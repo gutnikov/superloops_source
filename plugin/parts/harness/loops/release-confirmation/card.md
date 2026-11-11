@@ -9,6 +9,7 @@ stages: [production]
 speed: [minutes, days]
 needs: [logs, deploy]
 agent: [investigator]
+related: [canary-feature-flags, health-checks-smoke, reproduction-gate, error-tracking]
 links:
   - title: "Kayenta"
     author: "Netflix and Google"
@@ -72,9 +73,11 @@ is the confirmation phase of delivery, remediation and maintenance; the three di
 
 - A canary tool compares with the previous version by itself
   ([canary-feature-flags](../canary-feature-flags/card.md)); this loop adds the check that the change happened.
-- This loop answers what [canary-feature-flags](../canary-feature-flags/card.md) and
-  [health-checks-smoke](../health-checks-smoke/card.md) leave open: what counts as worse, and how long to wait
-  before a result counts as red.
+- Beside [canary-feature-flags](../canary-feature-flags/card.md) and
+  [health-checks-smoke](../health-checks-smoke/card.md), this loop decides what counts as worse (the previous
+  version's level) and how long to wait before a result counts as red (a window counted in events).
+- For a fixed error from the tracker, the signal is its Sentry issue
+  ([error-tracking](../error-tracking/card.md)).
 
 ## Agent step
 

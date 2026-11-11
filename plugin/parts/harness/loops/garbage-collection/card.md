@@ -9,40 +9,63 @@ stages: [scheduled]
 speed: [minutes, hours]
 needs: []
 agent: [worker, reviewer]
+related: [taste-invariants, sample-audit, agent-code-review, behaviour-invariance]
 links:
   - title: "Harness engineering: leveraging Codex in an agent-first world"
     url: "https://openai.com/index/harness-engineering/"
     author: "OpenAI"
+  - title: "Claude Code GitHub Actions: run on a schedule"
+    url: "https://code.claude.com/docs/en/github-actions#run-on-a-schedule"
+    author: "Anthropic"
 ---
 
 ## Why
 
-Code that breaks the golden principles piles up, and cleaning it up by hand took OpenAI every Friday. Background agents on a schedule do that cleanup instead and open one small PR per finding, so each fix is quick to review. The golden principles are written down in the repository, so the agents and whoever reviews their PRs judge code by the same principles.
+Code that breaks the golden principles piles up, and cleaning it up by hand took OpenAI every Friday. Background
+agents on a schedule do that cleanup instead and open one small PR per finding, so each fix is quick to review. The
+golden principles are written down in the repository, so the agents and whoever reviews their PRs judge code by the
+same principles.
 
 ## How it works
 
-On a schedule, background agents look for code that breaks the "golden principles" written down in the repository, and open small PRs to fix it. At OpenAI, most of these PRs took under a minute to review and were merged automatically.
+1. On a schedule, a worker takes one golden principle, finds code that breaks it, and opens one small PR per finding.
+2. The project's loops run on the PR as on any other, and a reviewer agent judges whether the PR does only what the
+   principle asks.
+3. A PR that passes merges automatically. One that does not waits for a person.
 
-The source does not say:
-
-- what the golden principles are, or give an example
-- who reviews the PRs: a person, another agent or a CI check
-- what lets a PR merge automatically
-- what happens to the PRs that take longer to review
+At OpenAI, most of these PRs took under a minute to review and were merged automatically.
 
 ## Set up
 
-- Write the golden principles down in the repository.
-- Add a `QUALITY_SCORE.md` file to the repository.
-
-The source does not say what `QUALITY_SCORE.md` contains, who updates it or how the agents use it.
+- **The golden principles**, in one file, such as `docs/golden-principles.md`: for each, an id, the rule in one line,
+  and a short example of code that breaks it and of code that keeps it. A principle a lint can check moves to
+  [taste-invariants](../taste-invariants/card.md) and leaves the list: a lint is cheaper and gives the same answer
+  every time.
+- **A score per principle**, in a file the worker updates on each run (OpenAI's repository has a `QUALITY_SCORE.md`):
+  how many violations of each principle the last run found, so the trend shows whether cleanup keeps ahead.
+- **What may merge on its own.** A PR fixes one principle, changes under 100 lines, keeps every test's expected value
+  and every public API, its CI is green, and the reviewer passes it. Anything else waits for a person. A PR still open
+  after a week is closed by the next run, and its finding is listed for a person in the score file.
+- **The `run`** prints the reviewer's Verdict for each open PR of the loop, one line per PR, `<PR>: merge` or
+  `<PR>: wait (<reason>)`. It exits non-zero for any `wait`, but only once the reviewer is calibrated; until then it
+  prints the verdicts and exits 0, and every PR waits for a person.
+- **Cases** for the reviewer's evals. Must fire: a cleanup PR that also changes a test's expected value; a PR that
+  fixes two principles at once; a PR that renames a public function. Must pass: a one-principle PR of 30 lines with
+  the tests untouched.
+- **Wiring.** A scheduled CI job runs the worker, such as the Claude Code GitHub Action with a `prompt` on a `cron`
+  schedule. The worker opens PRs and never merges: the merge belongs to branch protection, which requires CI and the
+  reviewer's check. A PR that touches the principles file, the reviewer's prompt or the CI config never merges on its
+  own.
 
 ## Notes
 
 - Before this loop, OpenAI spent every Friday (20% of the week) cleaning up "AI slop" by hand.
+- A person samples what merged without them ([sample-audit](../sample-audit/card.md)); each mismatch becomes an eval
+  case for the reviewer.
 
 ## Agent step
 
 A worker on a schedule finds code that breaks one golden principle and opens one small PR per finding. A reviewer,
-not the worker, judges each PR before it merges; the worker never merges its own. The reviewer may block a merge only
-after it has been calibrated ([agent-calibration](../agent-calibration/card.md)).
+not the worker, judges each PR before it merges and returns a Verdict; it gets the PR's diff and the principle, never
+the worker's reasoning. The worker never merges its own PRs. The reviewer may block a merge only after it has been
+calibrated ([agent-calibration](../agent-calibration/card.md)).

@@ -8,16 +8,19 @@ places: [harness:delivery/gate, harness:delivery/confirmation, harness:remediati
 stages: [local, scheduled]
 speed: [minutes]
 needs: []
+related: [llm-judge-calibration, sample-audit, steering-loop, llm-evals]
 links:
-  - title: "Using LLM-as-a-Judge For Evaluation"
+  - title: "Using LLM-as-a-Judge For Evaluation: A Complete Guide"
+    url: "https://hamel.dev/blog/posts/llm-judge/"
     author: "Hamel Husain"
-    note: "grading against one principal expert with pass or fail and a critique."
-  - title: "A retelling of critique shadowing"
+    note: "grading against one principal expert with pass or fail and a critique; true-positive and true-negative rates"
+  - title: "Creating a LLM-as-a-Judge that drives business results"
+    url: "https://simonwillison.net/2024/Oct/30/llm-as-a-judge/"
     author: "Simon Willison"
-    note: "revising the judge's prompt until it agrees with the expert."
+    note: "revising the judge's prompt until it agrees with the expert"
   - title: "Best practices for Claude Code"
     url: "https://code.claude.com/docs/en/best-practices"
-    note: "the agent doing the work isn't the one grading it."
+    note: "a fresh reviewer that never saw the conversation"
 ---
 
 ## Why
@@ -80,11 +83,11 @@ in use: each verdict's outcome is logged (confirmed, false positive, missed, ove
 
 ## Notes
 
-- This loop settles what the cards it builds on leave open. [llm-judge-calibration](../llm-judge-calibration/card.md)
-  does not say how close is close enough, on how many results, or what to do when the judge never matches: here
-  the threshold is an approved reference, the set is the agent's eval cases run three times, and an agent that
-  never reaches it stays advisory or is retired. [llm-evals](../llm-evals/card.md) covers prompts of product features; this
-  is the same loop for the agents of the harness itself.
+- A judge's eval cases come from [llm-judge-calibration](../llm-judge-calibration/card.md): one expert's pass or
+  fail grades, each with a critique. This loop scores the judge against them three times, against a threshold a
+  person approved, and keeps a judge that never reaches it `advisory` or retires it.
+  [llm-evals](../llm-evals/card.md) covers prompts of product features; this is the same loop for the agents of the
+  harness itself.
 - Reviewers, guards, refuters and investigators can be calibrated without a person: their cases have answers a
   script can check. A judge of taste or quality cannot: only a person knows the right grade, so a person grades
   its cases once, and a [sample audit](../sample-audit/card.md) checks it again later.

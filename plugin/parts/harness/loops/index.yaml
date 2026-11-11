@@ -26,6 +26,7 @@ loops:
     speed: [minutes, hours]
     needs: []
     agent: [reviewer, refuter]
+    related: [spec-check, progress-file-feature-list, reproduction-gate, verification-subagent]
   - id: accessibility-checks
     title: "Accessibility checks (axe, ARIA)"
     path: accessibility-checks/card.md
@@ -37,6 +38,7 @@ loops:
     speed: [seconds]
     needs: [browser]
     agent: [explorer]
+    related: [accessibility-tree-navigation, lighthouse-ci, e2e-browser, approved-fixtures]
   - id: accessibility-tree-navigation
     title: "Agent navigation by the accessibility tree"
     path: accessibility-tree-navigation/card.md
@@ -47,6 +49,7 @@ loops:
     stages: [local]
     speed: [seconds]
     needs: [browser]
+    related: [accessibility-checks, e2e-browser, agentic-manual-testing]
   - id: agent-audit-trail
     title: "Audit trail of agent actions"
     path: agent-audit-trail/card.md
@@ -57,6 +60,11 @@ loops:
     stages: [task]
     speed: [minutes]
     needs: []
+    related: [verification-subagent, human-diff-review, result-demo, progress-file-feature-list]
+    when: [after]
+    initiator: rule
+    sync: blocking
+    assesses: [result]
   - id: agent-calibration
     title: "Calibration of a loop's agent"
     path: agent-calibration/card.md
@@ -67,6 +75,7 @@ loops:
     stages: [local, scheduled]
     speed: [minutes]
     needs: []
+    related: [llm-judge-calibration, sample-audit, steering-loop, llm-evals]
   - id: agent-code-review
     title: "Code review by another agent"
     path: agent-code-review/card.md
@@ -78,6 +87,7 @@ loops:
     speed: [minutes]
     needs: []
     agent: [reviewer]
+    related: [verification-subagent, security-review-agent, human-diff-review, agent-calibration]
   - id: agentic-manual-testing
     title: "Agentic manual testing"
     path: agentic-manual-testing/card.md
@@ -89,6 +99,7 @@ loops:
     speed: [seconds, minutes]
     needs: []
     agent: [explorer]
+    related: [red-green-tdd, bug-failing-test-fix, e2e-browser, exploratory-testing]
   - id: ai-judges-telemetry
     title: "AI judges on telemetry"
     path: ai-judges-telemetry/card.md
@@ -100,6 +111,7 @@ loops:
     speed: [minutes]
     needs: [logs]
     agent: [judge]
+    related: [triage, llm-judge-calibration, llm-evals, sample-audit]
   - id: api-breaking-changes
     title: "Breaking changes in the API"
     path: api-breaking-changes/card.md
@@ -110,6 +122,7 @@ loops:
     stages: [local, ci]
     speed: [seconds]
     needs: []
+    related: [contract-tests, executable-docs, behaviour-invariance]
   - id: approved-fixtures
     title: "Snapshot / golden / approved fixtures"
     path: approved-fixtures/card.md
@@ -117,10 +130,11 @@ loops:
     sensor: computational
     ilities: [correctness, testability]
     places: [delivery/work, remediation/work, maintenance/oracle, maintenance/work]
-    stages: [local]
+    stages: [local, ci]
     speed: [seconds]
     needs: []
     agent: [reviewer]
+    related: [human-acceptance-criteria, behaviour-invariance]
   - id: architecture-fitness-functions
     title: "Architecture fitness functions"
     path: architecture-fitness-functions/card.md
@@ -131,6 +145,7 @@ loops:
     stages: [commit, ci]
     speed: [seconds]
     needs: []
+    related: [lint-with-fix-instructions, coupling-analysis, correction-becomes-rule, pre-commit-pre-push]
   - id: async-questions-with-assumptions
     title: "Asynchronous questions with assumptions"
     path: async-questions-with-assumptions/card.md
@@ -141,6 +156,7 @@ loops:
     stages: [task]
     speed: [minutes]
     needs: []
+    related: [escalation-on-uncertainty, result-demo, correction-becomes-rule]
     when: [during, after]
     initiator: agent
     sync: async
@@ -154,6 +170,7 @@ loops:
     stages: [edit, local]
     speed: [sub-second]
     needs: []
+    related: [pre-commit-pre-push, lsp-diagnostics, ci-clean-infra]
   - id: backup-restore-rollback
     title: "Restore from backup and rollback"
     path: backup-restore-rollback/card.md
@@ -164,6 +181,7 @@ loops:
     stages: [scheduled]
     speed: [minutes, hours]
     needs: [deploy]
+    related: [chaos-engineering, db-migration-lint, health-checks-smoke, canary-feature-flags]
   - id: behaviour-invariance
     title: "Behaviour invariance"
     path: behaviour-invariance/card.md
@@ -175,6 +193,7 @@ loops:
     speed: [minutes]
     needs: []
     agent: [reviewer]
+    related: [triage, approved-fixtures, dependency-updates, garbage-collection]
   - id: benchmarks-vs-baseline
     title: "Benchmarks against a baseline"
     path: benchmarks-vs-baseline/card.md
@@ -185,6 +204,7 @@ loops:
     stages: [local]
     speed: [minutes]
     needs: []
+    related: [profiling, behaviour-invariance, perf-budgets-telemetry]
   - id: browser-console-devtools
     title: "Browser console and DevTools"
     path: browser-console-devtools/card.md
@@ -196,17 +216,19 @@ loops:
     speed: [seconds]
     needs: [browser]
     agent: [investigator]
+    related: [e2e-browser, agentic-manual-testing, structured-logs]
   - id: bug-failing-test-fix
     title: "Bug → failing test → fix"
     path: bug-failing-test-fix/card.md
-    summary: "The agent reproduces the bug with a test, fixes the code and shows a green run."
+    summary: "Red/green for a bug: the agent starts from a test that reproduces the bug and fails, changes the code until it passes, and runs the whole suite."
     sensor: computational
     ilities: [correctness, testability]
-    places: [remediation/oracle, remediation/work]
+    places: [remediation/work]
     stages: [local]
     speed: [seconds, minutes]
     needs: []
     agent: [explorer]
+    related: [reproduction-gate, red-green-tdd, exploratory-testing, agentic-manual-testing]
   - id: build
     title: "Build / compile"
     path: build/card.md
@@ -217,6 +239,7 @@ loops:
     stages: [local, ci]
     speed: [seconds]
     needs: []
+    related: [type-check, lsp-diagnostics, stop-hook, ci-clean-infra]
   - id: bundle-size-budget
     title: "Bundle size budget"
     path: bundle-size-budget/card.md
@@ -227,6 +250,7 @@ loops:
     stages: [ci]
     speed: [seconds]
     needs: []
+    related: [lighthouse-ci, dependency-updates]
   - id: canary-feature-flags
     title: "Canaries and feature flags"
     path: canary-feature-flags/card.md
@@ -237,6 +261,7 @@ loops:
     stages: [production]
     speed: [minutes, hours]
     needs: [metrics, deploy]
+    related: [release-confirmation, health-checks-smoke, slo-degradation, triage]
   - id: chaos-engineering
     title: "Chaos engineering"
     path: chaos-engineering/card.md
@@ -248,6 +273,7 @@ loops:
     speed: [minutes]
     needs: [metrics, deploy]
     agent: [investigator]
+    related: [fault-injection, slo-degradation, backup-restore-rollback]
   - id: choose-from-options
     title: "Choose from options"
     path: choose-from-options/card.md
@@ -258,6 +284,7 @@ loops:
     stages: [task]
     speed: [minutes]
     needs: []
+    related: [correction-becomes-rule, taste-invariants, escalation-on-uncertainty]
     when: [during, after]
     initiator: agent
     assesses: [result, code]
@@ -272,6 +299,7 @@ loops:
     speed: [minutes]
     needs: [ci]
     agent: [investigator]
+    related: [pre-commit-pre-push, platform-matrix, isolated-environment]
   - id: code-coverage
     title: "Code coverage"
     path: code-coverage/card.md
@@ -282,6 +310,7 @@ loops:
     stages: [local, ci]
     speed: [seconds]
     needs: []
+    related: [mutation-testing, behaviour-invariance, red-green-tdd]
   - id: compliance-mutants
     title: "Compliance hardening with mutants"
     path: compliance-mutants/card.md
@@ -293,6 +322,7 @@ loops:
     speed: [minutes, hours]
     needs: []
     agent: [worker]
+    related: [mutation-testing, security-review-agent, garbage-collection]
   - id: config-validation
     title: "Configuration check"
     path: config-validation/card.md
@@ -300,9 +330,10 @@ loops:
     sensor: computational
     ilities: [deployability, compatibility]
     places: [delivery/work, remediation/work, maintenance/work]
-    stages: [local, ci]
-    speed: [seconds]
+    stages: [edit, commit, ci]
+    speed: [seconds, minutes]
     needs: []
+    related: [health-checks-smoke, preview-environments]
   - id: contract-tests
     title: "Contract tests"
     path: contract-tests/card.md
@@ -310,41 +341,44 @@ loops:
     sensor: computational
     ilities: [compatibility, testability]
     places: [delivery/work, delivery/gate, remediation/work, maintenance/gate]
-    stages: [ci]
+    stages: [local, ci]
     speed: [minutes]
-    needs: []
+    needs: [ci]
+    related: [api-breaking-changes, integration-tests-emulators]
   - id: correction-becomes-rule
     title: "Steering: a repeated correction becomes a rule"
     path: correction-becomes-rule/card.md
-    summary: "When the person has corrected the agent twice for the same thing, the correction becomes an automated sensor (a lint, a test, a fitness function) or a line in CLAUDE.md."
+    summary: "Every correction a person makes is logged at the phase that should have caught it; the second of a kind is an escape, and it becomes a lint, a test or a line in CLAUDE.md."
     sensor: human
     ilities: [alignment]
-    places: [harness:remediation/entry, harness:remediation/oracle]
+    places: [harness:remediation/entry]
     stages: [continuous]
     speed: [minutes]
     needs: []
-    related: [steering-loop]
+    related: [steering-loop, human-diff-review, taste-invariants, sample-audit]
     initiator: human
   - id: coupling-analysis
     title: "Coupling analysis"
     path: coupling-analysis/card.md
-    summary: "The agent calls a CLI that reports fan-in, fan-out and dependency cycles. It then refactors the hot spots using the numbers from that tool, not its own judgement of the code."
+    summary: "On a schedule a CLI reports fan-in, fan-out and cycles; what got worse than the baseline, minus intended hubs, becomes a maintenance item, and the refactoring must improve the numbers."
     sensor: computational
     ilities: [maintainability]
     places: [maintenance/entry, maintenance/oracle]
     stages: [scheduled]
     speed: [minutes]
     needs: []
+    related: [behaviour-invariance, architecture-fitness-functions, triage]
   - id: dast
     title: "DAST"
     path: dast/card.md
-    summary: "A scanner attacks the preview environment. The agent fixes the vulnerabilities that the scanner finds."
+    summary: "OWASP ZAP scans the running preview from the outside: passively on every deploy, with attacks before a release. The agent fixes each alert the scan fails on."
     sensor: computational
     ilities: [security]
     places: [delivery/release, remediation/entry]
-    stages: [staging]
-    speed: [minutes]
-    needs: []
+    stages: [preview, staging]
+    speed: [minutes, hours]
+    needs: [ci]
+    related: [preview-environments, sast, security-review-agent]
   - id: db-migration-lint
     title: "Lint and run database migrations"
     path: db-migration-lint/card.md
@@ -352,9 +386,10 @@ loops:
     sensor: computational
     ilities: [compatibility, reliability]
     places: [delivery/work, remediation/work, maintenance/gate]
-    stages: [ci]
+    stages: [local, ci]
     speed: [seconds, minutes]
     needs: []
+    related: [backup-restore-rollback, integration-tests-emulators, api-breaking-changes]
   - id: debugger-repl
     title: "Debugger and REPL"
     path: debugger-repl/card.md
@@ -365,6 +400,7 @@ loops:
     stages: [local]
     speed: [seconds]
     needs: []
+    related: [bug-failing-test-fix, reproduction-gate, agentic-manual-testing]
   - id: dependency-scanning-sbom
     title: "Dependency analysis (SCA) and SBOM"
     path: dependency-scanning-sbom/card.md
@@ -372,9 +408,10 @@ loops:
     sensor: computational
     ilities: [security]
     places: [delivery/work, remediation/work, maintenance/entry, maintenance/work]
-    stages: [ci]
+    stages: [ci, scheduled]
     speed: [minutes]
     needs: []
+    related: [dependency-updates, license-check, triage]
   - id: dependency-updates
     title: "Dependency updates"
     path: dependency-updates/card.md
@@ -382,10 +419,11 @@ loops:
     sensor: computational
     ilities: [compatibility, maintainability]
     places: [maintenance/entry, maintenance/work]
-    stages: [scheduled]
+    stages: [scheduled, ci]
     speed: [minutes]
     needs: [ci]
     agent: [worker]
+    related: [dependency-scanning-sbom, behaviour-invariance, ci-clean-infra]
   - id: discovery-decision
     title: "Discovery decision"
     path: discovery-decision/card.md
@@ -397,6 +435,7 @@ loops:
     speed: [hours, days]
     needs: []
     agent: [refuter]
+    related: [triage, verification-subagent, acceptance-loop]
   - id: document-review
     title: "Review of document texts"
     path: document-review/card.md
@@ -420,6 +459,7 @@ loops:
     speed: [minutes]
     needs: [browser]
     agent: [explorer]
+    related: [agentic-manual-testing, browser-console-devtools, progress-file-feature-list, acceptance-loop]
   - id: error-tracking
     title: "Error tracking (Sentry)"
     path: error-tracking/card.md
@@ -431,6 +471,7 @@ loops:
     speed: [minutes, days]
     needs: [errors]
     agent: [investigator]
+    related: [release-confirmation, reproduction-gate, triage]
   - id: escalation-on-uncertainty
     title: "Escalation on uncertainty"
     path: escalation-on-uncertainty/card.md
@@ -441,7 +482,7 @@ loops:
     stages: [task]
     speed: [minutes, hours]
     needs: []
-    related: [async-questions-with-assumptions]
+    related: [async-questions-with-assumptions, risky-action-gates, correction-becomes-rule]
     when: [during]
     initiator: agent
     sync: blocking
@@ -456,6 +497,7 @@ loops:
     stages: [local, ci]
     speed: [seconds]
     needs: []
+    related: [knowledge-base-doc-lint, contract-tests, api-breaking-changes]
   - id: exploratory-testing
     title: "Exploratory testing"
     path: exploratory-testing/card.md
@@ -467,7 +509,7 @@ loops:
     speed: [hours]
     needs: []
     agent: [explorer]
-    related: [bug-failing-test-fix]
+    related: [reproduction-gate, bug-failing-test-fix, agentic-manual-testing, triage]
     when: [after]
     initiator: human
     sync: async
@@ -482,6 +524,7 @@ loops:
     stages: [local, ci]
     speed: [seconds]
     needs: []
+    related: [chaos-engineering, integration-tests-emulators, reproduction-gate]
   - id: fuzzing
     title: "Fuzzing"
     path: fuzzing/card.md
@@ -492,6 +535,7 @@ loops:
     stages: [ci, scheduled]
     speed: [minutes, hours]
     needs: []
+    related: [property-based-tests, bug-failing-test-fix, reproduction-gate]
   - id: garbage-collection
     title: "Garbage collection"
     path: garbage-collection/card.md
@@ -503,6 +547,7 @@ loops:
     speed: [minutes, hours]
     needs: []
     agent: [worker, reviewer]
+    related: [taste-invariants, sample-audit, agent-code-review, behaviour-invariance]
   - id: health-checks-smoke
     title: "Health checks and smoke tests after deploy"
     path: health-checks-smoke/card.md
@@ -514,6 +559,7 @@ loops:
     speed: [seconds]
     needs: [logs]
     agent: [investigator]
+    related: [release-confirmation, preview-environments, config-validation, canary-feature-flags]
   - id: human-acceptance-criteria
     title: "Acceptance criteria and references from a person"
     path: human-acceptance-criteria/card.md
@@ -521,11 +567,11 @@ loops:
     sensor: human
     ilities: [alignment, correctness]
     places: [delivery/oracle]
-    stages: [task]
+    stages: [task, ci]
     speed: [seconds]
     needs: []
     agent: [reviewer]
-    related: [approved-fixtures, acceptance-loop]
+    related: [approved-fixtures, acceptance-loop, interview]
     when: [before]
     initiator: human
     assesses: [result]
@@ -539,8 +585,10 @@ loops:
     stages: [ci]
     speed: [hours, days]
     needs: [ci]
-    related: [agent-code-review]
+    related: [agent-code-review, result-demo, correction-becomes-rule, sample-audit]
     when: [after]
+    initiator: rule
+    sync: async
     assesses: [code, intent]
   - id: i18n-pseudolocalization
     title: "i18n and pseudo-localization"
@@ -549,9 +597,10 @@ loops:
     sensor: computational
     ilities: [compatibility]
     places: [delivery/work, remediation/work, maintenance/work]
-    stages: [ci]
+    stages: [edit, ci]
     speed: [seconds, minutes]
-    needs: []
+    needs: [browser]
+    related: [e2e-browser, visual-screenshot-check, lint-with-fix-instructions]
   - id: integration-tests-emulators
     title: "Integration tests with emulators"
     path: integration-tests-emulators/card.md
@@ -562,6 +611,7 @@ loops:
     stages: [local, ci]
     speed: [minutes]
     needs: []
+    related: [contract-tests, fault-injection, db-migration-lint, ci-clean-infra]
   - id: interview
     title: "Interview"
     path: interview/card.md
@@ -572,7 +622,7 @@ loops:
     stages: [task]
     speed: [minutes]
     needs: []
-    related: [plan-approval]
+    related: [plan-approval, task-restatement, spec-check, acceptance-loop]
     when: [before]
     initiator: agent
     sync: blocking
@@ -587,6 +637,7 @@ loops:
     stages: [task]
     speed: [seconds, minutes]
     needs: []
+    related: [run-tests-first, ci-clean-infra, structured-logs, preview-environments]
   - id: knowledge-base-doc-lint
     title: "Doc linters for the knowledge base"
     path: knowledge-base-doc-lint/card.md
@@ -597,6 +648,7 @@ loops:
     stages: [ci, scheduled]
     speed: [minutes]
     needs: []
+    related: [document-review, executable-docs, garbage-collection]
   - id: license-check
     title: "License check"
     path: license-check/card.md
@@ -607,6 +659,7 @@ loops:
     stages: [ci]
     speed: [seconds]
     needs: []
+    related: [dependency-scanning-sbom, dependency-updates]
   - id: lighthouse-ci
     title: "Lighthouse CI"
     path: lighthouse-ci/card.md
@@ -617,6 +670,7 @@ loops:
     stages: [preview]
     speed: [minutes]
     needs: [browser]
+    related: [preview-environments, bundle-size-budget, accessibility-checks]
   - id: lint-with-fix-instructions
     title: "Linter with fix instructions"
     path: lint-with-fix-instructions/card.md
@@ -627,6 +681,7 @@ loops:
     stages: [commit, ci]
     speed: [seconds]
     needs: []
+    related: [taste-invariants, architecture-fitness-functions, pre-commit-pre-push]
   - id: llm-evals
     title: "Eval suites for LLM features"
     path: llm-evals/card.md
@@ -634,21 +689,24 @@ loops:
     sensor: computational
     ilities: [correctness]
     places: [delivery/work, remediation/work, maintenance/work]
-    stages: [local]
+    stages: [local, ci]
     speed: [minutes]
     needs: []
     agent: [judge]
+    related: [llm-judge-calibration, agent-calibration, ai-judges-telemetry]
   - id: llm-judge-calibration
     title: "Calibrating an LLM judge on an expert (critique shadowing)"
     path: llm-judge-calibration/card.md
-    summary: "An expert grades a sample of results. An LLM judge's prompt is revised until the judge grades that sample the same way as the expert. This is prompt revision, not model training."
+    summary: "One expert grades a sample pass or fail, each with a critique; the judge's prompt is revised until its grades agree. The graded sample becomes the judge's eval cases."
     sensor: human
     ilities: [alignment]
-    places: [harness:delivery/oracle, harness:delivery/gate]
+    places: [harness:delivery/oracle]
     stages: [scheduled]
-    speed: [seconds, hours]
+    speed: [hours]
     needs: []
-    related: [llm-evals, ai-judges-telemetry]
+    related: [agent-calibration, llm-evals, ai-judges-telemetry, ux-evaluator]
+    when: [after]
+    initiator: rule
     sync: async
     assesses: [result]
   - id: load-testing
@@ -658,10 +716,11 @@ loops:
     sensor: computational
     ilities: [performance]
     places: [delivery/release, maintenance/release]
-    stages: [staging]
+    stages: [preview, staging]
     speed: [minutes]
     needs: [traces]
     agent: [investigator]
+    related: [preview-environments, traces-opentelemetry, profiling, perf-budgets-telemetry]
   - id: lsp-diagnostics
     title: "LSP diagnostics after every edit"
     path: lsp-diagnostics/card.md
@@ -672,6 +731,7 @@ loops:
     stages: [edit, local]
     speed: [sub-second]
     needs: []
+    related: [type-check, build, lint-with-fix-instructions, autoformat-hook]
   - id: metrics-promql
     title: "Metrics (PromQL)"
     path: metrics-promql/card.md
@@ -679,10 +739,11 @@ loops:
     sensor: computational
     ilities: [observability, performance, reliability]
     places: [delivery/work, delivery/confirmation, remediation/confirmation, maintenance/confirmation]
-    stages: [local]
+    stages: [local, production]
     speed: [seconds]
     needs: [metrics]
     agent: [investigator]
+    related: [slo-degradation, perf-budgets-telemetry, load-testing, release-confirmation]
   - id: mutation-testing
     title: "Mutation testing"
     path: mutation-testing/card.md
@@ -690,9 +751,10 @@ loops:
     sensor: computational
     ilities: [testability]
     places: [delivery/work, remediation/work, maintenance/oracle]
-    stages: [local, ci]
+    stages: [local, ci, scheduled]
     speed: [minutes, hours]
     needs: []
+    related: [code-coverage, compliance-mutants, red-green-tdd, behaviour-invariance]
   - id: observe-and-interrupt
     title: "Observe and interrupt"
     path: observe-and-interrupt/card.md
@@ -701,15 +763,16 @@ loops:
     ilities: [alignment]
     places: [delivery/work, remediation/work, maintenance/work]
     stages: [task]
-    speed: [sub-second]
+    speed: [minutes, hours]
     needs: []
+    related: [risky-action-gates, correction-becomes-rule, escalation-on-uncertainty]
     when: [during]
     initiator: human
     sync: async
   - id: perf-budgets-telemetry
     title: "Performance budgets through telemetry"
     path: perf-budgets-telemetry/card.md
-    summary: "The agent gets a performance budget, such as \"the service starts in under 800 ms\", queries the traces and optimizes the code until the service meets the budget."
+    summary: "The agent gets a performance budget, such as \"service startup completes in under 800ms\", queries the service's own traces and metrics, and optimizes the code until the service meets it."
     sensor: computational
     ilities: [performance]
     places: [delivery/work, maintenance/work, maintenance/confirmation]
@@ -717,6 +780,7 @@ loops:
     speed: [minutes]
     needs: [traces]
     agent: [investigator]
+    related: [traces-opentelemetry, metrics-promql, benchmarks-vs-baseline, release-confirmation]
   - id: plan-approval
     title: "Plan approval"
     path: plan-approval/card.md
@@ -727,7 +791,7 @@ loops:
     stages: [task]
     speed: [minutes]
     needs: []
-    related: [interview]
+    related: [interview, task-restatement, agent-code-review]
     when: [before]
     initiator: agent
     sync: blocking
@@ -742,6 +806,7 @@ loops:
     stages: [ci]
     speed: [minutes]
     needs: [ci]
+    related: [ci-clean-infra, e2e-browser]
   - id: pre-commit-pre-push
     title: "Pre-commit / pre-push"
     path: pre-commit-pre-push/card.md
@@ -752,6 +817,7 @@ loops:
     stages: [commit]
     speed: [sub-second]
     needs: []
+    related: [ci-clean-infra, autoformat-hook, secret-scanning, stop-hook]
   - id: preview-environments
     title: "Preview environments per PR"
     path: preview-environments/card.md
@@ -762,17 +828,18 @@ loops:
     stages: [preview]
     speed: [minutes]
     needs: [deploy]
+    related: [health-checks-smoke, dast, lighthouse-ci, load-testing]
   - id: production-users
     title: "Users in production"
     path: production-users/card.md
-    summary: "The signal comes from users in production: feedback, support tickets, A/B tests, dogfooding. A person turns it into acceptance criteria, which the agent gets as a spec and a test."
+    summary: "A person reads the users' signal from production in aggregate: feedback, support tickets, A/B tests, dogfooding. It shows whether shipped work has value; a single item goes on to user-feedback."
     sensor: human
     ilities: [alignment, usability]
     places: [delivery/entry, delivery/confirmation, remediation/entry, discovery/entry]
     stages: [production]
     speed: [days, weeks]
     needs: []
-    related: [user-feedback]
+    related: [user-feedback, triage, release-confirmation]
     when: [production]
     initiator: human
     sync: async
@@ -788,17 +855,18 @@ loops:
     speed: [minutes]
     needs: []
     agent: [investigator]
+    related: [benchmarks-vs-baseline, load-testing, perf-budgets-telemetry]
   - id: progress-file-feature-list
     title: "Progress file and feature list"
     path: progress-file-feature-list/card.md
-    summary: "An initializer creates a JSON list of features, each with `\"passes\": false`. Every session takes one feature and marks it as passing only after an e2e check."
+    summary: "Long work over many sessions: a JSON feature list and a progress file carry the state; each session takes one failing feature and marks it passing only after an e2e check."
     sensor: computational
     ilities: [correctness]
-    places: [delivery/oracle, delivery/gate]
+    places: [delivery/work]
     stages: [task]
     speed: [minutes, hours]
     needs: []
-    related: [acceptance-loop]
+    related: [acceptance-loop, e2e-browser, isolated-environment, stop-hook]
   - id: property-based-tests
     title: "Property-based tests"
     path: property-based-tests/card.md
@@ -806,9 +874,10 @@ loops:
     sensor: computational
     ilities: [correctness, reliability]
     places: [delivery/work, remediation/work, maintenance/work]
-    stages: [local, ci]
+    stages: [local, ci, scheduled]
     speed: [seconds]
     needs: []
+    related: [fuzzing, red-green-tdd, bug-failing-test-fix]
   - id: red-green-tdd
     title: "Unit tests, red/green TDD"
     path: red-green-tdd/card.md
@@ -832,6 +901,7 @@ loops:
     speed: [minutes, days]
     needs: [logs, deploy]
     agent: [investigator]
+    related: [canary-feature-flags, health-checks-smoke, reproduction-gate, error-tracking]
   - id: reproduction-gate
     title: "Reproduction gate"
     path: reproduction-gate/card.md
@@ -843,6 +913,7 @@ loops:
     speed: [minutes]
     needs: []
     agent: [reviewer]
+    related: [bug-failing-test-fix, acceptance-loop, release-confirmation, exploratory-testing]
   - id: result-demo
     title: "Result demo"
     path: result-demo/card.md
@@ -853,7 +924,7 @@ loops:
     stages: [task]
     speed: [minutes]
     needs: []
-    related: [agent-audit-trail, preview-environments]
+    related: [preview-environments, agent-audit-trail, human-diff-review, human-acceptance-criteria]
     when: [after]
     initiator: agent
     assesses: [result]
@@ -864,10 +935,10 @@ loops:
     sensor: human
     ilities: [security]
     places: [delivery/work, delivery/release, remediation/work, remediation/release, maintenance/work, maintenance/release]
-    stages: [task]
+    stages: [task, ci]
     speed: [seconds, minutes]
     needs: []
-    related: [isolated-environment]
+    related: [isolated-environment, escalation-on-uncertainty, db-migration-lint]
     when: [during]
     initiator: rule
     sync: blocking
@@ -879,9 +950,10 @@ loops:
     sensor: computational
     ilities: [testability]
     places: [delivery/work, remediation/work, maintenance/oracle]
-    stages: [local]
+    stages: [task, local]
     speed: [minutes]
     needs: []
+    related: [isolated-environment, behaviour-invariance, ci-clean-infra]
   - id: sample-audit
     title: "Sample audit"
     path: sample-audit/card.md
@@ -892,6 +964,7 @@ loops:
     stages: [scheduled]
     speed: [minutes]
     needs: []
+    related: [steering-loop, agent-calibration, llm-judge-calibration]
     when: [after]
     initiator: schedule
     sync: async
@@ -903,9 +976,10 @@ loops:
     sensor: computational
     ilities: [security]
     places: [delivery/work, remediation/work, maintenance/work]
-    stages: [local, ci]
-    speed: [seconds]
+    stages: [edit, local, ci]
+    speed: [seconds, minutes]
     needs: []
+    related: [security-review-agent, secret-scanning, dast, lint-with-fix-instructions]
   - id: secret-scanning
     title: "Secret scanning"
     path: secret-scanning/card.md
@@ -913,13 +987,14 @@ loops:
     sensor: computational
     ilities: [security]
     places: [delivery/work, remediation/work, maintenance/work]
-    stages: [commit]
+    stages: [commit, ci]
     speed: [seconds]
     needs: []
+    related: [pre-commit-pre-push, sast]
   - id: security-review-agent
     title: "Security and data-handling review by an agent"
     path: security-review-agent/card.md
-    summary: "A subagent checks the code against a security checklist or against rules such as \"user names never reach the frontend\", and returns findings with line numbers."
+    summary: "A subagent checks the code against a security checklist or rules such as \"no user names should ever be sent to the web frontend\", and returns findings with line numbers."
     sensor: inferential
     ilities: [security]
     places: [remediation/entry]
@@ -927,6 +1002,7 @@ loops:
     speed: [minutes]
     needs: []
     agent: [reviewer]
+    related: [sast, agent-code-review, compliance-mutants, agent-calibration]
   - id: slo-degradation
     title: "SLO degradation"
     path: slo-degradation/card.md
@@ -938,6 +1014,7 @@ loops:
     speed: [minutes, hours]
     needs: [metrics]
     agent: [investigator]
+    related: [release-confirmation, metrics-promql, traces-opentelemetry, triage]
   - id: spec-check
     title: "Spec check"
     path: spec-check/card.md
@@ -948,30 +1025,31 @@ loops:
     stages: [edit, commit, ci]
     speed: [seconds]
     needs: []
-    related: [acceptance-loop]
+    related: [acceptance-loop, interview]
   - id: steering-loop
     title: "Steering loop"
     path: steering-loop/card.md
     summary: "Every escape, a failure that got further than it should have, becomes a must-fire case at the phase that should have caught it, and the loop at that phase is fixed or added."
     sensor: inferential
     ilities: [testability, alignment]
-    places: [harness:remediation/entry, harness:remediation/oracle, harness:remediation/work]
+    places: [harness:remediation/oracle, harness:remediation/work]
     stages: [continuous]
     speed: [hours, days]
     needs: []
     agent: [investigator]
+    related: [correction-becomes-rule, sample-audit, release-confirmation, agent-calibration]
   - id: stop-hook
     title: "Stop hook / `/goal`"
     path: stop-hook/card.md
-    summary: "A hook runs a check and does not let the agent end its turn until the check passes."
+    summary: "When the agent tries to end its turn, a hook runs the check and sends the agent back to work while it fails; `/goal` does the same with a model that judges the transcript."
     sensor: computational
     ilities: [correctness]
     places: [delivery/work, remediation/work, maintenance/work]
     stages: [local]
     speed: [seconds, minutes]
     needs: []
-    agent: [refuter]
-    related: [acceptance-loop]
+    agent: [judge]
+    related: [acceptance-loop, verification-subagent, pre-commit-pre-push, autoformat-hook]
   - id: structured-logs
     title: "Structured logs and log queries"
     path: structured-logs/card.md
@@ -979,10 +1057,11 @@ loops:
     sensor: computational
     ilities: [observability]
     places: [delivery/work, delivery/confirmation, remediation/oracle, remediation/confirmation, maintenance/confirmation]
-    stages: [local]
+    stages: [local, production]
     speed: [seconds]
     needs: [logs]
     agent: [investigator]
+    related: [taste-invariants, isolated-environment, traces-opentelemetry, browser-console-devtools]
   - id: task-restatement
     title: "Task restatement"
     path: task-restatement/card.md
@@ -993,6 +1072,7 @@ loops:
     stages: [task]
     speed: [seconds]
     needs: []
+    related: [interview, plan-approval, human-acceptance-criteria]
     when: [before]
     initiator: agent
     sync: blocking
@@ -1007,6 +1087,7 @@ loops:
     stages: [local, ci]
     speed: [seconds]
     needs: []
+    related: [lint-with-fix-instructions, correction-becomes-rule, steering-loop, garbage-collection]
   - id: traces-opentelemetry
     title: "Traces (OpenTelemetry)"
     path: traces-opentelemetry/card.md
@@ -1018,6 +1099,7 @@ loops:
     speed: [seconds]
     needs: [traces]
     agent: [investigator]
+    related: [perf-budgets-telemetry, load-testing, structured-logs, metrics-promql]
   - id: triage
     title: "Triage: every signal goes to one super-loop, with its oracle"
     path: triage/card.md
@@ -1029,6 +1111,7 @@ loops:
     speed: [minutes]
     needs: []
     agent: [judge]
+    related: [behaviour-invariance, reproduction-gate, acceptance-loop, discovery-decision]
   - id: type-check
     title: "Type checking"
     path: type-check/card.md
@@ -1036,20 +1119,25 @@ loops:
     sensor: computational
     ilities: [correctness]
     places: [delivery/work, remediation/work, maintenance/work]
-    stages: [local]
+    stages: [edit, local, ci]
     speed: [seconds]
     needs: []
+    related: [build, lsp-diagnostics, lint-with-fix-instructions]
   - id: user-feedback
     title: "User feedback"
     path: user-feedback/card.md
-    summary: "A person writes acceptance criteria from user feedback. The agent works to those criteria and checks its work against them."
+    summary: "One piece of user feedback becomes acceptance criteria tied to a reproducible scenario, approved by a person; the agent works to them, and they become its spec and test."
     sensor: human
     ilities: [alignment, usability]
-    places: [delivery/entry, delivery/oracle, remediation/entry, discovery/entry]
-    stages: [production]
-    speed: [days]
+    places: [delivery/oracle, remediation/oracle]
+    stages: [task]
+    speed: [hours, days]
     needs: []
-    related: [acceptance-loop]
+    related: [production-users, acceptance-loop, reproduction-gate, human-acceptance-criteria]
+    when: [before]
+    initiator: agent
+    sync: blocking
+    assesses: [intent]
   - id: ux-evaluator
     title: "UX evaluator with thresholds"
     path: ux-evaluator/card.md
@@ -1061,6 +1149,7 @@ loops:
     speed: [minutes]
     needs: [browser]
     agent: [explorer, judge]
+    related: [llm-judge-calibration, verification-subagent, e2e-browser, visual-screenshot-check]
   - id: verification-subagent
     title: "Verification subagent"
     path: verification-subagent/card.md
@@ -1072,7 +1161,7 @@ loops:
     speed: [minutes]
     needs: []
     agent: [refuter]
-    related: [acceptance-loop]
+    related: [acceptance-loop, reproduction-gate, agent-code-review, stop-hook]
   - id: visual-screenshot-check
     title: "Visual check with screenshots"
     path: visual-screenshot-check/card.md
@@ -1084,18 +1173,19 @@ loops:
     speed: [seconds, minutes]
     needs: [browser]
     agent: [judge]
+    related: [approved-fixtures, ux-evaluator, e2e-browser, llm-judge-calibration]
 
 # The loops at each place: <super-loop>/<phase>, or harness:<super-loop>/<phase> at the harness level
 # (super-loops/). The Phases table of each super-loop names the same loops, except in the work phase.
 by_place:
-  delivery/entry: [production-users, triage, user-feedback]
-  delivery/oracle: [acceptance-loop, choose-from-options, human-acceptance-criteria, interview, plan-approval, progress-file-feature-list, spec-check, task-restatement, user-feedback]
-  delivery/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, benchmarks-vs-baseline, browser-console-devtools, build, bundle-size-budget, choose-from-options, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, document-review, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, metrics-promql, mutation-testing, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, secret-scanning, stop-hook, structured-logs, taste-invariants, traces-opentelemetry, type-check, visual-screenshot-check]
-  delivery/gate: [acceptance-loop, agent-audit-trail, contract-tests, human-diff-review, progress-file-feature-list, result-demo, ux-evaluator, verification-subagent]
+  delivery/entry: [production-users, triage]
+  delivery/oracle: [acceptance-loop, choose-from-options, human-acceptance-criteria, interview, plan-approval, spec-check, task-restatement, user-feedback]
+  delivery/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, benchmarks-vs-baseline, browser-console-devtools, build, bundle-size-budget, choose-from-options, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, document-review, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, metrics-promql, mutation-testing, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, progress-file-feature-list, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, secret-scanning, stop-hook, structured-logs, taste-invariants, traces-opentelemetry, type-check, visual-screenshot-check]
+  delivery/gate: [acceptance-loop, agent-audit-trail, contract-tests, human-diff-review, result-demo, ux-evaluator, verification-subagent]
   delivery/release: [canary-feature-flags, dast, exploratory-testing, health-checks-smoke, lighthouse-ci, load-testing, preview-environments, risky-action-gates]
   delivery/confirmation: [canary-feature-flags, error-tracking, metrics-promql, production-users, release-confirmation, slo-degradation, structured-logs]
-  remediation/entry: [ai-judges-telemetry, backup-restore-rollback, chaos-engineering, dast, error-tracking, exploratory-testing, fuzzing, production-users, sample-audit, security-review-agent, slo-degradation, triage, user-feedback]
-  remediation/oracle: [agentic-manual-testing, browser-console-devtools, bug-failing-test-fix, debugger-repl, fuzzing, reproduction-gate, structured-logs, traces-opentelemetry]
+  remediation/entry: [ai-judges-telemetry, backup-restore-rollback, chaos-engineering, dast, error-tracking, exploratory-testing, fuzzing, production-users, sample-audit, security-review-agent, slo-degradation, triage]
+  remediation/oracle: [agentic-manual-testing, browser-console-devtools, debugger-repl, fuzzing, reproduction-gate, structured-logs, traces-opentelemetry, user-feedback]
   remediation/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, browser-console-devtools, bug-failing-test-fix, build, bundle-size-budget, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, mutation-testing, observe-and-interrupt, platform-matrix, pre-commit-pre-push, profiling, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, secret-scanning, stop-hook, taste-invariants, type-check, visual-screenshot-check]
   remediation/gate: [agent-audit-trail, human-diff-review, reproduction-gate, verification-subagent]
   remediation/release: [canary-feature-flags, health-checks-smoke, risky-action-gates]
@@ -1106,16 +1196,16 @@ by_place:
   maintenance/gate: [agent-audit-trail, api-breaking-changes, behaviour-invariance, contract-tests, db-migration-lint, human-diff-review, verification-subagent]
   maintenance/release: [canary-feature-flags, health-checks-smoke, load-testing, risky-action-gates]
   maintenance/confirmation: [canary-feature-flags, error-tracking, metrics-promql, perf-budgets-telemetry, release-confirmation, slo-degradation, structured-logs]
-  discovery/entry: [production-users, triage, user-feedback]
+  discovery/entry: [production-users, triage]
   discovery/oracle: [discovery-decision, interview, plan-approval, task-restatement]
   discovery/work: [accessibility-tree-navigation, agentic-manual-testing, async-questions-with-assumptions, benchmarks-vs-baseline, debugger-repl, escalation-on-uncertainty, isolated-environment]
   discovery/gate: [discovery-decision, document-review, verification-subagent]
   discovery/confirmation: [choose-from-options, discovery-decision, result-demo]
   harness:delivery/oracle: [llm-judge-calibration]
   harness:delivery/work: [document-review]
-  harness:delivery/gate: [agent-calibration, llm-judge-calibration]
+  harness:delivery/gate: [agent-calibration]
   harness:delivery/confirmation: [agent-calibration, sample-audit]
-  harness:remediation/entry: [correction-becomes-rule, sample-audit, steering-loop]
-  harness:remediation/oracle: [agent-calibration, correction-becomes-rule, steering-loop]
+  harness:remediation/entry: [correction-becomes-rule, sample-audit]
+  harness:remediation/oracle: [agent-calibration, steering-loop]
   harness:remediation/work: [steering-loop]
   harness:maintenance/gate: [agent-calibration]

@@ -1,18 +1,19 @@
 ---
 id: progress-file-feature-list
 title: "Progress file and feature list"
-summary: "An initializer creates a JSON list of features, each with `\"passes\": false`. Every session takes one feature and marks it as passing only after an e2e check."
+summary: "Long work over many sessions: a JSON feature list and a progress file carry the state; each session takes one failing feature and marks it passing only after an e2e check."
 sensor: computational
 ilities: [correctness]
-places: [delivery/oracle, delivery/gate]
+places: [delivery/work]
 stages: [task]
 speed: [minutes, hours]
 needs: []
-related: [acceptance-loop]
+related: [acceptance-loop, e2e-browser, isolated-environment, stop-hook]
 links:
   - title: "Effective harnesses for long-running agents"
     url: "https://anthropic.com/engineering/effective-harnesses-for-long-running-agents"
     author: "Anthropic"
+    note: "the initializer, feature_list.json, claude-progress.txt, init.sh, one feature per session"
   - title: "Effective harnesses for long-running agents"
     url: "https://businessdatasolutions.github.io/ai-wiki/sources/2025-11-26-anthropic-effective-harnesses-long-running-agents"
     note: "AI wiki summary"
@@ -23,28 +24,55 @@ links:
 
 ## Why
 
-Work that spans many sessions loses its state between them, and an agent's word that a feature is done is not
-evidence. With this loop, each new session reads from the list which features have passed an e2e check. One feature
-per session keeps each claim small enough to check.
+Work that spans many sessions loses its state between them: a new session redoes work, or sees that much is built
+and declares the job done. An agent's word that a feature is done is not evidence either. With this loop the state
+lives in files the next session reads, and a feature counts as passing only after an e2e check. One feature per
+session keeps each claim small enough to check.
 
 ## How it works
 
-1. An initializer creates a JSON list of features, each with `"passes": false`.
-2. Every session takes one feature from the list.
-3. The session marks that feature as passing only after an e2e check.
+1. **The first session is an initializer.** It turns the request into a JSON list of end-to-end features, each
+   with its steps and `"passes": false`. It also writes `init.sh`, which starts the app, a progress file and a first
+   commit.
+2. **Every later session first gets its bearings.** It reads the progress file and `git log`, runs `init.sh` and a
+   basic e2e check, and fixes what is broken before anything new.
+3. **It takes one feature**: the highest-priority one that does not pass. It implements the feature and checks it
+   end to end as a user would; for a web app, that means [in a browser](../e2e-browser/card.md).
+4. **Only then it marks the feature.** It sets `passes` to `true`, commits with a descriptive message, and adds what
+   it did to the progress file.
+
+The list is the agent's plan and memory, not the oracle. Where the requirements come from a person, the
+[acceptance loop](../acceptance-loop/card.md) is the oracle: the feature list is then its list of requirements, and a
+feature passes when its acceptance tests are green.
 
 ## Set up
 
-- Use Anthropic's template from the article "Effective harnesses for long-running agents". The source entry gives no more setup steps than this.
+- **Three files.**
+  - `feature_list.json`: per feature an id, a description, the steps and `passes`.
+  - The progress file (`claude-progress.txt` at Anthropic): one entry per session with the feature, what was done,
+    what is left and how it was checked.
+  - `init.sh`: starts the app and runs the basic e2e check.
+- **Two prompts.**
+  - The initializer's: build the list from the spec with every feature failing, write `init.sh`, commit.
+  - Each session's: the steps above, one feature only, and never edit a feature's description or steps.
+- **Only `passes` changes.** A PreToolUse hook on writes to `feature_list.json` denies any change other than
+  `passes`. Better still, a script sets `passes` from the e2e suite's report, where tests are tagged with the feature's
+  id, and the agent never writes it.
+- **A failed check or an unfinished session** leaves the feature at `false`. The progress entry says where the work
+  stopped, and the session commits on its branch or reverts with git, so the next one starts from a working state.
+- **`run`** compares `feature_list.json` with the main branch and the latest e2e report. It prints one line per
+  changed feature, `<id>: <status>`, where the status is `passing`, `passing without evidence`, `steps changed` or
+  `removed`. It exits non-zero on anything but `passing`.
+- **Cases.** Must fire: a feature set to `true` with no green e2e run for it; a feature whose steps were edited; a
+  removed feature. Must pass: one feature set to `true` after its e2e test passed, the rest untouched.
+- **Wiring**: a [Stop hook](../stop-hook/card.md) runs `run` at the end of each session, and CI runs it on the
+  branch.
 
 ## Notes
 
-The source entry leaves out these points. Decide them yourself before you set up the loop:
-
-- what the progress file is, and how it differs from the feature list
-- what the initializer is, and what it builds the feature list from
-- how a session picks which feature to take
-- what a session does when the e2e check fails, or when the session ends before the feature passes
-
-The [acceptance loop](../acceptance-loop/card.md) is the same idea built on requirements, an approved spec and
-acceptance tests derived from it; it settles these points.
+- At Anthropic, the list for a claude.ai clone had over 200 features. Agents were told to change only the `passes`
+  field: "It is unacceptable to remove or edit tests because this could lead to missing or buggy functionality."
+  The list is JSON because "the model is less likely to inappropriately change or overwrite JSON files compared to
+  Markdown files."
+- Without an explicit instruction to test as a user would, Claude marked features complete after unit tests or
+  `curl` while the feature did not work end to end (Anthropic).

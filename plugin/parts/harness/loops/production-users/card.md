@@ -1,7 +1,7 @@
 ---
 id: production-users
 title: "Users in production"
-summary: "The signal comes from users in production: feedback, support tickets, A/B tests, dogfooding. A person turns it into acceptance criteria, which the agent gets as a spec and a test."
+summary: "A person reads the users' signal from production in aggregate: feedback, support tickets, A/B tests, dogfooding. It shows whether shipped work has value; a single item goes on to user-feedback."
 sensor: human
 ilities: [alignment, usability]
 places: [delivery/entry, delivery/confirmation, remediation/entry, discovery/entry]
@@ -12,27 +12,61 @@ when: [production]
 initiator: human
 sync: async
 assesses: [intent]
-related: [user-feedback]
-links: []
+related: [user-feedback, triage, release-confirmation]
+links:
+  - title: "Human-in-the-loop cycles (in Russian)"
+    author: "Alexander Gutnikov"
+    note: "unpublished note, 2026-11-08"
 ---
 
 ## Why
 
-Every earlier loop checks the work against what someone on the team believes users want. This loop checks whether those beliefs were right. The source note calls the user signal the only one of its loops that shows whether the work has real value, and also the slowest and noisiest; the note gives no data for these claims. Because of the noise, a person turns the signal into acceptance criteria tied to a reproducible scenario before the agent works on it.
+Every earlier loop checks the work against what someone on the team believes users want. This loop checks whether
+those beliefs were right. Its signal is the slowest and the noisiest: it comes after days or weeks, in users' own
+words, from a few of them at a time. So a person reads it in aggregate, across channels, before any of it becomes
+work.
 
 ## How it works
 
-1. Users give a signal in production: feedback, support tickets, A/B tests or dogfooding.
-2. A human operator turns the signal into acceptance criteria and ties each one to a reproducible scenario.
-3. The agent gets the criteria as a spec and a test.
-
-[User feedback](../user-feedback/card.md) is the same loop, from the automated catalog.
+1. Users give a signal in production through its channels: feedback, support tickets, A/B tests and dogfooding.
+2. [Triage](../triage/card.md) merges the signals about the same thing and routes each to one super-loop.
+3. A person reads the signal in aggregate, with the count and the channels behind each item, and answers one of two
+   questions:
+   - at delivery's confirmation: did a shipped change bring the value it was for?
+   - at an entry: which problems are worth work now: a regression for remediation, a new need for delivery, an open
+     question for discovery?
+4. A single item chosen for work goes on to [user-feedback](../user-feedback/card.md), which turns it into acceptance
+   criteria tied to a reproducible scenario, and a test the agent runs.
 
 ## Set up
 
-- Take the problem from the user, not the solution.
-- Tie every complaint to a reproducible scenario.
-
-## Notes
-
-The note cites no source for this loop.
+- **The channels** are listed in the loop's `LOOP.md`, each with where it is read: the feedback form, the support
+  tool, the experiment platform, the dogfooding channel. Every signal keeps a link to where it came from.
+- **The problem, not the solution.** Record what the user tried to do and what got in the way, in their words. A
+  requested feature is a hypothesis about that problem.
+- **Counted, not anecdotal.** Triage merges signals on the same thing, and the count travels with the item: one loud
+  complaint and fifty quiet ones are different priorities.
+- **Each shipped change names its question for users before the release**: what users should do more, or complain
+  about less. [release-confirmation](../release-confirmation/card.md) shows that the change runs and broke nothing;
+  this loop shows whether it was worth it. The window for the read is set in `LOOP.md`; start at 4 weeks, long
+  enough for a weekly user to meet the change several times.
+- **An A/B test** is decided on a metric and a threshold fixed before it starts and approved by a person under H5:
+  a metric picked after the result fits the result.
+- **Called under H4** when the agent proposes which items to act on first, a trade-off only the person can weigh,
+  and under H1 when what users meant stays unclear after reading the signals. The agent shows a table (the item, the
+  count, the channels, the route) and asks through the session's question tool with 2–4 options, the recommended
+  one first, and a free answer. It logs the call: `loops.py hitl H4 --loop <loop-id> --checked "<the signals
+  read>" --question "…" --answer "…"`.
+- **Where the answer goes.** An item chosen for work goes to [user-feedback](../user-feedback/card.md) as a
+  requirement file with its origin (`specs.py new-req <KEY> --source <ticket url>`, the
+  [`spec`](../../../spec/README.md) part). An item the person declines is closed in the tracker with the reason, so
+  the next signal on it merges there instead of being asked again. A shipped change users did not value passed the
+  gate and was not confirmed: it is an escape at the oracle that approved it, `loops.py trace escape delivery/oracle
+  --item <change> --note "<what users said>"`.
+- **Validation is `manual`**: only a person can read what users value. `run` checks that the reads happen: one line
+  per shipped change, `<change>: <status>` (`valued`, `not valued`, `question missing`, `due, not read`), and a
+  non-zero exit while a change has no question or is past its window unread. Must fire: a change shipped 6 weeks
+  ago with no read; a change with no question. Must pass: every change read, or still inside its window.
+- **Wiring.** A weekly scheduled job pulls the channels' new signals into triage and lists the changes due for a
+  read; the next session asks the person. Replying to a user sends something outside the project, so it is a call
+  under H2, never the agent's own step.

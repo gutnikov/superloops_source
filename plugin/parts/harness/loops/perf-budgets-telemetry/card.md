@@ -1,7 +1,7 @@
 ---
 id: perf-budgets-telemetry
 title: "Performance budgets through telemetry"
-summary: "The agent gets a performance budget, such as \"the service starts in under 800 ms\", queries the traces and optimizes the code until the service meets the budget."
+summary: "The agent gets a performance budget, such as \"service startup completes in under 800ms\", queries the service's own traces and metrics, and optimizes the code until the service meets it."
 sensor: computational
 ilities: [performance]
 places: [delivery/work, maintenance/work, maintenance/confirmation]
@@ -9,10 +9,15 @@ stages: [local]
 speed: [minutes]
 needs: [traces]
 agent: [investigator]
+related: [traces-opentelemetry, metrics-promql, benchmarks-vs-baseline, release-confirmation]
 links:
   - title: "Harness engineering: leveraging Codex in an agent-first world"
     url: "https://openai.com/index/harness-engineering/"
     author: "OpenAI"
+    note: "budgets given to the agent as prompts, checked against a per-worktree observability stack."
+  - title: "Construct a TraceQL query"
+    url: "https://grafana.com/docs/tempo/latest/traceql/construct-traceql-queries/"
+    author: "Grafana Tempo"
 ---
 
 ## Why
@@ -24,23 +29,37 @@ that the service is slow.
 
 ## How it works
 
-The agent gets a performance budget, such as "the service starts in under 800 ms" or "no span on a critical path
-takes longer than 2 s". It queries the traces and optimizes the code until the service meets the performance budget
-(OpenAI's example).
+The agent gets a budget. At OpenAI the prompts were "ensure service startup completes in under 800ms" and "no span in
+these four critical user journeys exceeds two seconds", and they became tractable because "Logs, metrics, and traces
+are exposed to Codex via a local observability stack that's ephemeral for any given worktree." The agent starts the
+service in its own environment, drives the journeys, measures each budget with a query, and optimizes the code until
+every budget holds.
 
 ## Set up
 
-- A local telemetry stack: [structured-logs](../structured-logs/card.md),
-  [metrics-promql](../metrics-promql/card.md), [traces-opentelemetry](../traces-opentelemetry/card.md).
-
-## Notes
-
-- The source does not say what the agent does if the agent cannot meet the performance budget. The source gives no
-  limit on iterations or time, and no point where the agent stops and reports to a human.
-- The source does not say how many runs must meet the performance budget before it counts as met, when timings
-  change from run to run.
+- **A local telemetry stack per worktree**: [structured-logs](../structured-logs/card.md),
+  [metrics-promql](../metrics-promql/card.md), [traces-opentelemetry](../traces-opentelemetry/card.md), in an
+  [isolated environment](../isolated-environment/card.md) so that no other run's spans mix in.
+- **Budgets as queries.** Each budget is a name, a query and a limit, in the loop's `LOOP.md` or a budgets file.
+  Startup is a span or a metric. "No span exceeds 2 s" is a TraceQL query such as `{ span:duration > 2s }`, narrowed
+  to the journey's spans, that must return nothing.
+- **Many runs.** Timings vary from run to run. Start the service 5 times and judge the median start time: one slow
+  start is noise, a median over the budget is not. A "no span exceeds" budget is judged on every span: one span over
+  the limit is red.
+- **A limit on attempts.** After 5 rounds of optimizing in which the measure did not improve, the agent stops and
+  reports to a person, with the investigator's Diagnosis and the measurements: the budget may be wrong (H5), or the
+  design may need to change.
+- **`run`** prints one line per budget, `<budget>: <measured> (limit <limit>): <status>`, where the status is `ok`,
+  `over`, or `no data` when the query found no spans of the journey: a journey that did not run is not a pass. It
+  exits non-zero on `over` or `no data`.
+- **Cases** are recorded telemetry snapshots that `run` judges. Must fire: a median start of 1.2 s; one span of 2.4 s
+  in a journey; no spans of the journey at all. Must pass: a snapshot within every budget.
+- **Wiring.** The agent runs `run` locally while it works and keeps the final measurements as evidence. A PreToolUse
+  hook denies its writes to the budgets. For the `maintenance/confirmation` place, the same queries run against
+  production telemetry after the release, outside the agent's session
+  ([release-confirmation](../release-confirmation/card.md)).
 
 ## Agent step
 
-An investigator finds the span or the step that breaks the budget and returns that span or step as a Diagnosis. The
-investigator never blocks; the budget does.
+An investigator gets the budget, its query and the slowest traces, finds the span or the step that breaks the budget,
+and returns it as a Diagnosis. The investigator never blocks; the budget does.

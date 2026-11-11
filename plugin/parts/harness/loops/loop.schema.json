@@ -89,8 +89,9 @@
     },
     "links": {
       "type": "array",
+      "minItems": 1,
       "items": {"$ref": "#/$defs/link"},
-      "description": "Where to read more: the sources of the card. [] when it has none yet, and its Notes say so."
+      "description": "Where to read more: the sources of the card, at least one. A tool's own documentation counts; an unpublished source is a title with an author and a note, and no url."
     },
     "when": {
       "type": "array",

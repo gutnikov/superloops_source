@@ -9,6 +9,7 @@ stages: [local, ci]
 speed: [minutes]
 needs: []
 agent: [reviewer]
+related: [bug-failing-test-fix, acceptance-loop, release-confirmation, exploratory-testing]
 links:
   - title: "Harness engineering: leveraging Codex in an agent-first world"
     url: "https://openai.com/index/harness-engineering/"
@@ -53,8 +54,9 @@ them.
 
 ## Notes
 
-- It settles what [bug-failing-test-fix](../bug-failing-test-fix/card.md) leaves open: a test that passes before
-  the fix, the agent changing the test instead of the code, a bug no test can catch.
+- Its part at the work phase is [bug-failing-test-fix](../bug-failing-test-fix/card.md), the agent's red/green
+  for a bug. This gate checks the record that loop leaves: red before the fix, green after it, no other test
+  weakened, and a bug no test can catch handed to the confirmation.
 - It is to remediation what the [acceptance loop](../acceptance-loop/card.md) is to delivery.
 
 ## Agent step

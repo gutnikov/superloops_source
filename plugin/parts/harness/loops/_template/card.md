@@ -10,7 +10,7 @@ stages: [ci]                   # where it runs
 speed: [minutes]               # one value, or a range [from, to]
 needs: []                      # what the agent must reach beyond the repository
 # agent: [reviewer]            # when an agent is a step; then add ## Agent step
-# related: [red-green-tdd]     # loops that pair with this one
+related: [red-green-tdd]       # loops that pair with this one
 links:
   - title: "The article the card is based on"
     url: https://example.com/article
@@ -29,4 +29,10 @@ what it does with the signal.
 ## Set up
 
 What has to exist in a project for the loop to work: the tool, the command, the hook or the job that runs it, and
-how the agent is kept from getting around it.
+how the agent is kept from getting around it. Where a source stops short, decide: a default with its reason.
+
+- **`run`** prints `file:line: message`, or one line per item, `<item>: <status>`, and exits non-zero when the
+  check fires.
+- **Cases** for `loops.py validate`. Must fire: one per kind of failure the loop catches. Must pass: correct work it
+  must leave alone.
+- **Wiring**: where it is hooked in, and where its final run happens out of the agent's reach.

@@ -35,26 +35,40 @@ what made the difference. It runs in seconds, so the agent can run it after ever
 ## How it works
 
 The agent writes a test and makes sure it fails (red). Then it writes the implementation until the run is green,
-and refactors. The [acceptance loop](../acceptance-loop/card.md) is the outer loop around this one, from the
-requirements to the acceptance tests.
+and refactors with the tests green. The [acceptance loop](../acceptance-loop/card.md) is the outer loop around this
+one, from the requirements to the acceptance tests. For a bug, the same cycle starts from a test that reproduces it:
+[bug-failing-test-fix](../bug-failing-test-fix/card.md).
 
 ## Set up
 
-- Add "use red/green TDD" to the agent's prompt. Simon Willison says any good model understands this shorthand.
-  Kent Beck states the rule as: "Always follow the TDD cycle: Red → Green → Refactor".
-- Stop the agent from deleting or weakening tests. The agent may, for example, disable a test or remove its
-  assertions (see Notes). The source names two guards: a hook, and a review of the test diff. It does not say what
-  the hook checks or who reviews the diff.
-- Use checks the agent cannot edit as the final ones: CI, mutation testing, production.
+- **The rule in the prompt.** Add "use red/green TDD" to the agent's prompt or CLAUDE.md. Simon Willison says any
+  good model understands this shorthand. Kent Beck states the rule as: "Always follow the TDD cycle: Red → Green →
+  Refactor".
+- **Red is kept.** The agent runs the new test before writing the code and keeps the failing output, the test's id
+  and its failure message, in the task's evidence. A test that passes before the code tests nothing: the agent
+  rewrites it until it fails for the reason the code is missing.
+- **Tests stay honest.** The agent may delete a test, skip it, remove its assertions or fake the implementation (see
+  Notes). A PreToolUse hook denies its writes to the acceptance tests and the spec, the oracle of the acceptance loop.
+  A guard reviews every unit-test diff (Agent step). A test that has to change its expected value goes through a
+  person.
+- **`run`** is the unit tests of the changed area. It prints each failing test as `file:line: message` and exits
+  non-zero on any failure. The guard's Verdict is printed with it, and blocks only once the guard is calibrated.
+- **Cases.** Must fire: a copy whose change breaks a unit test; for the guard, test diffs that delete an assertion,
+  skip a test or change an expected value. Must pass: a diff that adds a test which fails on the old code and passes
+  on the new.
+- **Wiring.** The agent runs the tests after each change. A Stop hook runs them at the end of the turn. The final
+  checks are ones the agent cannot edit: the whole suite in CI, and [mutation testing](../mutation-testing/card.md)
+  over the new tests.
 
 ## Notes
 
 - Kent Beck names as a warning sign "any indication that the genie was cheating, for example by disabling or
-  deleting tests". He also describes the agent deleting assertions and faking the implementation.
+  deleting tests". He has also seen "deleting assertions from tests, deleting whole tests" and "faking large swathes
+  of implementation".
 
 ## Agent step
 
 A guard: a reviewer whose only lens is the test diff. It returns a Verdict on whether the change weakened a test
-(deleted, skipped, a loosened assertion, a changed expected value, the code under test mocked out). That answers who
-reviews the test diff. It blocks only once calibrated on weakened and honest test diffs
+(deleted, skipped, a loosened assertion, a changed expected value, the code under test mocked out). It gets the test
+diff, never the agent's reasoning, and blocks only once calibrated on weakened and honest test diffs
 ([agent-calibration](../agent-calibration/card.md)).

@@ -9,10 +9,17 @@ stages: [local, ci]
 speed: [minutes]
 needs: [browser]
 agent: [explorer]
+related: [agentic-manual-testing, browser-console-devtools, progress-file-feature-list, acceptance-loop]
 links:
   - title: "Effective harnesses for long-running agents"
     url: "https://anthropic.com/engineering/effective-harnesses-for-long-running-agents"
     author: "Anthropic"
+  - title: "Web server"
+    url: "https://playwright.dev/docs/test-webserver"
+    author: "Playwright"
+  - title: "Dialogs"
+    url: "https://playwright.dev/docs/dialogs"
+    author: "Playwright"
 ---
 
 ## Why
@@ -23,22 +30,41 @@ it, the agent reports done on a feature that is broken end to end.
 
 ## How it works
 
-The agent runs the feature in a browser, as a user would. It starts the dev server, then uses Playwright or Puppeteer
-to walk a scenario through the app's screens.
+The agent starts the app and walks a scenario through it as a user would: open the page, fill in the form, press the
+button, read the result. Playwright or Puppeteer drives the browser. A step that fails names the screen, the action
+and what the agent saw instead: a screenshot, the URL, console errors, failed requests. The agent fixes the code and
+walks the scenario again.
+
+A walk that has to keep holding becomes a Playwright spec in the suite. In delivery that spec is an acceptance test of
+the [acceptance loop](../acceptance-loop/card.md); for long work over many sessions, a feature is marked passing only
+after its e2e check ([progress-file-feature-list](../progress-file-feature-list/card.md)).
 
 ## Set up
 
-What to set up:
-
-- An `init.sh` that starts the server and runs a basic e2e.
-- For a web app with Playwright fixtures and Page Objects: the [`app-probing`](../../../app-probing/README.md) part of
-  superloops, which walks the scenario through those fixtures and Page Objects before a spec exists.
+- **One command starts the app.** An `init.sh` that starts the dev server and runs a basic e2e, so no session spends
+  time finding out how to run the app. Playwright's `webServer` starts the server before the tests and waits until
+  its `url` answers; the wait "Defaults to 60000" ms, and a server that is not up by then fails the run.
+- **Fixtures and Page Objects.** For a web app, the [`app-probing`](../../../app-probing/README.md) part walks the
+  scenario through the fixtures and Page Objects the spec will use; `fixture-modify` and `pom-modify` add the ones
+  that are missing.
+- **Native dialogs in specs.** Playwright auto-dismisses `alert`, `confirm` and `prompt` dialogs unless the test
+  handles them with `page.on('dialog')`. A scenario with a native dialog is checked by a spec that handles it, not by
+  a free walk that cannot see it.
+- **`run`** is the e2e suite in a headless browser against a fresh server. It prints each failed test as
+  `file:line: message` with the step that failed, and exits non-zero on any failure.
+- **Cases.** Must fire: a copy where the unit tests pass but the submit button's handler is not attached; a copy
+  where the API returns 500 on submit. Must pass: the clean app.
+- **Wiring.** The agent runs the scenario locally after the unit tests. A CI job runs the suite on a fresh server, out
+  of the agent's reach, and "done" waits on that run, not on the agent's own walk. A spec the agent changes goes
+  through review like the acceptance tests.
 
 ## Notes
 
-- Anthropic observed that without an explicit prompt Claude "would fail to recognize that the feature didn't work
-  end-to-end".
-- Through Puppeteer MCP the agent does not see native alert modals.
+- Anthropic: Claude "mostly did well at verifying features end-to-end once explicitly prompted to use browser
+  automation tools and do all testing as a human user would". Before that prompt it tested with unit tests and
+  `curl` and missed features that did not work end to end.
+- Anthropic: "Claude can't see browser-native alert modals through the Puppeteer MCP, and features relying on these
+  modals tended to be buggier as a result."
 
 ## Agent step
 
