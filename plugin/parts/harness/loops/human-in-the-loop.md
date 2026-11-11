@@ -1,10 +1,12 @@
 # Human-in-the-loop loops
 
 A person in the loop is the only sensor of intent. Tests, linters and logs check that the code works; only a
-person can say whether it is the code we need. This group adds 16 loop types to the [catalog](README.md)
-where the signal comes from a person.
+person can say whether it is the code we need. The [catalog](README.md) has 18 loops where the signal comes from a
+person, `sensor: human` in their cards: this page lists all of them.
 
-It is based on Alexander Gutnikov's note on human-in-the-loop cycles (2026-11-08, in Russian).
+Sixteen come from Alexander Gutnikov's note on human-in-the-loop cycles (2026-11-08, in Russian), and this page is
+based on it. Two come from the research behind the rest of the catalog: the
+[audit trail of agent actions](agent-audit-trail/card.md) and [user feedback](user-feedback/card.md).
 
 A person's signal is slow (minutes to days), noisy (people make mistakes and contradict themselves) and expensive
 (attention is scarce). So a good human loop follows three rules:
@@ -69,6 +71,7 @@ The most profitable loops: one minute of a person's time here saves hours of the
 - [Task restatement](task-restatement/card.md)
 - [Plan approval](plan-approval/card.md)
 - [Acceptance criteria and references from a person](human-acceptance-criteria/card.md)
+- [User feedback](user-feedback/card.md): one item of feedback becomes approved acceptance criteria
 
 ### During work
 
@@ -87,6 +90,7 @@ the signal.
 - [Result demo](result-demo/card.md)
 - [Choose from options](choose-from-options/card.md)
 - [Diff review by a person](human-diff-review/card.md)
+- [Audit trail of agent actions](agent-audit-trail/card.md): the person checks the claims against the evidence
 - [Exploratory testing](exploratory-testing/card.md)
 
 ### Scaling expertise and production
@@ -127,7 +131,7 @@ follows the mistake.
 | Anti-pattern | How it shows | What to do |
 |---|---|---|
 | Rubber-stamp review | Large generated diffs are approved without reading; volume grows, attention drops (Kilo) | Small diffs, [result demos](result-demo/card.md), [sample audits](sample-audit/card.md) |
-| Confirmation fatigue | 93% of permission requests are approved, many without a meaningful check (Resilient Cyber) | [Gates](risky-action-gates/card.md) only on the irreversible, the rest in a sandbox |
+| Confirmation fatigue | Users accept 93% of Claude Code's permission prompts (Anthropic, *How we built Claude Code auto mode*) | [Gates](risky-action-gates/card.md) only on the irreversible, the rest in a sandbox |
 | One reviewer for everything | In an analysis of 25,000 agent PRs, 78.9% follow a pattern where the reviewer and the committer are the same person (Daniel Vaughan) | Review rules in AGENTS.md, spread the review, AI review as the first filter |
 | Uncontrolled parallelism | Many agents; merging is faster than anyone can check | Generate in parallel, decide sequentially (Kilo) |
 | Agent sycophancy | The agent follows an instruction that contradicts the tests, the data or a contract | A person's instruction is a hypothesis: the agent shows the contradiction with evidence and asks, instead of silently obeying |
@@ -176,12 +180,13 @@ The note names its sources without links.
 
 - Anthropic, *Measuring AI agent autonomy in practice* (18 February 2026): how long agents work autonomously,
   auto-approval among new and experienced users, agent questions and human interruptions.
-- [Best practices for Claude Code](https://code.claude.com/docs/en/best-practices): interviews through
-  AskUserQuestion, plan mode.
+- [Best practices for Claude Code](https://code.claude.com/docs/en/best-practices): Claude interviewing you
+  before it writes the spec ("Interview me until you could write the spec"); AskUserQuestion is a built-in tool of
+  Claude Code, documented in the [hooks reference](https://code.claude.com/docs/en/hooks).
 - Matt Pocock, *Human-in-the-loop* and *Human review* (AI Hero).
 - Hamel Husain, *Using LLM-as-a-Judge For Evaluation*, and Simon Willison's retelling: critique shadowing.
-- Resilient Cyber, *The human in the loop illusion*: the share of approved permission requests (secondary
-  retelling of Anthropic's data).
+- Anthropic, [*How we built Claude Code auto mode*](https://www.anthropic.com/engineering/claude-code-auto-mode):
+  "in practice users accept 93% of them anyway", of manual permission prompts.
 - Latent Space, *Anthropic's Agent Autonomy study*: the share of irreversible actions (secondary retelling).
 - Daniel Vaughan, *The Single-Human Oversight Bottleneck*: an analysis of 25,000 agent PRs (secondary retelling of
   a study).

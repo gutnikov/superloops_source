@@ -4,11 +4,12 @@ title: "Steering loop"
 summary: "Every escape, a failure that got further than it should have, becomes a must-fire case at the phase that should have caught it, and the loop at that phase is fixed or added."
 sensor: inferential
 ilities: [testability, alignment]
-places: [harness:remediation/entry, harness:remediation/oracle, harness:remediation/work]
+places: [harness:remediation/oracle, harness:remediation/work]
 stages: [continuous]
 speed: [hours, days]
 needs: []
 agent: [investigator]
+related: [correction-becomes-rule, sample-audit, release-confirmation, agent-calibration]
 links:
   - title: "Harness engineering for coding agent users"
     url: "https://martinfowler.com/articles/harness-engineering.html"
@@ -42,7 +43,13 @@ as a must-fire case there, and fixes or adds the loop at that phase: a sensor wh
 ## Set up
 
 - **Read the escapes from the trace**: the exits of the product's super-loops, with the phase where each failure was
-  caught ([the harness level](../../super-loops/harness-level.md)).
+  caught ([the harness level](../../super-loops/harness-level.md)). `loops.py stats` lists the releases not confirmed
+  and the places where escapes and corrections pile up; an escape no system records is logged with
+  `loops.py trace escape <super-loop>/<phase> --item <id> --note "…"`.
+- **Its entries**: a release that was not confirmed, a problem a recent change introduced, a mismatch a
+  [sample audit](../sample-audit/card.md) found, a false positive or a miss of a loop's agent (it becomes an eval
+  case, [agent-calibration](../agent-calibration/card.md)), and a person's correction made twice
+  ([correction-becomes-rule](../correction-becomes-rule/card.md)).
 - **Answer three questions for each escape**: where it was caught, where it was introduced, and the earliest phase
   that could have caught it. The loop goes to that earliest phase.
 - **Record the escape as a case**: its input becomes a must-fire case of the loop at that phase, and the loop is
@@ -57,7 +64,6 @@ as a must-fire case there, and fixes or adds the loop at that phase: a sensor wh
 - Where you can, turn an escape into a sensor that runs as code (a lint or a test), not into text in a guide.
 - Keep both guides and sensors. With sensors only, the agent repeats the same mistakes. With guides only, it never
   learns whether the guides worked.
-- For corrections that come from a person: [correction-becomes-rule](../correction-becomes-rule/card.md).
 
 ## Agent step
 

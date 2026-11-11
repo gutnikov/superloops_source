@@ -9,6 +9,7 @@ stages: [local, ci]
 speed: [minutes]
 needs: []
 agent: [reviewer]
+related: [triage, approved-fixtures, dependency-updates, garbage-collection]
 links:
   - title: "Refactoring"
     author: "Martin Fowler"
@@ -30,7 +31,7 @@ A change of behaviour goes back to triage.
 Before a maintenance change, the baseline is recorded: the expected values of every existing test, and the current
 value of the measure the change should improve. After the change, the gate reports whether any expected value
 changed, whether the tests pass, and whether the measure improved. A changed expected value sends the work back to
-triage: it is delivery or remediation, not maintenance.
+[triage](../triage/card.md): it is delivery or remediation, not maintenance.
 
 ## Set up
 
@@ -48,6 +49,10 @@ triage: it is delivery or remediation, not maintenance.
 - **Cases.** Must fire: an assertion with a new expected value; a deleted test; a snapshot updated in the same change;
   a measure that did not improve. Must pass: a dependency bump where only the setup of a mock changed and the measure
   improved.
+- **Wiring**: the agent runs the gate locally before it opens a pull request; a CI job runs it on every pull request
+  triage routed to maintenance, including those of [dependency-updates](../dependency-updates/card.md) and
+  [garbage collection](../garbage-collection/card.md), and a pull request does not merge on red. The CI job takes the
+  baseline from the base commit, so the change under check cannot rewrite it.
 
 ## Notes
 

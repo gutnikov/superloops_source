@@ -9,6 +9,7 @@ stages: [task, local, ci]
 speed: [minutes, hours]
 needs: []
 agent: [reviewer, refuter]
+related: [spec-check, progress-file-feature-list, reproduction-gate, verification-subagent]
 links:
   - title: "Growing Object-Oriented Software, Guided by Tests"
     author: "Steve Freeman, Nat Pryce"
@@ -36,8 +37,8 @@ The acceptance loop is a composite loop: its stages are other loops of the proje
 over them.
 
 1. **Requirement → spec.** A ticket or a text becomes a spec with examples: a named state, the inputs, what the
-   person sees or the error. [spec-check](../spec-check/card.md) keeps it whole. What the sources do not settle
-   goes to a person ([interview](../interview/card.md),
+   person sees or the error. [spec-check](../spec-check/card.md) keeps it whole. What the ticket and the texts do
+   not settle goes to a person ([interview](../interview/card.md),
    [escalation-on-uncertainty](../escalation-on-uncertainty/card.md)), and a person approves the spec
    ([human-acceptance-criteria](../human-acceptance-criteria/card.md)).
 2. **Spec → acceptance tests, red.** A test writer derives the tests from the spec's examples, one test per
@@ -94,9 +95,8 @@ A test that is red after the work goes back to where the mistake is:
   approved spec, not at a hand-written acceptance test.
 - It is this catalog's answer to its main caveat, that no sensor can check correctness if a person has not
   specified what they want.
-- [progress-file-feature-list](../progress-file-feature-list/card.md) is the same idea with a feature list and an e2e
-  check. This loop settles what that card leaves open: the list comes from the requirements, a feature passes when
-  its acceptance tests pass, and a failure goes back by the table above.
+- Over many sessions, [progress-file-feature-list](../progress-file-feature-list/card.md) carries the state of the
+  work: its feature list is this loop's list of requirements, and a feature passes when its acceptance tests pass.
 - Kent Beck warns of the "genie" that disables or deletes tests. Without the protected oracle the loop proves
   nothing.
 

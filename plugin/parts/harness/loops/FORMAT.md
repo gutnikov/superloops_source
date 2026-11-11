@@ -34,7 +34,7 @@ description of the loop: the plugin and the site both read it, and nothing about
 | `needs` | yes | What the agent must reach beyond the repository, such as `ci`, `logs` or `browser`; `[]` when nothing |
 | `agent` | no | The kinds of agent that are a step of the loop, such as `reviewer` |
 | `related` | no | The ids of loops that pair with this one |
-| `links` | yes | Where to read more: each with a `title`, and a `url`, an `author` and a `note` where there are any; `[]` when the card has no source yet, and its Notes say so |
+| `links` | yes | Where to read more, at least one: each with a `title`, and a `url`, an `author` and a `note` where there are any. A tool's own documentation counts; an unpublished source has no `url` |
 | `when`, `initiator`, `sync`, `assesses` | no | The axes of a human loop; only a card with `sensor: human` has them ([human loops](human-in-the-loop.md#how-the-loops-differ)) |
 
 The `ilities` are a closed list:
@@ -70,11 +70,27 @@ The body has no H1, since the title is in the frontmatter. These sections come i
 
 A link to another loop is `../<id>/card.md`. A section may have `###` subsections.
 
+## The voice
+
+A card tells the harness engineer what to build and the agent what to do. Where a source stops short, the card
+decides: a default with its reason ("poll `/ready` every 5 seconds for up to 2 minutes; a timeout is red"), or the
+decision the project makes and where it is recorded. It does not list what its sources say or leave out: where the
+text came from is in `links`, and a quote or a number keeps its author in the sentence (Böckeler: "…"). A fact about
+a tool comes from the tool's documentation, and that page is in `links`.
+
+Set up ends in what the plugin builds from the card ([the harness](../README.md)): what the loop's `run` prints and
+when it exits non-zero, its must-fire and must-pass cases for `loops.py validate`, and its wiring. A human loop says
+which reason of `defaults/hitl.yaml` calls the person and where the answer is written so that a machine reads it.
+
+`catalog.py check` fails on a sentence about the card's source, such as "the source does not say" or "the research
+cites no source".
+
 ## What the check verifies
 
-`catalog.py check` fails on a card that does not match `loop.schema.json`, and on what a schema cannot say: the `id`
-is not the folder's name; a section is missing, unknown, repeated or out of order; `agent` without `## Agent step`,
-or the other way round; a `speed` range with the slower value first; a place whose super-loop has no such phase; a
-`related` id or a link that names no loop; an image that is missing or too large; a super-loop's Phases table that
-does not name a loop with that place. It checks the template as well, and fails when `index.yaml` or the list in the
-README is out of date.
+`catalog.py check` fails on a card that does not match `loop.schema.json`, and on what a schema cannot say: a
+sentence about the card's source ([The voice](#the-voice)); the `id` is not the folder's name; a section is missing,
+unknown, repeated or out of order; `agent` without `## Agent step`, or the other way round; a `speed` range with the
+slower value first; a place whose super-loop has no such phase; a `related` id or a link that names no loop; an
+image that is missing or too large; a super-loop's Phases table that does not name a loop with that place;
+[human-in-the-loop.md](human-in-the-loop.md) not listing exactly the cards with `sensor: human`. It checks the
+template as well, and fails when `index.yaml` or the list in the README is out of date.

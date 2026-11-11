@@ -9,7 +9,14 @@ stages: [ci, scheduled]
 speed: [minutes, hours]
 needs: []
 agent: [worker]
+related: [mutation-testing, security-review-agent, garbage-collection]
 links:
+  - title: "LLMs Are the Key to Mutation Testing and Better Compliance"
+    url: "https://engineering.fb.com/2025/09/30/security/llms-are-the-key-to-mutation-testing-and-better-compliance/"
+    author: "Mark Harman, Meta"
+  - title: "Mutation-Guided LLM-based Test Generation at Meta"
+    url: "https://arxiv.org/abs/2501.12862"
+    author: "Christopher Foster et al."
   - title: "Meta: LLM-Powered Mutation Testing for Automated Test Generation"
     url: "https://www.zenml.io/llmops-database/llm-powered-mutation-testing-for-automated-test-generation"
     author: "ZenML LLMOps Database"
@@ -22,29 +29,49 @@ such as data leaks, show where the tests would miss that kind of change, and the
 
 ## How it works
 
-The loop follows the three steps of the approach Meta calls ACH, as the linked source describes them:
+A worker takes one concern, written in plain text, such as "a message is shown to an audience it was not meant for",
+and the code it applies to. Then:
 
-1. a description of one concern, such as data leaks
-2. mutants specific to that concern, which an LLM generates
-3. tests that catch those mutants, which the LLM also generates
+1. it writes mutants of that code that would introduce the fault the concern describes;
+2. it drops the mutants that change nothing and the ones the existing tests already catch;
+3. it writes tests that catch the rest.
 
-A mutation run then checks the tests. They must fail on the mutants and pass on the real code.
+A mutation run then checks each new test: it must pass on the real code and fail on its mutant. The tests that pass
+this check go to engineers as a pull request; the mutants are not committed.
 
 ## Set up
 
-- Follow the approach Meta calls ACH, which the linked source describes. How it works lists its three steps.
-- Run the loop in CI or as a scheduled batch job.
+- **Concerns are written down**, one file per concern in the loop's folder, by the engineer who owns the concern
+  (privacy, security, a regulation). The file names the concern, the code it covers, and what a leak or a breach
+  would look like in that code.
+- **The worker is not the coding agent.** It runs on a schedule, weekly per concern by default, over the code that
+  changed since its last run, and over all the covered code on its first run. It opens one small PR per concern and
+  never merges it.
+- **The mutation run is the check, not the worker.** For each generated test, `run` applies its mutant, runs the
+  test, reverts the mutant and runs the test again. It prints one line per test, `<test>: <status>`:
+  `kills its mutant`, `passes on the mutant`, `fails on the real code`. The exit is non-zero on anything but
+  `kills its mutant`, and only tests that kill their mutant go into the PR.
+- **Survivors are reported, not dropped.** A mutant the worker could not write a killing test for in two attempts
+  goes into the PR's description as a gap for the concern's owner. A mutant the worker judges equivalent is listed
+  with its reason.
+- **Cases.** Must fire: a generated test that passes on its mutant (a mutant that logs a user's email address); a
+  generated test that fails on the unchanged code. Must pass: a test that fails on that mutant and passes on the real
+  code.
+- **Wiring.** A scheduled CI job runs the worker and then `run`. The PR's own loops decide on merging: CI, and a
+  person's review of the tests. The worker's PR adds tests only: the job fails when its change touches product code,
+  and the mutants are applied in a scratch copy.
 
-The source does not say:
+## Notes
 
-- whether the LLM is the coding agent or a separate generator
-- who writes the description of the concern, or in what form
-- which tool or model runs the steps
-- where the generated tests go, or what signal reaches the coding agent
-- what to do with mutants that no test catches, or with tests that fail on the unchanged code
-- what starts a CI run, or how often batches run and what goes into each one
+- Meta's ACH takes "simple, plain-text prompts where engineers describe the mutant to test", and an "LLM-based
+  Equivalence Detector agent" filters out mutants no test could kill. It aims at "currently undetected faults that
+  are specific to an issue of concern" (Foster et al.).
+- In Meta's privacy test-a-thons engineers accepted 73% of ACH's tests and judged 36% privacy relevant.
+- The general version of this loop, with the tool's own mutants instead of a concern's:
+  [mutation-testing](../mutation-testing/card.md).
 
 ## Agent step
 
-A worker generates the concern's mutants and the tests that catch them. A mutation run, not the worker, shows that
-the tests fail on the mutants and pass on the real code: the worker does not grade its own tests.
+A worker generates the concern's mutants and the tests that catch them, and opens the PR. A mutation run, not the
+worker, shows that the tests fail on the mutants and pass on the real code: the worker does not grade its own tests.
+It does not block; the loops on its PR decide.

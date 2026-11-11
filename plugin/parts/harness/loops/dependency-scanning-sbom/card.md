@@ -5,41 +5,71 @@ summary: "The scanner reports a CVE in a dependency the agent added. The agent t
 sensor: computational
 ilities: [security]
 places: [delivery/work, remediation/work, maintenance/entry, maintenance/work]
-stages: [ci]
+stages: [ci, scheduled]
 speed: [minutes]
 needs: []
-links: []
+related: [dependency-updates, license-check, triage]
+links:
+  - title: "SBOM"
+    url: "https://trivy.dev/latest/docs/supply-chain/sbom/"
+    author: "Trivy"
+    note: "writing an SBOM in CycloneDX or SPDX, and scanning one with `trivy sbom`."
+  - title: "Others: exit code"
+    url: "https://trivy.dev/latest/docs/configuration/others/"
+    author: "Trivy"
+    note: "Trivy exits 0 on findings unless `--exit-code` is set."
+  - title: "Filtering"
+    url: "https://trivy.dev/latest/docs/configuration/filtering/"
+    author: "Trivy"
+    note: "`.trivyignore` with an expiry date, and `--ignore-unfixed`."
+  - title: "Output: return codes"
+    url: "https://google.github.io/osv-scanner/output/"
+    author: "OSV-Scanner"
 ---
 
 ## Why
 
 A dependency the agent adds brings code nobody in the project wrote, and its known vulnerabilities do not show in
-the diff. The loop catches reported CVEs in that dependency while the change is still open.
-
-The SBOM lists what the project is built from.
+the diff. The scan catches a reported CVE in that dependency while the change is still open. The SBOM, the list of
+every component and version a release is built from, lets the same scan run again later, when a CVE is published for
+something already shipped.
 
 ## How it works
 
-A dependency scanner in CI checks the dependencies the agent adds against reported CVEs. When it reports a CVE in
-one of them, the agent picks a safe version.
-
-The research describes only this case. It does not say:
-
-- what counts as a safe version, or whether the scanner runs again to confirm the new version
-- what the agent does when no fixed version exists, when the CVE is in a transitive dependency, or when the fixed version breaks the build
-- when the loop stops or hands the problem to a person
+A CI job writes the SBOM from the project's lockfiles and scans it against vulnerability databases. For each finding
+the agent picks a safe version: the lowest version that fixes every blocking CVE of the package and that the build
+and the tests accept. For a transitive dependency it first updates the direct dependency that pulls it in, and pins
+the transitive version (an override in the package manager) only when no such update exists. With no fixed version,
+it replaces the package, or proposes an exception to a person. The scan then runs again; the loop ends when it is
+clean.
 
 ## Set up
 
-Use these in CI:
-
-- a dependency scanner: osv-scanner, Trivy or Dependabot
-- an SBOM (software bill of materials) in CycloneDX or SPDX format
+- **The scanner.** With Trivy, `trivy fs --format cyclonedx --output sbom.cdx.json .` writes the SBOM, and
+  `trivy sbom --exit-code 1 --severity HIGH,CRITICAL sbom.cdx.json` scans it. Trivy "exits with code 0 even when
+  security issues are detected", so `--exit-code` is not optional. OSV-Scanner is the alternative: it exits 1 when it
+  finds vulnerabilities, 127 on a general error and 128 when it found no packages.
+- **Block on HIGH and CRITICAL, report the rest.** Lower severities on every PR make a noise the agent learns to step
+  around. The project can set another level in the loop's `LOOP.md`.
+- **Do not hide unfixed CVEs in the gate.** `--ignore-unfixed` skips every vulnerability with no fix, and those are
+  the ones where the package has to be replaced or a person has to accept the risk.
+- **Exceptions expire.** A CVE the project accepts goes into `.trivyignore` with a comment saying why and an expiry
+  date (`CVE-2019-14697 exp:2023-01-01`); after the date it fires again. Accepting a risk is a person's decision
+  (H5): the agent proposes the line, a person approves it.
+- **The SBOM is kept with the release.** The release job stores `sbom.cdx.json` beside the build. A nightly job scans
+  the SBOMs of the versions in production with `trivy sbom`; a new finding there is a maintenance signal for
+  [triage](../triage/card.md), not a red PR.
+- **`run`** scans the directory and prints one line per finding, `<package>@<version>: <CVE id> <severity>, fixed in
+  <version>` or `no fix`. It exits non-zero on any finding at the blocking severity, and when the scanner failed or
+  found no packages: a scan that saw nothing is not a pass.
+- **Cases.** Must fire: a lockfile with a direct dependency at a version with a known HIGH CVE that a later version
+  fixes; the same with the vulnerable package as a transitive dependency; a directory with no lockfile. Must pass: the
+  lockfile with the fixed versions; a finding listed in `.trivyignore` before its expiry date. Keep the must-pass
+  lockfile small: a new CVE published for it turns the case red, and that is news to act on.
+- **Wiring.** A CI job on every PR that changes a manifest or a lockfile, and the nightly job over the SBOMs. The final
+  run is in CI, and a PreToolUse hook denies the agent's writes to `.trivyignore`.
 
 ## Notes
 
-The research behind this card cites no sources for this loop.
-
-The research did not check Trivy itself. It lists Trivy as common practice.
-
-The research does not say who produces the SBOM, at which step, or whether the scanner reads it.
+- [dependency-updates](../dependency-updates/card.md) keeps versions current, so the fix for a CVE is a small step.
+- The same Trivy job can check licences with `--scanners license` ([license-check](../license-check/card.md)).

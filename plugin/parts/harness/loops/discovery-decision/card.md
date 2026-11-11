@@ -9,11 +9,13 @@ stages: [task]
 speed: [hours, days]
 needs: []
 agent: [refuter]
+related: [triage, verification-subagent, acceptance-loop]
 links:
   - title: "Inspired"
     author: "Marty Cagan"
     note: "2nd edition, Wiley, 2017: product discovery before delivery."
   - title: "Documenting Architecture Decisions"
+    url: "https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions"
     author: "Michael Nygard"
     note: "2011: a decision record kept with the code."
 ---
@@ -26,8 +28,9 @@ each claim against the evidence it names keeps a guess out of the decision.
 
 ## How it works
 
-Before the work, the question and the evidence that would answer it are written down and agreed. The agent builds
-prototypes, probes and spikes, and writes the answer. The gate then checks the answer in two parts:
+A question reaches discovery from [triage](../triage/card.md). Before the work, the question and the evidence that
+would answer it are written down and agreed with the person who asked. The agent builds prototypes, probes and
+spikes, and writes the answer. The gate then checks the answer in two parts:
 
 - The `run` checks that every claim names its evidence, that this evidence exists, and that no spike code reached the
   main branch.
@@ -43,8 +46,11 @@ The person who asked decides: build it, drop it, or ask again.
   - the evidence that would answer it
   - the answer, with each claim and its evidence: a link, a screenshot, a measurement or a quote
   - the decision, with its date and who made it
-- **Throwaway work stays out.** Prototypes live where the product does not build them (the `ui-prototypes` part
-  keeps them in `prototypes/`); spikes live on a branch that is never merged.
+- **Two calls to the person who asked**: the question is agreed under H1 before the work, and the decision is asked
+  for under H4 after it. Each call is logged with `loops.py hitl`, and each answer is written into the record.
+- **Throwaway work stays out.** Prototypes live where the product does not build them (the
+  [`ui-prototypes`](../../../ui-prototypes/README.md) part keeps them in `prototypes/`); spikes live on a branch that
+  is never merged.
 - **The gate is the `run`.** It prints one line per claim, `<claim>: <status>`, with one of these statuses:
   - `no evidence`: the claim names no evidence.
   - `evidence missing`: the claim names evidence that does not exist.
@@ -54,11 +60,17 @@ The person who asked decides: build it, drop it, or ask again.
   `ok` or spike code is in main. The `run` does not check what the evidence says; the refuter does (see Agent step).
 - **Cases.** Must fire: a claim with no evidence; evidence that does not exist; spike code merged. Must pass: an
   answer where every claim links its evidence.
+- **Wiring**: the agent runs the gate before it hands the answer over; a CI job runs it on the pull request that adds
+  the record, where the agent cannot change the gate. The refuter runs in its own session with read-only access to
+  the repository and the evidence.
 
 ## Notes
 
 - "Do not build it" is a good result: the record keeps the evidence, so nobody has to ask the question again.
-- A decision to build becomes the input of delivery: the question, the answer and the evidence go into the spec.
+- A decision to build becomes the input of delivery: the question, the answer and the evidence go into the spec
+  ([acceptance-loop](../acceptance-loop/card.md)).
+- Nygard's decision records keep five parts (title, context, decision, status, consequences) in the repository; the
+  record here adds the claims and their evidence.
 
 ## Agent step
 

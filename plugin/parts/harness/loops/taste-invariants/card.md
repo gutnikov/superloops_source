@@ -8,10 +8,14 @@ places: [delivery/work, remediation/work, maintenance/work]
 stages: [local, ci]
 speed: [seconds]
 needs: []
+related: [lint-with-fix-instructions, correction-becomes-rule, steering-loop, garbage-collection]
 links:
   - title: "Harness engineering: leveraging Codex in an agent-first world"
     url: "https://openai.com/index/harness-engineering/"
     author: "OpenAI"
+  - title: "ESLint: Custom Rules"
+    url: "https://eslint.org/docs/latest/extend/custom-rules"
+    author: "ESLint"
 ---
 
 ## Why
@@ -29,10 +33,32 @@ each convention into a check, and its error tells the agent how to fix the viola
 
 ## Set up
 
-- Write custom lints that check your team's conventions statically. OpenAI checks these conventions:
+- **One lint per convention.** OpenAI checks these conventions with custom lints:
   - structured logging
   - naming of schemas and types
   - file size limits
   - reliability requirements
-- Make each lint error tell the agent how to fix the violation, not only what is wrong.
-- Run the lints locally and in CI.
+
+  In JavaScript and TypeScript, a convention is an ESLint custom rule: it reports with `context.report()` and a
+  message from its `meta.messages`. In another language, the language's linter plugin, or a script that prints the
+  same `file:line: message`.
+- **The message is the instruction.** It names the violation, shows the fix and says where the convention is written:
+  `api/billing.ts:88: unstructured log: pass the values as fields, log.info("charge failed", { orderId }); see
+  docs/conventions/logging.md`. For an ESLint rule, `meta.docs.url` points at the convention's page, which editors
+  link from the violation.
+- **The `run`** runs all custom lints over the directory, prints `file:line: message` per violation, and exits
+  non-zero on any.
+- **Cases.** One must-fire case per convention: a file that logs `"charge failed for " + orderId`; a schema named
+  against the naming rule; a file over the size limit. Must pass: the clean tree.
+- **Wiring.** The agent runs it locally before it commits (or a [Stop hook](../stop-hook/card.md) runs it at the end
+  of each turn), and a CI job runs it on every PR; the CI run is the final one. The lint rules are protected by a
+  PreToolUse hook. A suppression needs a reason on the same line, as in
+  [lint-with-fix-instructions](../lint-with-fix-instructions/card.md).
+
+## Notes
+
+- A convention usually starts as a person's correction ([correction-becomes-rule](../correction-becomes-rule/card.md)).
+  The second correction of the same kind is an escape, and [steering-loop](../steering-loop/card.md) turns it into a
+  must-fire case of this loop.
+- A convention no lint can check stays a golden principle for the scheduled cleanup
+  ([garbage-collection](../garbage-collection/card.md)).

@@ -37,7 +37,7 @@ new round.
 
 | Phase | What happens | Loop types |
 |---|---|---|
-| entry | A question, a hypothesis or an idea not decided yet arrives | [triage](../loops/triage/card.md), [production-users](../loops/production-users/card.md), [user-feedback](../loops/user-feedback/card.md) |
+| entry | A question, a hypothesis or an idea not decided yet arrives | [triage](../loops/triage/card.md), [production-users](../loops/production-users/card.md) |
 | oracle | The question and its evidence are written down and agreed | [discovery-decision](../loops/discovery-decision/card.md), [interview](../loops/interview/card.md), [task-restatement](../loops/task-restatement/card.md), [plan-approval](../loops/plan-approval/card.md) |
 | work | Prototypes, probes and spikes, thrown away afterwards | [isolated-environment](../loops/isolated-environment/card.md), [agentic-manual-testing](../loops/agentic-manual-testing/card.md), [benchmarks-vs-baseline](../loops/benchmarks-vs-baseline/card.md), [debugger-repl](../loops/debugger-repl/card.md); the `ui-prototypes` and `app-probing` parts |
 | gate | Every claim in the answer has its evidence: a link, a screenshot, a measurement, a quote. The work's code stays out of main | [discovery-decision](../loops/discovery-decision/card.md), [verification-subagent](../loops/verification-subagent/card.md), [document-review](../loops/document-review/card.md) |

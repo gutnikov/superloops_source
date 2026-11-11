@@ -9,6 +9,7 @@ stages: [local]
 speed: [minutes]
 needs: []
 agent: [reviewer]
+related: [verification-subagent, security-review-agent, human-diff-review, agent-calibration]
 links:
   - title: "Harness engineering: leveraging Codex in an agent-first world"
     url: "https://openai.com/index/harness-engineering/"
@@ -16,8 +17,16 @@ links:
   - title: "Harness engineering for coding agent users"
     url: "https://martinfowler.com/articles/harness-engineering.html"
     author: "Böckeler"
-  - title: "Claude Code power user tips"
-    url: "https://support.claude.com/en/articles/14554000-claude-code-power-user-tips"
+  - title: "Review locally with /code-review"
+    url: "https://code.claude.com/docs/en/code-review-local"
+    author: "Anthropic"
+  - title: "Create custom subagents"
+    url: "https://code.claude.com/docs/en/sub-agents"
+    author: "Anthropic"
+  - title: "Commands"
+    url: "https://code.claude.com/docs/en/commands"
+    author: "Anthropic"
+    note: "/simplify and /code-review."
 ---
 
 ## Why
@@ -30,34 +39,43 @@ every time.
 ## How it works
 
 1. The coding agent asks one or more reviewer agents for a review. Each reviewer agent starts with a fresh context.
-2. The reviewer agents return comments.
-3. The coding agent fixes the comments.
-4. The coding agent asks for a review again, until the reviewer agents are satisfied.
+2. The reviewers return Findings.
+3. The coding agent fixes the high findings that the finding verifier confirmed.
+4. The coding agent asks for a review again, up to 3 rounds. After the third, the open findings and the diff go to a
+   person (H4): a fourth round of the same disagreement costs more than a person's look.
 
 At OpenAI almost all review happens between agents.
 
-The source does not set a limit on review rounds. It also does not say what the coding agent should do if a reviewer agent is never satisfied.
-
 ## Set up
 
-The source names two ways to set up this loop:
-
-- a reviewer agent that runs as a subagent
-- `/simplify`, a command in Claude Code (source: Claude Code power user tips)
-
-The source does not say:
-
-- what the reviewer agent checks
-- how its comments reach the coding agent
-- what `/simplify` does
-- whether you use the two together or pick one
-
-For what each reviewer checks and what it returns, follow Agent step below. It is this catalog's setup for the reviewer.
+- **Reviewers as subagents.** One file per lens in `.claude/agents/`, such as `.claude/agents/review-correctness.md`,
+  with `tools: Read, Grep, Glob`. The `tools` field is an allowlist, so Claude Code keeps the reviewer from editing
+  anything. Each subagent runs in its own context window; the coding agent passes it the diff and the requirement,
+  and it returns Findings ([agent formats](../../agent-formats.md)).
+- **Or `/code-review`.** The bundled skill reviews the branch's changes for correctness bugs in a forked subagent
+  with its own context window, and reports its findings in the conversation; `--fix` applies them. It follows
+  `CLAUDE.md`, which is where the project's review rules go. Use it for the correctness lens, and the subagents above
+  for the lenses it does not cover.
+- **`/simplify` is not this loop.** The bundled skill runs four review agents in parallel, on reuse of existing
+  helpers, simplification, efficiency and the level of abstraction, and applies the fixes; it does not look for
+  correctness bugs. Run it as a cleanup step before the review if the project wants one, and write that choice in the
+  loop's `LOOP.md`.
+- **The `run`** runs the reviewers on the diff and prints their Findings, one JSON line each. It exits non-zero for a
+  high finding the verifier confirmed, but only for a reviewer that is calibrated; until then it prints the findings
+  and exits 0.
+- **Cases** are the reviewers' evals: one must-fire diff per lens, such as an off-by-one in a page loop for
+  correctness, a query built by string concatenation for security, a test that asserts nothing for tests; and a
+  must-pass diff, a pure rename with the tests green.
+- **Wiring.** The coding agent runs the loop after its tests pass and before it opens the PR. A CI job runs the same
+  reviewers on the PR, outside the coding agent's session, so a skipped review still happens; the agent cannot edit
+  the reviewers' definitions, which a PreToolUse hook protects.
 
 ## Notes
 
-- Böckeler: an LLM partly catches semantic duplication and over-engineering, but expensively and
-  probabilistically.
+- Böckeler: "LLMs can partially address problems that require semantic judgment", such as "semantically duplicate
+  code, redundant tests, brute-force fixes, over-engineered solutions", "but expensively and probabilistically."
+- The security lens has its own loop, [security-review-agent](../security-review-agent/card.md). A subagent that
+  tries to prove a claim of done wrong, by running things, is [verification-subagent](../verification-subagent/card.md).
 
 ## Agent step
 
@@ -70,4 +88,5 @@ Use one reviewer per lens: correctness, security, tests, performance, and the pr
 
 A finding verifier checks each high finding. The coding agent acts on a high finding only after that check.
 
-A reviewer blocks only once calibrated ([agent-calibration](../agent-calibration/card.md)). Until then, its findings are advice.
+A reviewer blocks only once calibrated ([agent-calibration](../agent-calibration/card.md)). Until then, its findings
+are advice.

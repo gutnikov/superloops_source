@@ -8,7 +8,7 @@ places: [delivery/oracle]
 stages: [edit, commit, ci]
 speed: [seconds]
 needs: []
-related: [acceptance-loop]
+related: [acceptance-loop, interview]
 links:
   - title: "Event Modeling"
     url: "https://eventmodeling.org/"
@@ -41,10 +41,15 @@ to add, change and delete in the tests. The spec check is the first stage of the
 - The [`spec`](../../../spec/README.md) part of superloops: `specs.py` and, for the event model, `em.py` of the
   [`event-model`](../../../event-model/README.md) part.
   `superloops/specs/layers.yaml` lists each layer's check command.
-- `run`: `specs.py check` followed by every layer's `check`; it fails when any of them fails.
+- `run`: `specs.py check` followed by every layer's `check`. `specs.py check` prints its `ERRORS` and `WARNINGS`
+  lists and exits 1 when there is any error; `run` exits non-zero when any of the checks fails.
 - Cases: broken copies of the spec in `cases/must-fire/` (a field that comes from nowhere, a command error with no
   example, a `reqs:` reference to a missing requirement), the real spec in `cases/must-pass/`.
-- Wiring: a Claude Code Stop hook or a pre-commit hook on changes under `superloops/specs/`, and a CI job.
+- Wiring: a Claude Code Stop hook or a pre-commit hook on changes under `superloops/specs/`, and a CI job, which is
+  the final run. CI takes the list of checks from the main branch's `layers.yaml`, so a gap is closed in the spec,
+  not by taking a check out of the list.
+- A gap the agent cannot close from the code and the documents becomes a question for a person, asked as in the
+  [interview](../interview/card.md).
 
 ## Notes
 

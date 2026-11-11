@@ -14,8 +14,9 @@ quality attributes" (unpublished, in Russian; it says 70 cycles but lists 71). N
 [the calibration of a loop's agent](agent-calibration/card.md); and five that the super-loops need:
 [triage](triage/card.md), [the reproduction gate](reproduction-gate/card.md),
 [behaviour invariance](behaviour-invariance/card.md), [release confirmation](release-confirmation/card.md)
-and [the discovery decision](discovery-decision/card.md). The other 16 are [human-in-the-loop loops](human-in-the-loop.md),
-where a person gives the signal.
+and [the discovery decision](discovery-decision/card.md). The other 16 come from a note on human-in-the-loop loops.
+With two loops of the research, [the audit trail](agent-audit-trail/card.md) and [user feedback](user-feedback/card.md),
+18 loops have a person as the sensor: the [human-in-the-loop loops](human-in-the-loop.md).
 
 What a card holds, and how to add one: [FORMAT.md](FORMAT.md). [index.yaml](index.yaml) lists every loop with its
 summary and its fields, so a tool or an agent can choose loops without opening each card; it and the list below are
@@ -122,21 +123,21 @@ _The product does what it was specified to do: functional suitability, completen
 - [Acceptance loop: from requirements to green acceptance tests](acceptance-loop/card.md): A requirement becomes an approved spec, then acceptance tests that fail; the agent works until they pass. The gate reports, per requirement, whether its tests were red before and green after.
 - [Agentic manual testing](agentic-manual-testing/card.md): The agent tries the code by hand with `python -c`, temporary files, `curl` or a browser; each defect it finds becomes a permanent test, written red/green.
 - [Behaviour invariance](behaviour-invariance/card.md): Maintenance must change no expected value. The gate fails on a changed expected value, red tests or a measure not improved against the baseline; a changed expected value goes back to triage.
-- [Bug → failing test → fix](bug-failing-test-fix/card.md): The agent reproduces the bug with a test, fixes the code and shows a green run.
+- [Bug → failing test → fix](bug-failing-test-fix/card.md): Red/green for a bug: the agent starts from a test that reproduces the bug and fails, changes the code until it passes, and runs the whole suite.
 - [Build / compile](build/card.md): The agent edits code and runs `build`. It reads compiler errors with file and line and fixes them until the command exits with code 0.
 - [Calibration of a loop's agent](agent-calibration/card.md): A loop's agent runs at least three times on eval cases with known answers; it may block only once its agreement reaches a threshold a person approved, and every miss becomes a new case.
 - [E2E through browser automation](e2e-browser/card.md): The agent starts the dev server and walks a scenario with Playwright or Puppeteer. That is how it finds out that a feature does not work end to end even though the unit tests and `curl` pass.
 - [Eval suites for LLM features](llm-evals/card.md): The agent changes a prompt and runs the evals; a drop in the metric counts as a failure.
 - [Exploratory testing](exploratory-testing/card.md): The person tries the product by hand and writes a bug report; the agent reproduces the bug with a failing test and fixes it.
 - [LSP diagnostics after every edit](lsp-diagnostics/card.md): Right after every edit the agent gets the language server's diagnostics, before any build.
-- [Progress file and feature list](progress-file-feature-list/card.md): An initializer creates a JSON list of features, each with `"passes": false`. Every session takes one feature and marks it as passing only after an e2e check.
+- [Progress file and feature list](progress-file-feature-list/card.md): Long work over many sessions: a JSON feature list and a progress file carry the state; each session takes one failing feature and marks it passing only after an e2e check.
 - [Property-based tests](property-based-tests/card.md): The agent states invariants and writes property tests for them. The framework finds a minimal counterexample, and the agent fixes the code.
 - [Release confirmation](release-confirmation/card.md): After a deploy, a job judges a snapshot of a window: the change is confirmed only if production runs it, its signal appeared often enough, and nothing is worse than under the previous version.
 - [Reproduction gate](reproduction-gate/card.md): A fix counts only against a reproduction that failed first. The agent fixes until it passes; the gate reports whether it was red before and green after, and whether any other test changed.
 - [Sample audit](sample-audit/card.md): On a schedule, the person reviews a random sample of what the agent did or merged without them, and marks where it differs from what they expected.
 - [Snapshot / golden / approved fixtures](approved-fixtures/card.md): A test compares the output with a stored reference; the agent fixes an unexpected diff and proposes an expected one to a person as the new reference.
 - [Spec check](spec-check/card.md): The agent runs `specs.py check` and each layer's check on the changed spec; every gap comes back as a message naming the element and what is missing, before the test writer gets the spec.
-- [Stop hook / `/goal`](stop-hook/card.md): A hook runs a check and does not let the agent end its turn until the check passes.
+- [Stop hook / `/goal`](stop-hook/card.md): When the agent tries to end its turn, a hook runs the check and sends the agent back to work while it fails; `/goal` does the same with a model that judges the transcript.
 - [Type checking](type-check/card.md): The agent runs `tsc --noEmit`, `mypy` or `pyright` and fixes the type mismatches it finds.
 - [Verification subagent](verification-subagent/card.md): When the working agent says a task is done, a separate subagent with a fresh context tries to prove the claim wrong.
 
@@ -146,7 +147,7 @@ _The work is what the person meant: the intent, the plan and the result match wh
 
 - [Acceptance criteria and references from a person](human-acceptance-criteria/card.md): The person writes or approves references: acceptance tests, "input → expected output" examples and reference snapshots. From then on the agent works against them without the person.
 - [Asynchronous questions with assumptions](async-questions-with-assumptions/card.md): The agent writes down each non-blocking question with the assumption it made and keeps working; at the end of the task the person confirms or cancels each assumption in one batch.
-- [Calibrating an LLM judge on an expert (critique shadowing)](llm-judge-calibration/card.md): An expert grades a sample of results. An LLM judge's prompt is revised until the judge grades that sample the same way as the expert. This is prompt revision, not model training.
+- [Calibrating an LLM judge on an expert (critique shadowing)](llm-judge-calibration/card.md): One expert grades a sample pass or fail, each with a critique; the judge's prompt is revised until its grades agree. The graded sample becomes the judge's eval cases.
 - [Choose from options](choose-from-options/card.md): On questions of taste — UI, naming, the shape of an API, the structure of a module — the agent makes 2–3 options. The person picks one and briefly explains why.
 - [Diff review by a person](human-diff-review/card.md): The person comments on the PR; the agent fixes the comments and replies in the thread.
 - [Discovery decision](discovery-decision/card.md): The agent answers an agreed question with prototypes, probes and spikes; the gate checks that each claim names evidence that exists and no spike code is in main, and a refuter tests each claim.
@@ -155,11 +156,11 @@ _The work is what the person meant: the intent, the plan and the result match wh
 - [Observe and interrupt](observe-and-interrupt/card.md): The person does not approve every step. They watch from the side and step in when they see the work going the wrong way.
 - [Plan approval](plan-approval/card.md): The agent studies the code read-only and proposes a plan; a person edits and approves it, and the agent then works by the plan on its own.
 - [Result demo](result-demo/card.md): The agent shows the working feature: a link to a preview environment, screenshots, a before/after video, recorded command output. The person judges the behaviour, not the code.
-- [Steering: a repeated correction becomes a rule](correction-becomes-rule/card.md): When the person has corrected the agent twice for the same thing, the correction becomes an automated sensor (a lint, a test, a fitness function) or a line in CLAUDE.md.
+- [Steering: a repeated correction becomes a rule](correction-becomes-rule/card.md): Every correction a person makes is logged at the phase that should have caught it; the second of a kind is an escape, and it becomes a lint, a test or a line in CLAUDE.md.
 - [Task restatement](task-restatement/card.md): The agent restates the task in its own words: what it understood, what is out of scope, and what will show it is done. A person answers "yes" or corrects the restatement.
 - [Triage: every signal goes to one super-loop, with its oracle](triage/card.md): Triage merges each incoming error, alert, bot's PR, user's message or ticket with any open item on the same thing, and routes it to one super-loop; the route decides the oracle.
-- [User feedback](user-feedback/card.md): A person writes acceptance criteria from user feedback. The agent works to those criteria and checks its work against them.
-- [Users in production](production-users/card.md): The signal comes from users in production: feedback, support tickets, A/B tests, dogfooding. A person turns it into acceptance criteria, which the agent gets as a spec and a test.
+- [User feedback](user-feedback/card.md): One piece of user feedback becomes acceptance criteria tied to a reproducible scenario, approved by a person; the agent works to them, and they become its spec and test.
+- [Users in production](production-users/card.md): A person reads the users' signal from production in aggregate: feedback, support tickets, A/B tests, dogfooding. It shows whether shipped work has value; a single item goes on to user-feedback.
 
 ### Testability
 
@@ -178,7 +179,7 @@ _The code is easy to read, change and extend: modularity, analysability, modifia
 - [Architecture fitness functions](architecture-fitness-functions/card.md): The agent adds an import and runs `dependency-cruiser` or ArchUnit; a broken rule returns a message that names the rule and describes the layers, and the agent moves the code.
 - [Auto-formatting hook](autoformat-hook/card.md): After every file write a hook formats the code, so the agent does not spend iterations fixing formatting by hand.
 - [Code review by another agent](agent-code-review/card.md): The coding agent asks one or more reviewer agents, each with a fresh context, for a review, and fixes their comments until the reviewers are satisfied.
-- [Coupling analysis](coupling-analysis/card.md): The agent calls a CLI that reports fan-in, fan-out and dependency cycles. It then refactors the hot spots using the numbers from that tool, not its own judgement of the code.
+- [Coupling analysis](coupling-analysis/card.md): On a schedule a CLI reports fan-in, fan-out and cycles; what got worse than the baseline, minus intended hubs, becomes a maintenance item, and the refactoring must improve the numbers.
 - [Doc linters for the knowledge base](knowledge-base-doc-lint/card.md): CI checks that the `docs/` folder is current, cross-linked and correctly structured. The agent reads the errors CI reports and fixes the docs.
 - [Executable documentation](executable-docs/card.md): Doctests and a check of API responses against the OpenAPI schema turn a mismatch between the docs and the code into a failing test.
 - [Garbage collection](garbage-collection/card.md): On a schedule, background agents find code that breaks the repository's "golden principles" and open small PRs to fix it. At OpenAI most took under a minute to review and merged automatically.
@@ -193,13 +194,13 @@ _Confidentiality, integrity, privacy, compliance, audit and licences._
 
 - [Audit trail of agent actions](agent-audit-trail/card.md): The agent leaves evidence: commands with their output, screenshots, videos, commits. The reviewer checks the evidence instead of re-running everything.
 - [Compliance hardening with mutants](compliance-mutants/card.md): An LLM takes one concern, such as data leaks, and writes mutants for it and tests that catch them; a mutation run shows the tests fail on the mutants and pass on the real code.
-- [DAST](dast/card.md): A scanner attacks the preview environment. The agent fixes the vulnerabilities that the scanner finds.
+- [DAST](dast/card.md): OWASP ZAP scans the running preview from the outside: passively on every deploy, with attacks before a release. The agent fixes each alert the scan fails on.
 - [Dependency analysis (SCA) and SBOM](dependency-scanning-sbom/card.md): The scanner reports a CVE in a dependency the agent added. The agent then picks a safe version.
 - [Gates on risky actions](risky-action-gates/card.md): Before an irreversible action, the agent stops and asks a person to confirm it. In this card, a risky action means an irreversible one.
 - [License check](license-check/card.md): The check fails on a forbidden license; the agent replaces the package.
 - [SAST](sast/card.md): Semgrep or CodeQL reports a rule, a file and a line; the agent fixes the vulnerable pattern.
 - [Secret scanning](secret-scanning/card.md): GitLeaks in pre-commit blocks a commit that contains a secret; the agent moves the secret into environment variables.
-- [Security and data-handling review by an agent](security-review-agent/card.md): A subagent checks the code against a security checklist or against rules such as "user names never reach the frontend", and returns findings with line numbers.
+- [Security and data-handling review by an agent](security-review-agent/card.md): A subagent checks the code against a security checklist or rules such as "no user names should ever be sent to the web frontend", and returns findings with line numbers.
 
 ### Compatibility
 
@@ -221,7 +222,7 @@ _Time behaviour, resource use, capacity, scalability._
 - [Bundle size budget](bundle-size-budget/card.md): size-limit "throws an error if the cost exceeds the limit". With `--why` the agent finds what bloated the bundle and removes it.
 - [Lighthouse CI](lighthouse-ci/card.md): `lhci assert` fails when a preview page scores below an assertion's threshold, such as performance under 0.9. The agent reads the JSON report and `manifest.json`.
 - [Load testing](load-testing/card.md): The agent runs k6, Gatling or Locust against a preview, sees p95 degrade and looks for the bottleneck in the traces.
-- [Performance budgets through telemetry](perf-budgets-telemetry/card.md): The agent gets a performance budget, such as "the service starts in under 800 ms", queries the traces and optimizes the code until the service meets the budget.
+- [Performance budgets through telemetry](perf-budgets-telemetry/card.md): The agent gets a performance budget, such as "service startup completes in under 800ms", queries the service's own traces and metrics, and optimizes the code until the service meets it.
 - [Profiling](profiling/card.md): The agent takes a CPU or memory profile as text (the top N functions), makes a fix and compares the new profile with the original.
 
 ### Reliability

@@ -9,9 +9,16 @@ stages: [local, ci]
 speed: [seconds, minutes]
 needs: [browser]
 agent: [judge]
+related: [approved-fixtures, ux-evaluator, e2e-browser, llm-judge-calibration]
 links:
   - title: "Best practices for Claude Code"
     url: "https://code.claude.com/docs/en/best-practices"
+    author: "Anthropic"
+    note: "a browser screenshot next to the mockup as a check Claude can run; ask for the screenshot as evidence."
+  - title: "Visual comparisons"
+    url: "https://playwright.dev/docs/test-snapshots"
+    author: "Playwright"
+    note: "toHaveScreenshot: a stored baseline, pixel comparison, rendering that differs between hosts."
 ---
 
 ## Why
@@ -24,20 +31,48 @@ back as a list the agent can fix one by one.
 
 The loop needs a mockup of the screen to compare with.
 
-1. The agent takes a screenshot. Locally, the [`app-probing`](../../../app-probing/README.md) part of superloops takes a
-   full-page screenshot once the screen has settled; the comparison with the mockup stays with the agent.
-2. The agent compares the screenshot with the mockup and lists the differences.
-3. The agent fixes the differences.
+1. The agent takes a screenshot. Locally, the [`app-probing`](../../../app-probing/README.md) part of superloops
+   takes a full-page screenshot once the screen has settled.
+2. A judge compares the screenshot with the mockup and lists the differences (see Agent step).
+3. The agent fixes the differences and takes a new screenshot, until the judge finds none.
+4. Once the screen matches, a Playwright `toHaveScreenshot` test stores the screenshot as its baseline, and from then
+   on CI compares pixels, with no judgement needed.
 
 ## Set up
 
-Set it up in two places:
+- **A mockup per screen**, exported from the design tool at the viewport width it was drawn for, in the repository
+  next to the screen's spec. Decide in the loop's `LOOP.md` where mockups live and how they are named
+  (`design/<screen>@<width>.png`, say).
+- **The screenshot at the mockup's width**, of a settled screen with the same data the mockup shows, so differences
+  in content do not hide differences in layout.
+- **What counts as a difference** is in the judge's prompt: a missing or extra element, its position or size off by
+  more than a few pixels, a wrong colour, font or text. Anti-aliasing and the rendering of fonts do not count.
+- **A pixel baseline once it matches.** `toHaveScreenshot` fails on the first run and writes the actual screenshot;
+  that file is committed as the baseline. `maxDiffPixels` and `threshold` set the tolerance, and `stylePath` hides
+  dynamic content such as dates. Playwright warns that "Browser rendering can vary based on the host OS, version,
+  settings, hardware", so baselines are made in the CI environment, not on a laptop.
+- **A changed baseline is a changed reference.** `--update-snapshots` in the same change as the UI shows the new image
+  in the pull request, and a person approves it there ([approved-fixtures](../approved-fixtures/card.md)).
+- **`run`** gives the judge the mockup and the screenshot of each screen and prints one line per screen,
+  `<screen>: matches` or `<screen>: <n> differences`, then the judge's reasons. It exits 1 on a `fail` only once the
+  judge is `gate` in `superloops/agents.yaml`; until then it prints the Verdict and exits 0. The pixel comparison in
+  CI is a plain Playwright test and fails on a diff beyond its tolerance.
+- **Cases.** Must fire: a screenshot with the primary button missing; one with the button in the wrong colour; one
+  with a label cut off. Must pass: a screenshot of the matching screen; one that differs from the mockup only by
+  anti-aliasing. They are also the judge's eval cases.
+- **Wiring**: the agent runs the loop locally at the end of a UI change; the `toHaveScreenshot` tests run as a CI job
+  on every pull request, and that run is the one that counts. The judge is a separate agent with read-only tools, and
+  the baselines change only in a reviewed pull request.
 
-- Locally: give the agent the prompt from the Claude Code docs: "take a screenshot of the result and compare it to the original".
-- In CI: run pixel regression.
+## Notes
+
+- Claude Code's best practices list "A browser screenshot next to the mockup" among the checks Claude can run, and
+  say to ask Claude for evidence: "the command it ran and its output, or the screenshot".
 
 ## Agent step
 
-A judge compares the screenshot with the mockup and returns a Verdict listing each difference. Comparing images takes
-judgement, so the judge's Verdict blocks only after a person graded pairs that match and pairs that do not, and the
-judge agreed with that person's grades ([agent-calibration](../agent-calibration/card.md)).
+A judge gets the mockup and the screenshot, never the code or the working agent's reasoning, and returns a Verdict
+with one reason per difference: the element, what the mockup shows and what the screenshot shows. A person grades
+pairs that match and pairs that do not, and the judge's prompt is revised until it agrees
+([llm-judge-calibration](../llm-judge-calibration/card.md)); its Verdict blocks only once its agreement reaches the
+approved threshold ([agent-calibration](../agent-calibration/card.md)).

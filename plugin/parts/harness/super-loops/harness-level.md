@@ -23,12 +23,13 @@ product level   discovery · delivery · remediation · maintenance    the agent
 
 The catalog's loops of this level:
 
-- [steering-loop](../loops/steering-loop/card.md) and
-  [correction-becomes-rule](../loops/correction-becomes-rule/card.md) are its remediation: an escape or a
-  repeated correction becomes a loop at the phase that should have caught it.
+- [correction-becomes-rule](../loops/correction-becomes-rule/card.md) and
+  [steering-loop](../loops/steering-loop/card.md) are its remediation: the first is its entry for a person's
+  corrections, the second turns every escape, a repeated correction among them, into a must-fire case at the phase
+  that should have caught it and fixes or adds the loop there.
 - [agent-calibration](../loops/agent-calibration/card.md) runs three super-loops for one agent: delivery (from
   `draft` to `gate`), remediation (a false positive becomes an eval) and maintenance (a new model means a new score).
-  [llm-judge-calibration](../loops/llm-judge-calibration/card.md) delivers a judge.
+  [llm-judge-calibration](../loops/llm-judge-calibration/card.md) gives a judge its oracle: one expert's grades.
 - [sample-audit](../loops/sample-audit/card.md) is its detector, as error tracking is the product's. Giving the
   agent more autonomy on its results is a release like any other: one step at a time, each with a window.
 - [document-review](../loops/document-review/card.md) checks the texts its delivery writes: every `LOOP.md` and
