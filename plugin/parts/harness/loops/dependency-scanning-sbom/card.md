@@ -25,6 +25,12 @@ links:
   - title: "Output: return codes"
     url: "https://google.github.io/osv-scanner/output/"
     author: "OSV-Scanner"
+  - title: "AGENTS.md: Dependency and Install Security"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/AGENTS.md#dependency-and-install-security"
+    author: "pi (earendil-works)"
+  - title: "check-pinned-deps.mjs"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/scripts/check-pinned-deps.mjs"
+    author: "pi (earendil-works)"
 ---
 
 ## Why
@@ -59,6 +65,10 @@ clean.
 - **The SBOM is kept with the release.** The release job stores `sbom.cdx.json` beside the build. A nightly job scans
   the SBOMs of the versions in production with `trivy sbom`; a new finding there is a maintenance signal for
   [triage](../triage/card.md), not a red PR.
+- **Before the scan, limit what a change can bring in.** Pi pins every direct registry dependency to an exact version
+  (`check-pinned-deps.mjs` fails on a range), installs with `--ignore-scripts`, and lets a dependency run a lifecycle
+  script only from an allowlist that `npm run check` verifies. A lockfile change is blocked at commit unless it is
+  allowed explicitly ([pre-commit-pre-push](../pre-commit-pre-push/card.md)).
 - **`run`** scans the directory and prints one line per finding, `<package>@<version>: <CVE id> <severity>, fixed in
   <version>` or `no fix`. It exits non-zero on any finding at the blocking severity, and when the scanner failed or
   found no packages: a scan that saw nothing is not a pass.

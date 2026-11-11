@@ -16,6 +16,10 @@ links:
   - title: "ESLint: Custom Rules"
     url: "https://eslint.org/docs/latest/extend/custom-rules"
     author: "ESLint"
+  - title: "pi's check scripts"
+    url: "https://github.com/earendil-works/pi/tree/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/scripts"
+    author: "pi (earendil-works)"
+    note: "check-ts-relative-imports.mjs, check-runtime-deps.mjs, check-pinned-deps.mjs, check-released-changelogs.mjs."
 ---
 
 ## Why
@@ -62,3 +66,8 @@ each convention into a check, and its error tells the agent how to fix the viola
   must-fire case of this loop.
 - A convention no lint can check stays a golden principle for the scheduled cleanup
   ([garbage-collection](../garbage-collection/card.md)).
+- A convention that is not about one line of code still fits a small script. Pi's `npm run check` runs such scripts
+  next to the linter: no relative `.js` imports in `.ts` source, no runtime import a public package does not declare
+  as a dependency, no direct dependency without an exact version. One of them carries its fix in the message: "Released
+  sections are fixed. Move new entries to ## [Unreleased] and restore the rest as in the tag." The others name only the
+  rule and the files, and would cost the agent less with a fix text.

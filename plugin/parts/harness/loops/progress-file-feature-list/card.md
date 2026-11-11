@@ -20,6 +20,10 @@ links:
   - title: "Effective harnesses for long-running agents"
     url: "https://daily.dev/posts/effective-harnesses-for-long-running-agents-7clzunmmu"
     note: "daily.dev"
+  - title: "AGENTS.md: Chord v2 Code Style, Slices and Deferred work"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/AGENTS.md#chord-v2-code-style"
+    author: "pi (earendil-works)"
+    note: "the carry-over ledger of deferred work."
 ---
 
 ## Why
@@ -76,3 +80,6 @@ feature passes when its acceptance tests are green.
   Markdown files."
 - Without an explicit instruction to test as a user would, Claude marked features complete after unit tests or
   `curl` while the feature did not work end to end (Anthropic).
+- Deferred work needs the same file. Pi builds one package in vertical slices: anything a slice leaves for later goes
+  into the "Carry-over" section under the slice that will do it, in the same change, and that slice's spec and build
+  must include every entry filed under it. Work put off in one session is then where the next session reads it.

@@ -34,6 +34,18 @@ links:
     url: "https://www.anthropic.com/research/measuring-agent-autonomy"
     author: "Anthropic"
     note: "18 February 2026: the share of agent actions that look irreversible."
+  - title: "/sa: update a GitHub security advisory (a prompt template)"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/.pi/prompts/sa.md"
+    author: "pi (earendil-works)"
+    note: "the approved draft is re-read from disk before it is applied."
+  - title: "agent-loop.ts: runToolCall"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/packages/agent/src/agent-loop.ts#L813-L830"
+    author: "pi (earendil-works)"
+    note: "tool calls made by tools go through the same hooks."
+  - title: "AGENTS.md: Git"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/AGENTS.md#git"
+    author: "pi (earendil-works)"
+    note: "rules for several sessions in one checkout."
 ---
 
 ## Why
@@ -66,6 +78,18 @@ comment to Claude as the reason, and Claude continues working; "No" with no comm
   stands where the action happens. Production credentials stay out of the agent's environment, and a deploy runs from
   a CI environment with required reviewers: on GitHub, the job waits until one of the reviewers, up to six people or
   teams, approves it.
+- **Tools that call tools go through the same gate.** A code-mode script, a subagent or a batch tool can call other
+  tools. In pi, those nested calls run through the same pipeline as the model's own calls, with schema validation and
+  the permission hooks (`runToolCall`). A gate that sees only the calls the model makes directly can be walked around.
+- **The approval names a file, and that file is what runs.** For an action built from a payload, such as an advisory,
+  a release note or a batch of API calls, the agent writes the payload to a file, the person approves the file, and
+  the agent re-reads it from disk just before it acts, never from its memory of the conversation. A side effect beyond
+  the approved action runs only if the file says so: pi's `/sa` requests a CVE only when the draft's frontmatter has
+  `request_cve: true`.
+- **Another session's work is data too.** Where several sessions share one checkout, `git reset --hard`,
+  `git checkout .`, `git clean -fd`, `git stash` and `git add -A` destroy the others' uncommitted work; pi's AGENTS.md
+  forbids them and stages explicit paths only. Give each session its own
+  [isolated environment](../isolated-environment/card.md), or gate those commands like any deletion.
 - **Who confirms** is written in `superloops/superloops.md`: the person running the session for an action in it, the
   environment's reviewers for a release. At every autonomy level, anything that cannot be undone is a call to a person.
 - **Nobody there.** In a run nobody watches, the gate refuses: with `--permission-mode dontAsk`, Claude Code denies a

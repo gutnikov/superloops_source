@@ -24,6 +24,9 @@ links:
   - title: "Best practices for Claude Code"
     url: "https://code.claude.com/docs/en/best-practices"
     note: "Steer the session: Esc, /rewind, /clear."
+  - title: "agent-loop.ts: the steering and follow-up queues"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/packages/agent/src/agent-loop.ts#L184-L316"
+    author: "pi (earendil-works)"
 ---
 
 ## Why
@@ -77,3 +80,7 @@ irreversible step goes through a [gate](../risky-action-gates/card.md), watched 
   corrections (32%)": the corrections worth logging.
 - In Anthropic's own use from August to December 2025, Claude Code's success rate on the hardest tasks doubled, while
   human interventions per session fell from 5.4 to 3.3 (Anthropic).
+- A correction need not stop the step. In pi's agent loop, a message typed while the agent works waits in a steering
+  queue and reaches the model before its next call, once the current tool calls finish; the loop checks the queue
+  again after a long step such as compaction. A follow-up queue holds messages for when the agent would stop, and
+  aborting the step is a separate action.
