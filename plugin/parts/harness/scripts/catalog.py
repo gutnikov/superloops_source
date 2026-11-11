@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""The loop-type catalog (../loop-types), the loop cards (../loops) and the super-loops (../super-loops): build the
-index and validate them.
+"""The loop-type catalog (../loop-types) and the super-loops (../super-loops): build the index and validate both.
 
     python3 catalog.py index   write loop-types/index.yaml from the cards' frontmatter
     python3 catalog.py check   validate every card and every super-loop, and fail if index.yaml is out of date
@@ -8,8 +7,7 @@ index and validate them.
 Group titles come from the "### <title> — `<group>/`" headings in loop-types/README.md.
 A card's summary is the start of its Loop section: the first paragraph (with its list, if it leads into one),
 without sentences about the source, at most 3 sentences.
-The loop-type cards hold only scalars and flow lists in their frontmatter; strings are written as JSON, which is valid
-YAML. The loop cards of ../loops are checked against ../loops/loop.schema.json and need PyYAML.
+No dependencies: frontmatter holds only scalars and flow lists; strings are written as JSON, which is valid YAML.
 """
 import collections
 import json
@@ -36,15 +34,6 @@ VOCAB = {
     "needs": {"ci", "logs", "errors", "metrics", "traces", "browser", "deploy"},
 }
 ITEM = re.compile(r"^\s*(\d+\.|-)\s+")
-
-LOOPS = CATALOG.parent / "loops"
-SCHEMA = LOOPS / "loop.schema.json"
-TEMPLATE = LOOPS / "_template" / "card.md"
-SECTIONS = ["Why", "How it works", "Set up", "Notes", "Agent step"]  # in this order
-REQUIRED_SECTIONS = ["Why", "How it works", "Set up"]
-SPEEDS = ["sub-second", "seconds", "minutes", "hours", "days", "weeks"]
-IMAGE_MAX_BYTES = 300 * 1024
-FENCE = re.compile(r"^```.*?^```[^\n]*$", re.S | re.M)
 
 
 def frontmatter(text):
