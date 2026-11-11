@@ -1,0 +1,20 @@
+{
+  "name": "superloops-site-tests",
+  "private": true,
+  "type": "module",
+  "description": "Acceptance tests of superloops.dev (spec SITE-1), derived from superloops/specs/model/site.em.yaml",
+  "scripts": {
+    "test": "playwright test --project=acceptance",
+    "test:fixtures": "playwright test --project=fixture-contracts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "20.19.43",
+    "mdast-util-from-markdown": "2.1.0",
+    "mdast-util-gfm": "3.1.0",
+    "micromark-extension-gfm": "3.0.0",
+    "typescript": "5.9.3",
+    "yaml": "2.9.1"
+  }
+}

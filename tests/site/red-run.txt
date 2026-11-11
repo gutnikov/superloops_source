@@ -1,0 +1,245 @@
+# Red run of tests/site, 2026-11-11 10:38 CET, commit a6a057c on branch site-1, before site/ exists
+# Contract: event-model/1, revision of SITE-1 with delta-2 (Page.stylesheets on all three screens, Page.language; 4 super-loop cards)
+# Command: npx playwright test --reporter=list
+#   project acceptance: the 6 examples of the contract; project fixture-contracts: the contract specs of the fixtures
+
+
+Running 14 tests using 1 worker
+
+  ✘   1 [acceptance] › specs/t01-publish-the-loop-types.spec.ts:24:1 › every card of the catalog has a page with what the card holds @T01 @SITE-1#1 @SITE-1#2 (829ms)
+  ✘   2 [acceptance] › specs/t01-publish-the-loop-types.spec.ts:46:1 › a card the site cannot show stops the build @T01 @SITE-1#1 @SITE-1#2 (2ms)
+  ✘   3 [acceptance] › specs/t02-publish-the-super-loops.spec.ts:33:1 › every super-loop card has a page with what the card holds @T02 @SITE-1#3 (820ms)
+  ✘   4 [acceptance] › specs/t02-publish-the-super-loops.spec.ts:55:1 › a super-loop card the site cannot show stops the build @T02 @SITE-1#3 (1ms)
+  ✘   5 [acceptance] › specs/t03-deploy-the-site.spec.ts:17:1 › a deploy puts the commit's site on superloops.dev @T03 @SITE-1#4 @SITE-1#5 @SITE-1#6 @SITE-1#7 @SITE-1#8 (1ms)
+  -   6 [acceptance] › specs/t03-deploy-the-site.spec.ts:59:6 › a failed deploy leaves the previous site on superloops.dev @T03 @SITE-1#4 @SITE-1#5 @SITE-1#6 @SITE-1#7 @SITE-1#8
+  ✓   7 [fixture-contracts] › _fixtures/states.contract.spec.ts:23:1 › contract: catalogOnMain is the catalog of plugin/parts/harness @fixture-contract (4ms)
+  ✓   8 [fixture-contracts] › _fixtures/states.contract.spec.ts:38:1 › contract: catalogValid passes the catalog check @fixture-contract (256ms)
+  ✓   9 [fixture-contracts] › _fixtures/states.contract.spec.ts:43:1 › contract: catalogWithInvalidCard breaks one loop-type card @fixture-contract (285ms)
+  ✓  10 [fixture-contracts] › _fixtures/states.contract.spec.ts:58:3 › with a super-loop card broken › contract: catalogWithInvalidCard breaks one super-loop card @fixture-contract (290ms)
+  ✘  11 [fixture-contracts] › _fixtures/states.contract.spec.ts:71:1 › contract: siteBuilt has a built site @fixture-contract (0ms)
+  ✘  12 [fixture-contracts] › _fixtures/states.contract.spec.ts:76:1 › contract: siteLive serves a version @fixture-contract (1ms)
+  ✘  13 [fixture-contracts] › _fixtures/states.contract.spec.ts:81:1 › contract: cloudflareDeploys serves the site @fixture-contract (1ms)
+  -  14 [fixture-contracts] › _fixtures/states.contract.spec.ts:89:6 › contract: cloudflareFails refuses the deploy @fixture-contract
+
+
+  1) [acceptance] › specs/t01-publish-the-loop-types.spec.ts:24:1 › every card of the catalog has a page with what the card holds @T01 @SITE-1#1 @SITE-1#2 
+
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
+    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+
+       at support/fixtures.ts:93
+
+      91 |       const build = await buildSite({ outDir });
+      92 |       if (build.code !== 0) {
+    > 93 |         throw new Error(
+         |               ^
+      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
+      95 |         );
+      96 |       }
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+
+    Error Context: test-results/specs-t01-publish-the-loop-731b5-ge-with-what-the-card-holds-acceptance/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/specs-t01-publish-the-loop-731b5-ge-with-what-the-card-holds-acceptance/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/specs-t01-publish-the-loop-731b5-ge-with-what-the-card-holds-acceptance/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [acceptance] › specs/t01-publish-the-loop-types.spec.ts:46:1 › a card the site cannot show stops the build @T01 @SITE-1#1 @SITE-1#2 
+
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
+    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+
+       at support/fixtures.ts:93
+
+      91 |       const build = await buildSite({ outDir });
+      92 |       if (build.code !== 0) {
+    > 93 |         throw new Error(
+         |               ^
+      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
+      95 |         );
+      96 |       }
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+
+    Error Context: test-results/specs-t01-publish-the-loop-6a875-cannot-show-stops-the-build-acceptance/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/specs-t01-publish-the-loop-6a875-cannot-show-stops-the-build-acceptance/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/specs-t01-publish-the-loop-6a875-cannot-show-stops-the-build-acceptance/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [acceptance] › specs/t02-publish-the-super-loops.spec.ts:33:1 › every super-loop card has a page with what the card holds @T02 @SITE-1#3 
+
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
+    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+
+       at support/fixtures.ts:93
+
+      91 |       const build = await buildSite({ outDir });
+      92 |       if (build.code !== 0) {
+    > 93 |         throw new Error(
+         |               ^
+      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
+      95 |         );
+      96 |       }
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+
+    Error Context: test-results/specs-t02-publish-the-supe-7eae9-ge-with-what-the-card-holds-acceptance/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/specs-t02-publish-the-supe-7eae9-ge-with-what-the-card-holds-acceptance/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/specs-t02-publish-the-supe-7eae9-ge-with-what-the-card-holds-acceptance/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [acceptance] › specs/t02-publish-the-super-loops.spec.ts:55:1 › a super-loop card the site cannot show stops the build @T02 @SITE-1#3 
+
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
+    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+
+       at support/fixtures.ts:93
+
+      91 |       const build = await buildSite({ outDir });
+      92 |       if (build.code !== 0) {
+    > 93 |         throw new Error(
+         |               ^
+      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
+      95 |         );
+      96 |       }
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+
+    Error Context: test-results/specs-t02-publish-the-supe-7ad65-cannot-show-stops-the-build-acceptance/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/specs-t02-publish-the-supe-7ad65-cannot-show-stops-the-build-acceptance/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/specs-t02-publish-the-supe-7ad65-cannot-show-stops-the-build-acceptance/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [acceptance] › specs/t03-deploy-the-site.spec.ts:17:1 › a deploy puts the commit's site on superloops.dev @T03 @SITE-1#4 @SITE-1#5 @SITE-1#6 @SITE-1#7 @SITE-1#8 
+
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
+    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+
+       at support/fixtures.ts:93
+
+      91 |       const build = await buildSite({ outDir });
+      92 |       if (build.code !== 0) {
+    > 93 |         throw new Error(
+         |               ^
+      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
+      95 |         );
+      96 |       }
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+
+    Error Context: test-results/specs-t03-deploy-the-site--28b7d-it-s-site-on-superloops-dev-acceptance/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/specs-t03-deploy-the-site--28b7d-it-s-site-on-superloops-dev-acceptance/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/specs-t03-deploy-the-site--28b7d-it-s-site-on-superloops-dev-acceptance/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) [fixture-contracts] › _fixtures/states.contract.spec.ts:71:1 › contract: siteBuilt has a built site @fixture-contract 
+
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
+    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+
+       at support/fixtures.ts:93
+
+      91 |       const build = await buildSite({ outDir });
+      92 |       if (build.code !== 0) {
+    > 93 |         throw new Error(
+         |               ^
+      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
+      95 |         );
+      96 |       }
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+
+    Error Context: test-results/_fixtures-states.contract--aeb45--siteBuilt-has-a-built-site-fixture-contracts/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/_fixtures-states.contract--aeb45--siteBuilt-has-a-built-site-fixture-contracts/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/_fixtures-states.contract--aeb45--siteBuilt-has-a-built-site-fixture-contracts/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) [fixture-contracts] › _fixtures/states.contract.spec.ts:76:1 › contract: siteLive serves a version @fixture-contract 
+
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
+    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+
+       at support/fixtures.ts:93
+
+      91 |       const build = await buildSite({ outDir });
+      92 |       if (build.code !== 0) {
+    > 93 |         throw new Error(
+         |               ^
+      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
+      95 |         );
+      96 |       }
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+
+    Error Context: test-results/_fixtures-states.contract-contract-siteLive-serves-a-version-fixture-contracts/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/_fixtures-states.contract-contract-siteLive-serves-a-version-fixture-contracts/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/_fixtures-states.contract-contract-siteLive-serves-a-version-fixture-contracts/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8) [fixture-contracts] › _fixtures/states.contract.spec.ts:81:1 › contract: cloudflareDeploys serves the site @fixture-contract 
+
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
+    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+
+       at support/fixtures.ts:93
+
+      91 |       const build = await buildSite({ outDir });
+      92 |       if (build.code !== 0) {
+    > 93 |         throw new Error(
+         |               ^
+      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
+      95 |         );
+      96 |       }
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+
+    Error Context: test-results/_fixtures-states.contract--837cf-lareDeploys-serves-the-site-fixture-contracts/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/_fixtures-states.contract--837cf-lareDeploys-serves-the-site-fixture-contracts/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/_fixtures-states.contract--837cf-lareDeploys-serves-the-site-fixture-contracts/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8 failed
+    [acceptance] › specs/t01-publish-the-loop-types.spec.ts:24:1 › every card of the catalog has a page with what the card holds @T01 @SITE-1#1 @SITE-1#2 
+    [acceptance] › specs/t01-publish-the-loop-types.spec.ts:46:1 › a card the site cannot show stops the build @T01 @SITE-1#1 @SITE-1#2 
+    [acceptance] › specs/t02-publish-the-super-loops.spec.ts:33:1 › every super-loop card has a page with what the card holds @T02 @SITE-1#3 
+    [acceptance] › specs/t02-publish-the-super-loops.spec.ts:55:1 › a super-loop card the site cannot show stops the build @T02 @SITE-1#3 
+    [acceptance] › specs/t03-deploy-the-site.spec.ts:17:1 › a deploy puts the commit's site on superloops.dev @T03 @SITE-1#4 @SITE-1#5 @SITE-1#6 @SITE-1#7 @SITE-1#8 
+    [fixture-contracts] › _fixtures/states.contract.spec.ts:71:1 › contract: siteBuilt has a built site @fixture-contract 
+    [fixture-contracts] › _fixtures/states.contract.spec.ts:76:1 › contract: siteLive serves a version @fixture-contract 
+    [fixture-contracts] › _fixtures/states.contract.spec.ts:81:1 › contract: cloudflareDeploys serves the site @fixture-contract 
+  2 skipped
+  4 passed (10.7s)
+
+# exit code of npx playwright test: 1
