@@ -1,0 +1,7 @@
+# text-quality: runs of the part and of the language labs, and the writer's sandbox
+.text-quality-runs/
+plugin/parts/text-quality/*/lab/runs/
+plugin/parts/text-quality/*/lab/sandbox/
+
+__pycache__/
+.DS_Store

@@ -1,0 +1,16 @@
+{
+  "name": "superloops",
+  "description": "superloops: agent loops for coding agents, as a Claude Code plugin.",
+  "owner": {
+    "name": "Alex Gutnikov",
+    "url": "https://github.com/gutnikov"
+  },
+  "plugins": [
+    {
+      "name": "superloops",
+      "source": "./plugin",
+      "description": "Make an agent's work on a project checkable from the task to its confirmation where it is used: /superloops maps the project's loops on its first run, and runs every product or harness task through its super-loop.",
+      "version": "0.5.0"
+    }
+  ]
+}
