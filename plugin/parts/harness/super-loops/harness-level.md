@@ -23,15 +23,15 @@ product level   discovery · delivery · remediation · maintenance    the agent
 
 The catalog's loops of this level:
 
-- [steering-loop](../loop-types/meta/steering-loop.md) and
-  [correction-becomes-rule](../loop-types/human/correction-becomes-rule.md) are its remediation: an escape or a
+- [steering-loop](../loops/steering-loop/card.md) and
+  [correction-becomes-rule](../loops/correction-becomes-rule/card.md) are its remediation: an escape or a
   repeated correction becomes a loop at the phase that should have caught it.
-- [agent-calibration](../loop-types/meta/agent-calibration.md) runs three super-loops for one agent: delivery (from
+- [agent-calibration](../loops/agent-calibration/card.md) runs three super-loops for one agent: delivery (from
   `draft` to `gate`), remediation (a false positive becomes an eval) and maintenance (a new model means a new score).
-  [llm-judge-calibration](../loop-types/human/llm-judge-calibration.md) delivers a judge.
-- [sample-audit](../loop-types/human/sample-audit.md) is its detector, as error tracking is the product's. Giving the
+  [llm-judge-calibration](../loops/llm-judge-calibration/card.md) delivers a judge.
+- [sample-audit](../loops/sample-audit/card.md) is its detector, as error tracking is the product's. Giving the
   agent more autonomy on its results is a release like any other: one step at a time, each with a window.
-- [document-review](../loop-types/meta/document-review.md) checks the texts its delivery writes: every `LOOP.md` and
+- [document-review](../loops/document-review/card.md) checks the texts its delivery writes: every `LOOP.md` and
   every prompt of an agent.
 
 ## Its signal
@@ -43,7 +43,7 @@ Strongest first:
 2. **A problem that a recent change introduced.** Remediation finds it; the super-loop and the phase that let it
    through are a failure of the harness.
 3. **A person's corrections, escalations, the false positives and misses of agents, reverts.** The same correction
-   made twice is a missing loop ([correction-becomes-rule](../loop-types/human/correction-becomes-rule.md)).
+   made twice is a missing loop ([correction-becomes-rule](../loops/correction-becomes-rule/card.md)).
 
 The measures of this level are the share of changes not confirmed (the change failure rate of DORA), failures by the
 phase that caught them, repeated corrections of one kind, and calls to a person by policy id. Each should go down.

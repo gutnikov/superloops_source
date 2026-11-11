@@ -37,17 +37,17 @@ new round.
 
 | Phase | What happens | Loop types |
 |---|---|---|
-| entry | A question, a hypothesis or an idea not decided yet arrives | [triage](../loop-types/meta/triage.md), [production-users](../loop-types/human/production-users.md), [user-feedback](../loop-types/production/user-feedback.md) |
-| oracle | The question and its evidence are written down and agreed | [discovery-decision](../loop-types/meta/discovery-decision.md), [interview](../loop-types/human/interview.md), [task-restatement](../loop-types/human/task-restatement.md), [plan-approval](../loop-types/human/plan-approval.md) |
-| work | Prototypes, probes and spikes, thrown away afterwards | [isolated-environment](../loop-types/deployability/isolated-environment.md), [agentic-manual-testing](../loop-types/testing/agentic-manual-testing.md), [benchmarks-vs-baseline](../loop-types/performance/benchmarks-vs-baseline.md), [debugger-repl](../loop-types/observability/debugger-repl.md); the `ui-prototypes` and `app-probing` parts |
-| gate | Every claim in the answer has its evidence: a link, a screenshot, a measurement, a quote. The work's code stays out of main | [discovery-decision](../loop-types/meta/discovery-decision.md), [verification-subagent](../loop-types/meta/verification-subagent.md), [document-review](../loop-types/meta/document-review.md) |
-| confirmation | The person who asked decides | [discovery-decision](../loop-types/meta/discovery-decision.md), [choose-from-options](../loop-types/human/choose-from-options.md), [result-demo](../loop-types/human/result-demo.md) |
+| entry | A question, a hypothesis or an idea not decided yet arrives | [triage](../loops/triage/card.md), [production-users](../loops/production-users/card.md), [user-feedback](../loops/user-feedback/card.md) |
+| oracle | The question and its evidence are written down and agreed | [discovery-decision](../loops/discovery-decision/card.md), [interview](../loops/interview/card.md), [task-restatement](../loops/task-restatement/card.md), [plan-approval](../loops/plan-approval/card.md) |
+| work | Prototypes, probes and spikes, thrown away afterwards | [isolated-environment](../loops/isolated-environment/card.md), [agentic-manual-testing](../loops/agentic-manual-testing/card.md), [benchmarks-vs-baseline](../loops/benchmarks-vs-baseline/card.md), [debugger-repl](../loops/debugger-repl/card.md); the `ui-prototypes` and `app-probing` parts |
+| gate | Every claim in the answer has its evidence: a link, a screenshot, a measurement, a quote. The work's code stays out of main | [discovery-decision](../loops/discovery-decision/card.md), [verification-subagent](../loops/verification-subagent/card.md), [document-review](../loops/document-review/card.md) |
+| confirmation | The person who asked decides | [discovery-decision](../loops/discovery-decision/card.md), [choose-from-options](../loops/choose-from-options/card.md), [result-demo](../loops/result-demo/card.md) |
 
 ## Gate
 
 Each claim of the answer names its evidence, and the evidence exists and says what the claim says. A refuter can try
 to prove a claim wrong, as it does with a "done" in delivery. Code written for the answer lives on a branch or in a
-scratch directory, and is not merged. The loop is [discovery-decision](../loop-types/meta/discovery-decision.md).
+scratch directory, and is not merged. The loop is [discovery-decision](../loops/discovery-decision/card.md).
 
 ## Confirmation
 

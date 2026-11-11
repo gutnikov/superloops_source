@@ -34,25 +34,25 @@ change should improve (the age of a dependency, the number of known vulnerabilit
 latency). The agent may change how a test reaches the code, such as a mock or a setup, but not what the test expects.
 
 Where the tests do not cover the code the change touches, the oracle is weak. Characterization tests come first then:
-they record what the code does now ([approved-fixtures](../loop-types/testing/approved-fixtures.md)).
+they record what the code does now ([approved-fixtures](../loops/approved-fixtures/card.md)).
 
 ## Phases
 
 | Phase | What happens | Loop types |
 |---|---|---|
-| entry | A trigger arrives: a schedule, a release of a dependency, an end of life, a vulnerability, a measure over its budget | [triage](../loop-types/meta/triage.md), [dependency-updates](../loop-types/compatibility/dependency-updates.md), [dependency-scanning-sbom](../loop-types/security/dependency-scanning-sbom.md), [coupling-analysis](../loop-types/code/coupling-analysis.md), [garbage-collection](../loop-types/meta/garbage-collection.md), [knowledge-base-doc-lint](../loop-types/code/knowledge-base-doc-lint.md), [compliance-mutants](../loop-types/security/compliance-mutants.md) |
-| oracle | The baseline is recorded: the tests that must stay as they are, and the measure's current value | [behaviour-invariance](../loop-types/meta/behaviour-invariance.md), [run-tests-first](../loop-types/testing/run-tests-first.md), [approved-fixtures](../loop-types/testing/approved-fixtures.md), [code-coverage](../loop-types/testing/code-coverage.md), [mutation-testing](../loop-types/testing/mutation-testing.md), [benchmarks-vs-baseline](../loop-types/performance/benchmarks-vs-baseline.md), [coupling-analysis](../loop-types/code/coupling-analysis.md) |
+| entry | A trigger arrives: a schedule, a release of a dependency, an end of life, a vulnerability, a measure over its budget | [triage](../loops/triage/card.md), [dependency-updates](../loops/dependency-updates/card.md), [dependency-scanning-sbom](../loops/dependency-scanning-sbom/card.md), [coupling-analysis](../loops/coupling-analysis/card.md), [garbage-collection](../loops/garbage-collection/card.md), [knowledge-base-doc-lint](../loops/knowledge-base-doc-lint/card.md), [compliance-mutants](../loops/compliance-mutants/card.md) |
+| oracle | The baseline is recorded: the tests that must stay as they are, and the measure's current value | [behaviour-invariance](../loops/behaviour-invariance/card.md), [run-tests-first](../loops/run-tests-first/card.md), [approved-fixtures](../loops/approved-fixtures/card.md), [code-coverage](../loops/code-coverage/card.md), [mutation-testing](../loops/mutation-testing/card.md), [benchmarks-vs-baseline](../loops/benchmarks-vs-baseline/card.md), [coupling-analysis](../loops/coupling-analysis/card.md) |
 | work | The agent changes the code | The inner loops |
-| gate | The tests pass with their expected values unchanged, and the measure improved | [behaviour-invariance](../loop-types/meta/behaviour-invariance.md), [verification-subagent](../loop-types/meta/verification-subagent.md), [api-breaking-changes](../loop-types/compatibility/api-breaking-changes.md), [contract-tests](../loop-types/testing/contract-tests.md), [db-migration-lint](../loop-types/compatibility/db-migration-lint.md), [agent-audit-trail](../loop-types/security/agent-audit-trail.md), [human-diff-review](../loop-types/human/human-diff-review.md) |
-| release | The change reaches production | [health-checks-smoke](../loop-types/reliability/health-checks-smoke.md), [load-testing](../loop-types/performance/load-testing.md), [risky-action-gates](../loop-types/human/risky-action-gates.md), [canary-feature-flags](../loop-types/deployability/canary-feature-flags.md) |
-| confirmation | Production behaves as the previous version did, and the measure improved where it is measured | [release-confirmation](../loop-types/production/release-confirmation.md), [canary-feature-flags](../loop-types/deployability/canary-feature-flags.md), [error-tracking](../loop-types/production/error-tracking.md), [slo-degradation](../loop-types/production/slo-degradation.md), [structured-logs](../loop-types/observability/structured-logs.md), [metrics-promql](../loop-types/observability/metrics-promql.md), [perf-budgets-telemetry](../loop-types/performance/perf-budgets-telemetry.md) |
+| gate | The tests pass with their expected values unchanged, and the measure improved | [behaviour-invariance](../loops/behaviour-invariance/card.md), [verification-subagent](../loops/verification-subagent/card.md), [api-breaking-changes](../loops/api-breaking-changes/card.md), [contract-tests](../loops/contract-tests/card.md), [db-migration-lint](../loops/db-migration-lint/card.md), [agent-audit-trail](../loops/agent-audit-trail/card.md), [human-diff-review](../loops/human-diff-review/card.md) |
+| release | The change reaches production | [health-checks-smoke](../loops/health-checks-smoke/card.md), [load-testing](../loops/load-testing/card.md), [risky-action-gates](../loops/risky-action-gates/card.md), [canary-feature-flags](../loops/canary-feature-flags/card.md) |
+| confirmation | Production behaves as the previous version did, and the measure improved where it is measured | [release-confirmation](../loops/release-confirmation/card.md), [canary-feature-flags](../loops/canary-feature-flags/card.md), [error-tracking](../loops/error-tracking/card.md), [slo-degradation](../loops/slo-degradation/card.md), [structured-logs](../loops/structured-logs/card.md), [metrics-promql](../loops/metrics-promql/card.md), [perf-budgets-telemetry](../loops/perf-budgets-telemetry/card.md) |
 
 ## Gate
 
 For every change, the gate checks whether any test's expected value changed, whether the tests pass, and whether the
 measure improved against its baseline. A changed expected value fails the gate whatever the reason, and the work goes
 back to triage. The final run is in CI. The loop is
-[behaviour-invariance](../loop-types/meta/behaviour-invariance.md).
+[behaviour-invariance](../loops/behaviour-invariance/card.md).
 
 ## Confirmation
 
@@ -82,7 +82,7 @@ or Dependabot, or a schedule.
 ## Notes
 
 - This is the super-loop most likely to run without a person: at OpenAI, the pull requests of
-  [garbage collection](../loop-types/meta/garbage-collection.md) were merged automatically. That is why its gate checks
+  [garbage collection](../loops/garbage-collection/card.md) were merged automatically. That is why its gate checks
   the behaviour itself and does not rely on a review: a change of behaviour routed here would reach users with nobody
   approving it.
 - ISO/IEC 14764 calls this adaptive, perfective and preventive maintenance; corrective maintenance is

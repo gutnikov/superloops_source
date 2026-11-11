@@ -2,7 +2,7 @@
 
 A super-loop is the path a piece of work takes in a project, from where it enters to a change confirmed where the
 change is used. A project has up to four, one for each kind of work. They are made of the loops in the
-[catalog](../loop-types/README.md): every loop has a place in them, a super-loop and a phase. What a super-loop adds
+[catalog](../loops/README.md): every loop has a place in them, a super-loop and a phase. What a super-loop adds
 to its loops is what only the whole can check: a gate before the release and a confirmation after it.
 
 | Super-loop | Starts with | Ends with |
@@ -58,7 +58,7 @@ piece of work is choosing its oracle.
 
 The costly mistake is a change of behaviour routed to maintenance. Maintenance runs without a person approving any
 behaviour, so the change would reach users unapproved. Its gate stops it: when a test's expected value has to change,
-the work goes back to triage. The loop that routes is [triage](../loop-types/meta/triage.md).
+the work goes back to triage. The loop that routes is [triage](../loops/triage/card.md).
 
 ## The trace
 

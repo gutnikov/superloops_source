@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/gutnikov/superloops/blob/main/plugin/parts/harness/loops/loop.schema.json",
+  "title": "Loop card",
+  "description": "The frontmatter of loops/<id>/card.md: the one description of a loop that the plugin and the site read. scripts/catalog.py check validates every card against it, and checks what a schema cannot say: the id is the folder's name, the sections, the speed range, the places against the super-loops' phases, the related ids, the image.",
+  "$comment": "catalog.py implements the subset of JSON Schema used here: $ref to $defs, type, const, enum, oneOf, not, if/then/else, properties, required, additionalProperties: false, items, minItems, maxItems, uniqueItems, minLength, maxLength, pattern, format: uri. Keep to it, or extend catalog.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "summary", "sensor", "ilities", "places", "stages", "speed", "needs", "links"],
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/id",
+      "description": "The name of the card's folder. Stable: links, the site's address and the plugin refer to it."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60,
+      "description": "The loop's name, as a card shows it. The explanation goes in summary."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[^\\n]+$",
+      "description": "What the loop does, in one line: what the agent does and what signal it gets. The list of loops on the site and the agent choosing loops read only this."
+    },
+    "image": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*\\.(svg|png|webp|jpg)$",
+      "description": "Optional: an illustration, a file in the card's folder."
+    },
+    "sensor": {
+      "description": "What gives the loop's signal. It decides how far the signal can be trusted.",
+      "oneOf": [
+        {"const": "computational", "description": "A program: tests, a linter, a compiler, a query. Deterministic and cheap; it may block at once."},
+        {"const": "inferential", "description": "An LLM agent: a review, a verdict, a grade. Not deterministic; it blocks only once calibrated (agent-calibration)."},
+        {"const": "human", "description": "A person: the only sensor of intent, slow and costly. Such a loop has the axes when, initiator, sync and assesses."}
+      ]
+    },
+    "ilities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/ility"},
+      "description": "The quality attributes the loop checks, the main one first."
+    },
+    "places": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/place"},
+      "description": "Where the loop serves in the super-loops: <super-loop>/<phase>, or harness:<super-loop>/<phase> at the harness level. The super-loop must have the phase: discovery has no release."
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/stage"},
+      "description": "Where the loop runs."
+    },
+    "speed": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/speed"},
+      "description": "How long one round takes: one value, or a range [from, to], the faster first."
+    },
+    "needs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/need"},
+      "description": "What the agent must reach from its session beyond the repository; [] when nothing. The values are the keys of tools in a project's profile, so the plugin can tell which loops a project can run."
+    },
+    "agent": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/agent"},
+      "description": "Optional: the kinds of agent that are a step of the loop. A card with this field has an Agent step section."
+    },
+    "related": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/id"},
+      "description": "Optional: the ids of loops that pair with this one."
+    },
+    "links": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/link"},
+      "description": "Where to read more: the sources of the card. [] when it has none yet, and its Notes say so."
+    },
+    "when": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "oneOf": [
+          {"const": "before", "description": "Before the work."},
+          {"const": "during", "description": "During the work."},
+          {"const": "after", "description": "After the work."},
+          {"const": "production", "description": "In production."}
+        ]
+      },
+      "description": "Human loops: when the person is in the loop. The earlier, the cheaper a misunderstanding is to fix."
+    },
+    "initiator": {
+      "description": "Human loops: who starts the loop.",
+      "oneOf": [
+        {"const": "agent", "description": "The agent asks."},
+        {"const": "human", "description": "A person interrupts."},
+        {"const": "rule", "description": "A gate by rule."},
+        {"const": "schedule", "description": "A schedule."}
+      ]
+    },
+    "sync": {
+      "description": "Human loops: whether the agent waits for the person.",
+      "oneOf": [
+        {"const": "blocking", "description": "The agent waits."},
+        {"const": "async", "description": "The agent goes on."}
+      ]
+    },
+    "assesses": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "oneOf": [
+          {"const": "intent", "description": "What is wanted."},
+          {"const": "plan", "description": "How the agent will do it."},
+          {"const": "result", "description": "What the agent made."},
+          {"const": "code", "description": "The change itself."},
+          {"const": "action-risk", "description": "Whether an action is safe to take."}
+        ]
+      },
+      "description": "Human loops: what the person assesses."
+    }
+  },
+  "if": {"required": ["sensor"], "properties": {"sensor": {"const": "human"}}},
+  "else": {
+    "properties": {
+      "when": {"$ref": "#/$defs/human-only"},
+      "initiator": {"$ref": "#/$defs/human-only"},
+      "sync": {"$ref": "#/$defs/human-only"},
+      "assesses": {"$ref": "#/$defs/human-only"}
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+    "human-only": {"not": {}, "description": "only a loop with sensor: human has this axis"},
+    "place": {
+      "type": "string",
+      "pattern": "^(harness:)?(delivery|remediation|maintenance|discovery)/(entry|oracle|work|gate|release|confirmation)$"
+    },
+    "ility": {
+      "oneOf": [
+        {"const": "correctness", "description": "The product does what it was specified to do: functional suitability, completeness, faultlessness."},
+        {"const": "alignment", "description": "The work is what the person meant: the intent, the plan and the result match what was wanted."},
+        {"const": "testability", "description": "Behaviour can be checked by tests, and the tests catch what they should."},
+        {"const": "maintainability", "description": "The code is easy to read, change and extend: modularity, analysability, modifiability, evolvability, understandability."},
+        {"const": "security", "description": "Confidentiality, integrity, privacy, compliance, audit and licences."},
+        {"const": "compatibility", "description": "It works with other systems, versions, platforms and locales: integrability, interoperability, portability, i18n."},
+        {"const": "performance", "description": "Time behaviour, resource use, capacity, scalability."},
+        {"const": "reliability", "description": "Availability, fault tolerance, recoverability, resilience."},
+        {"const": "observability", "description": "What the system does can be seen and explained: logs, metrics, traces, debuggability, operability."},
+        {"const": "deployability", "description": "A change reaches where it runs, reproducibly and safely: builds, environments, rollouts, installability."},
+        {"const": "usability", "description": "People can use it: accessibility, UX, interaction."}
+      ]
+    },
+    "stage": {
+      "oneOf": [
+        {"const": "edit", "description": "After every file edit: a hook, the language server."},
+        {"const": "local", "description": "The agent runs it in its own workspace."},
+        {"const": "commit", "description": "A pre-commit or pre-push hook."},
+        {"const": "ci", "description": "CI on clean infrastructure."},
+        {"const": "preview", "description": "A per-PR preview environment."},
+        {"const": "staging", "description": "Staging."},
+        {"const": "production", "description": "Production."},
+        {"const": "scheduled", "description": "On a schedule: nightly, periodically, in batches."},
+        {"const": "task", "description": "Within a task or session: at its start, at its end, or when something in it calls for it."},
+        {"const": "sprint", "description": "Once per sprint."},
+        {"const": "continuous", "description": "All the time."}
+      ]
+    },
+    "speed": {
+      "enum": ["sub-second", "seconds", "minutes", "hours", "days", "weeks"],
+      "description": "From the fastest to the slowest."
+    },
+    "need": {
+      "oneOf": [
+        {"const": "ci", "description": "CI status and logs: gh, glab, a CI MCP server."},
+        {"const": "logs", "description": "Logs: Elasticsearch, Loki, Datadog, CloudWatch."},
+        {"const": "errors", "description": "Error tracking: Sentry, Bugsnag, Crashlytics."},
+        {"const": "metrics", "description": "Metrics: Prometheus, Grafana."},
+        {"const": "traces", "description": "Traces: an OpenTelemetry backend."},
+        {"const": "browser", "description": "A browser or a simulator: Playwright, Chrome DevTools MCP, iOS Simulator, adb."},
+        {"const": "deploy", "description": "Deploys to a stand: kubectl, helm, the Vercel CLI, a CI job the agent can start."}
+      ]
+    },
+    "agent": {
+      "oneOf": [
+        {"const": "reviewer", "description": "Reads a diff or an artifact through a lens or a checklist, returns findings. Blocks only once calibrated."},
+        {"const": "refuter", "description": "Tries to prove a claim of done wrong, by running tests and opening the app. Blocks only once calibrated."},
+        {"const": "judge", "description": "Grades a result on a rubric. Blocks only once calibrated on a person's grades."},
+        {"const": "explorer", "description": "Walks the running app like a user, returns what it saw and the defects. Does not block: what it finds becomes a test."},
+        {"const": "investigator", "description": "Reads logs, traces, profiles or a CI log, returns a diagnosis. Does not block: it helps the working agent."},
+        {"const": "worker", "description": "Does a narrow task on a schedule, returns a small PR. Does not block: the loops on its PR decide."}
+      ]
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1, "description": "The title of the article, book or talk."},
+        "url": {"type": "string", "format": "uri", "description": "Its address; a book may have none."},
+        "author": {"type": "string", "minLength": 1, "description": "Who wrote it: a person or an organisation."},
+        "note": {"type": "string", "minLength": 1, "description": "What the card takes from it, when that is not plain from the title."}
+      }
+    }
+  }
+}

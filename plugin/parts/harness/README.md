@@ -58,9 +58,10 @@ over-engineered refactorings" (Böckeler).
   (requirement → spec → red acceptance tests → work → green). Its own `run` is a gate that checks what only the
   whole can show; it reuses its parts' output and adds no second check for what a part already checks. A super-loop
   is the largest composite: its parts are the loops at its phases.
-- **Loop type**: a pattern from this part's catalog, `loop-types/`, that a loop is built from. 96 types:
-  automated ones in 11 groups and human-in-the-loop ones in `loop-types/human/`. A card's `places` say where the
-  type serves in the super-loops.
+- **Loop type**: a pattern from this part's catalog, `loops/`, that a loop is built from: 96 cards, one folder
+  each, `loops/<id>/card.md`, in the format of `loops/FORMAT.md`. A card's `sensor` says what gives the signal (a
+  program, an LLM agent or a person), its `ilities` what it checks, and its `places` where it serves in the
+  super-loops.
 - **Guide**: what steers the agent before it acts: CLAUDE.md, AGENTS.md, skills. **Sensor**: what tells it after
   it acted: tests, linters, logs, a browser, a reviewer agent. Every loop you build is a sensor.
 - **Agent step**: an agent whose run is part of a loop, such as a reviewer, a refuter or an LLM judge. Its kind
@@ -155,7 +156,7 @@ A harness task that asks which loops to build, such as the first one after the s
 
 1. **Take the requirements.** Write down the failure the loop prevents, who asked for it, and its place: the
    super-loop and the phase that should have caught the failure. Pick the loop type: read the summaries in
-   `loop-types/index.yaml` (its `by_place` lists the loop types of each place), then the card. Create the loop:
+   `loops/index.yaml` (its `by_place` lists the loop types of each place), then the card. Create the loop:
    `python3 $S/scripts/loops.py new <id> --type <type-id>` (or `--type custom`).
 2. **Confirm the tools.** Find each tool the loop needs, install it if the autonomy level allows, run it once, and note
    its version in the Tools section of `LOOP.md`. Missing access is H3.
@@ -179,7 +180,7 @@ A harness task that asks which loops to build, such as the first one after the s
 6. **Document and commit.**
    - Complete every section of `LOOP.md`.
    - Review `LOOP.md` and every agent prompt you wrote with the `document-review` loop type
-     (card `loop-types/meta/document-review.md`, part `text-quality`).
+     (card `loops/document-review/card.md`, part `text-quality`).
    - `python3 $S/scripts/loops.py index`, then `python3 $S/scripts/loops.py check`.
    - Commit, push and merge as far as the autonomy level allows. Once the loop is wired in on the main branch, set
      `status: active`.
@@ -192,7 +193,7 @@ Then build the composite's gate as its `run`, with must-fire cases for states of
 Report the result to the user in a few lines: the loop diagram, the validation table, and anything still open.
 
 Prefer loops that run without a person. Add a human-in-the-loop step only where no check can stand in for a
-person's judgement, and then pick its loop type from `loop-types/human/`.
+person's judgement, and then pick its loop type from those with `sensor: human` (`loops/human-in-the-loop.md`).
 
 ## Agent steps
 
@@ -254,7 +255,7 @@ Look at a loop again when:
 - `python3 $S/scripts/loops.py stats` shows the same question asked more than once: automate the answer, or
   propose to settle it in the Notes of `superloops/superloops.md` (H7);
 - the user corrects the agent twice for the same thing: turn the correction into a loop
-  (`loop-types/human/correction-becomes-rule.md`);
+  (`loops/correction-becomes-rule/card.md`);
 - a tool, a model or the loop type changes;
 - the project changes: a new CI job or stand, a tool connected or lost. Update `superloops/map.yaml` and redraw the
   map, then check which loops the change allows or makes useless.
@@ -301,7 +302,7 @@ retires a loop.
 | `$S/templates/agent.md` | The template for an agent that is a step of a loop |
 | `$S/agent-formats.md` | What agents return (Finding, Finding check, Verdict, Diagnosis), their evals and outcomes |
 | `$S/super-loops/` | The four super-loops and the harness level: phases, oracles, gates, confirmations, exits, trace |
-| `$S/loop-types/` | The catalog: `README.md`, `index.yaml`, one card per loop type |
+| `$S/loops/` | The catalog: `README.md`, `FORMAT.md`, `loop.schema.json`, `index.yaml`, one folder per loop type with its `card.md` |
 | `$S/scripts/loops.py` | `init`, `new`, `validate`, `check`, `index`, `hitl`, `stats`, `agent-new`, `eval-score`, `outcome`, `map`, `candidates`, `trace`, `migrate` for the project's `superloops/` |
 | `$S/scripts/catalog.py` | `index` and `check` for the catalog itself |
 
