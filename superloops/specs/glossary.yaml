@@ -8,9 +8,12 @@ terms:
     meaning: "one check an agent runs on its own work, with its trigger, its command, its signal and what the agent does with it"
     not: [cycle]
   - term: loop type
-    meaning: "a pattern from the plugin's catalog that a loop is built from: one card in plugin/parts/harness/loop-types/"
-  - term: loop group
-    meaning: "a group of loop types in the catalog, one folder of plugin/parts/harness/loop-types/, such as testing or security"
+    meaning: "a pattern from the plugin's catalog that a loop is built from: one card, plugin/parts/harness/loops/<id>/card.md; on the site, a loop"
+  - term: sensor
+    meaning: "what gives a loop's signal: computational (a program), inferential (an LLM agent) or human (a person)"
+  - term: ility
+    meaning: "a quality attribute a loop checks, from the closed list of plugin/parts/harness/loops/loop.schema.json, such as testability or observability"
+    not: [quality, group]
   - term: super-loop
     meaning: "the path a piece of work takes from its entry to a change confirmed where it is used: delivery, remediation, maintenance or discovery; SuperLoop in a name"
   - term: phase

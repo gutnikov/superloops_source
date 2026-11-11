@@ -1,0 +1,48 @@
+# Requirements from one source: a ticket or a text. Ids are stable: spec elements refer to them in `reqs:`.
+
+key: SITE-2
+source: "text from the owner in the session of 2026-11-11: the structure and format of the loop card (translated from Russian)"
+title: "The loop card: one source of truth for the site and the plugin"
+fetched: 2026-11-11
+status: questions              # draft | questions | approved | superseded
+approved_by: ""
+approved_at: ""
+
+requirements:
+  - id: SITE-2#1
+    kind: functional
+    text: "The loop card is used for both the website and the plugin and is the single source of truth: what the cards in plugin/parts/harness/loops/ hold is what the site shows."
+    prod:
+      signal: "a loop's page is opened on superloops.dev: by the synthetic check right after the deploy (SITE-1?4)"
+      match: {path_prefix: "/loops/"}
+      min: 1
+  - id: SITE-2#2
+    kind: functional
+    text: "A loop's page shows the card's categories: its name; its description (why it is needed, how it works and what it does); its speed; the tools and infrastructure it needs; where to read more; which super-loop(s) it belongs to; its ilities."
+    prod:
+      signal: "a loop's page is opened on superloops.dev: by the synthetic check right after the deploy (SITE-1?4)"
+      match: {path_prefix: "/loops/"}
+      min: 1
+  - id: SITE-2#3
+    kind: functional
+    text: "A card's image is used as the illustration of the card."
+    prod:
+      signal: none
+      why: "no card has an image yet; the synthetic check opens a loop's page, and the acceptance test checks a card with an image built from a fixture"
+  - id: SITE-2#4
+    kind: constraint
+    text: "There are 4 super-loop types; everything else is just a loop: the name meta goes, because its meaning overlaps with super."
+
+questions:
+  - id: SITE-2?1
+    reason: H4
+    text: "Besides the categories of SITE-2#2, the card has more fields: what gives the signal (sensor: a program, an LLM agent or a person), where the loop runs (stages), the loops that pair with it (related), the kinds of agent that are a step of it, and for a loop where a person gives the signal its four axes (when, who starts it, whether the agent waits, what the person assesses). Does a loop's page show (a) every field of the card, the related loops as links to their pages (recommended: the card is the single source of truth, and nothing of it is hidden), or (b) only the categories of SITE-2#2?"
+    answer: ""
+  - id: SITE-2?2
+    reason: H1
+    text: "Where a card has an image, the page shows it right under the title, with the loop's name as its alt text, and the file is served next to the page (/loops/<id>/<file>). Is that right, or should the alt text be empty, as for a decorative picture?"
+    answer: ""
+  - id: SITE-2?3
+    reason: H4
+    text: "SITE-1#2 says the site shows what the cards in plugin/parts/harness/loop-types/ hold; that folder is gone, and SITE-2#1 says the same of plugin/parts/harness/loops/. An approved requirement file can only be superseded as a whole, and SITE-1's other requirements stand. Keep SITE-1#2 as it is, traced to the same slice as SITE-2#1 (recommended), or edit its text to the new path?"
+    answer: ""

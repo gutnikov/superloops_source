@@ -9,7 +9,7 @@ system: superloops.dev
 actors: [Visitor]
 externals:
   Catalog:
-    outcomes: {valid: catalogValid, invalid: catalogWithInvalidCard}
+    outcomes: {valid: catalogValid, invalid: catalogWithInvalidCard, withImage: catalogWithImage}
   Cloudflare:
     outcomes: {deploys: cloudflareDeploys, fails: cloudflareFails}
 clock: false
@@ -20,13 +20,14 @@ rules: {}
 screens:
   HomePage: {route: /, pom: homePage}
   LoopTypePage: {route: "/loops/<id>/", pom: loopTypePage}
+  LoopImageFile: {route: "/loops/<id>/<image>", pom: loopTypePage}
   SuperLoopPage: {route: "/super-loops/<id>/", pom: superLoopPage}
   VersionFile: {route: /version.txt, pom: versionFile}
 
 states:
   catalogOnMain:
     given: []
-    note: "the repository at a commit of main: the catalog as it is in plugin/parts/harness: 96 loop-type cards in 12 groups, and 4 super-loop cards (delivery, discovery, maintenance, remediation; README.md and harness-level.md of super-loops/ are documents, not cards); no site built from it yet"
+    note: "the repository at a commit of main: the catalog as it is in plugin/parts/harness: 96 loop cards, one folder each (loops/<id>/card.md, none with an image), and 4 super-loop cards (delivery, discovery, maintenance, remediation; README.md and harness-level.md of super-loops/ are documents, not cards); no site built from it yet"
   siteBuilt:
     extends: catalogOnMain
     given: [LoopTypePublished, SuperLoopPublished]
@@ -43,15 +44,15 @@ slices:
     external: Catalog
     trigger: external
     reads: []
-    reqs: [SITE-1#1, SITE-1#2]
+    reqs: [SITE-1#1, SITE-1#2, SITE-2#1, SITE-2#2, SITE-2#3, SITE-2#4]
     command:
       name: PublishLoopType
-      fields: {id: ext, title: ext, group: ext, places: ext, stages: ext, qualities: ext, summary: ext, sections: ext}
+      fields: {id: ext, title: ext, summary: ext, image: ext, sensor: ext, ilities: ext, places: ext, stages: ext, speed: ext, needs: ext, agent: ext, related: ext, links: ext, when: ext, initiator: ext, sync: ext, assesses: ext, sections: ext}
     errors: [CardInvalid]
     events:
       LoopTypePublished:
         stream: Site
-        fields: {id: cmd, title: cmd, group: cmd, places: cmd, stages: cmd, qualities: cmd, summary: cmd, sections: cmd}
+        fields: {id: cmd, title: cmd, summary: cmd, image: cmd, sensor: cmd, ilities: cmd, places: cmd, stages: cmd, speed: cmd, needs: cmd, agent: cmd, related: cmd, links: cmd, when: cmd, initiator: cmd, sync: cmd, assesses: cmd, sections: cmd}
     specs:
       - name: every card of the catalog has a page with what the card holds
         given: catalogOnMain
@@ -60,12 +61,39 @@ slices:
           events: [LoopTypePublished]
           see:
             - {screen: LoopTypePage, field: LoopType.title, is: "Unit tests, red/green TDD"}
-            - {screen: LoopTypePage, field: LoopType.group, is: "testing"}
+            - {screen: LoopTypePage, field: LoopType.summary, is: "The agent writes a test and sees it fail, then writes the code until the test passes, then refactors."}
+            - {screen: LoopTypePage, field: LoopType.sensor, is: "computational"}
+            - {screen: LoopTypePage, field: LoopType.ilities, is: "testability, correctness"}
             - {screen: LoopTypePage, field: LoopType.places, is: "delivery/work, remediation/work"}
             - {screen: LoopTypePage, field: LoopType.stages, is: "local"}
-            - {screen: LoopTypePage, field: LoopType.qualities, is: "testability, correctness"}
-            - {screen: LoopTypePage, field: LoopType.summary, is: "The agent writes a test and makes sure it fails (red). Then it writes the implementation until the run is green, and refactors."}
-            - {screen: LoopTypePage, field: LoopType.sections, is: "Loop, Set up, Notes, Agent step, Related, Sources, with the card's text"}
+            - {screen: LoopTypePage, field: LoopType.speed, is: "seconds"}
+            - {screen: LoopTypePage, field: LoopType.needs, is: "none"}
+            - {screen: LoopTypePage, field: LoopType.agent, is: "reviewer"}
+            - {screen: LoopTypePage, field: LoopType.related, is: "acceptance-loop, mutation-testing: each a link to that loop's page"}
+            - {screen: LoopTypePage, field: LoopType.links, is: "5 links, in the card's order; the first: Red/green TDD — Agentic Engineering Patterns, by Simon Willison, to https://andrewmurphy.io/stdlib/b139fcdd-2733-435b-a97f-6d7e47836719"}
+            - {screen: LoopTypePage, field: LoopType.image, is: "none: the card has no image"}
+            - {screen: LoopTypePage, field: LoopType.sections, is: "Why, How it works, Set up, Notes, Agent step, with the card's text"}
+      - name: a loop where a person gives the signal shows its four axes
+        given: catalogOnMain
+        external: {Catalog: valid}
+        then:
+          events: [LoopTypePublished]
+          see:
+            - {screen: LoopTypePage, field: LoopType.title, is: "Plan approval"}
+            - {screen: LoopTypePage, field: LoopType.sensor, is: "human"}
+            - {screen: LoopTypePage, field: LoopType.when, is: "before"}
+            - {screen: LoopTypePage, field: LoopType.initiator, is: "agent"}
+            - {screen: LoopTypePage, field: LoopType.sync, is: "blocking"}
+            - {screen: LoopTypePage, field: LoopType.assesses, is: "plan"}
+      - name: a card's image illustrates its page
+        given: catalogOnMain
+        external: {Catalog: withImage}
+        note: "the catalog where loops/red-green-tdd/ also has image.svg, and its card says image: image.svg"
+        then:
+          events: [LoopTypePublished]
+          see:
+            - {screen: LoopTypePage, field: LoopType.image, is: "the card's image, right under the title, its alt text the loop's name: Unit tests, red/green TDD"}
+            - {screen: LoopImageFile, field: LoopType.image, is: "the bytes of loops/red-green-tdd/image.svg, at /loops/red-green-tdd/image.svg"}
       - name: a card the site cannot show stops the build
         given: siteLive
         external: {Catalog: invalid}
@@ -143,18 +171,28 @@ slices:
   - id: V01
     name: Loop type
     type: view
-    reqs: [SITE-1#8]
+    reqs: [SITE-1#8, SITE-2#2, SITE-2#3]
     read_model:
       name: LoopType
       fields:
         title: [LoopTypePublished.title]
-        group: [LoopTypePublished.group]
+        summary: [LoopTypePublished.summary]
+        image: [LoopTypePublished.image]
+        sensor: [LoopTypePublished.sensor]
+        ilities: [LoopTypePublished.ilities]
         places: [LoopTypePublished.places]
         stages: [LoopTypePublished.stages]
-        qualities: [LoopTypePublished.qualities]
-        summary: [LoopTypePublished.summary]
+        speed: [LoopTypePublished.speed]
+        needs: [LoopTypePublished.needs]
+        agent: [LoopTypePublished.agent]
+        related: [LoopTypePublished.related]
+        links: [LoopTypePublished.links]
+        when: [LoopTypePublished.when]
+        initiator: [LoopTypePublished.initiator]
+        sync: [LoopTypePublished.sync]
+        assesses: [LoopTypePublished.assesses]
         sections: [LoopTypePublished.sections]
-    screens: [LoopTypePage]
+    screens: [LoopTypePage, LoopImageFile]
 
   - id: V03
     name: Super-loop
