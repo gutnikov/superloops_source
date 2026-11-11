@@ -1,5 +1,6 @@
-// superloops.dev (spec SITE-1): Astro with static output, the pages built from the plugin's catalog at build time.
-// The seams with the acceptance tests are in tests/site/README.md; the environment variables are seams 2 and 3.
+// superloops.dev (specs SITE-1, SITE-2): Astro with static output, the pages built from the plugin's catalog at
+// build time. The seams with the acceptance tests are in tests/site/README.md; the environment variables are seams
+// 2 and 3.
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';

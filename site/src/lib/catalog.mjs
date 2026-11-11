@@ -1,7 +1,9 @@
 /**
- * The plugin's catalog, read at build time from a folder laid out like plugin/parts/harness: the loop-type cards
- * (loop-types/<group>/<id>.md, their summaries in loop-types/index.yaml) and the super-loop cards (the files of
- * super-loops/ with frontmatter; README.md and harness-level.md have none: they are documents, with no page).
+ * The plugin's catalog, read at build time from a folder laid out like plugin/parts/harness: the loop cards
+ * (loops/<id>/card.md, every field in the frontmatter, as loops/loop.schema.json and loops/FORMAT.md define them,
+ * and the card's image next to it; a folder whose name starts with _ is the template, not a loop; the files of
+ * loops/ are documents) and the super-loop cards (the files of super-loops/ with frontmatter; README.md and
+ * harness-level.md have none: they are documents, with no page).
  *
  * Nothing of a card is copied into the site: every page is built from what this reads. A card the site cannot
  * show stops the build with CardInvalid and the card's path relative to the catalog folder.
@@ -16,6 +18,33 @@ import { renderBlock, renderInline } from './markdown.mjs';
 const CATALOG_IN_REPOSITORY = 'plugin/parts/harness';
 
 const FRONTMATTER = /^---\n([\s\S]*?)\n---\n/;
+
+/**
+ * The fields of a loop card (loops/loop.schema.json), each one shown on the loop's page. A card with any other
+ * field cannot be shown: the page would hide part of what the card holds (SITE-2#1).
+ */
+const LOOP_FIELDS = new Set([
+  'id',
+  'title',
+  'summary',
+  'image',
+  'sensor',
+  'ilities',
+  'places',
+  'stages',
+  'speed',
+  'needs',
+  'agent',
+  'related',
+  'links',
+  'when',
+  'initiator',
+  'sync',
+  'assesses',
+]);
+
+/** The fields of an entry of a loop card's links. */
+const LINK_FIELDS = new Set(['title', 'url', 'author', 'note']);
 
 /** One or more cards of the catalog that the site cannot show. */
 export class CardInvalid extends Error {
@@ -32,8 +61,13 @@ export class CardInvalid extends Error {
 
 /**
  * @typedef {{ html: string, text: string }} Text  a one-line value, rendered and as plain text
- * @typedef {{ id: string, path: string, title: Text, group: string, places: string[], stages: string[],
- *   qualities: string[], summary: string, sections: string }} LoopType  summary and sections are HTML
+ * @typedef {{ title: string, url?: string, author?: string, note?: string }} Link  an entry of a loop card's links
+ * @typedef {{ file: string, src: string, source: string }} Image  file: as the card names it; src: where the site
+ *   serves it, next to the page; source: the absolute path of the card's file
+ * @typedef {{ id: string, path: string, title: Text, summary: Text, image?: Image, sensor: string,
+ *   ilities: string[], places: string[], stages: string[], speed: string[], needs: string[], agent?: string[],
+ *   related?: string[], links: Link[], when?: string[], initiator?: string, sync?: string, assesses?: string[],
+ *   sections: string }} LoopType  a field the card does not have is undefined; sections is HTML
  * @typedef {{ id: string, path: string, title: Text, phases: string[], exits: string[], sections: string }} SuperLoop
  * @typedef {{ dir: string, loopTypes: LoopType[], superLoops: SuperLoop[] }} Catalog
  */
@@ -44,9 +78,9 @@ export class CardInvalid extends Error {
  * @returns {Catalog}
  */
 export function loadCatalog(dir) {
-  const loopTypesDir = path.join(dir, 'loop-types');
+  const loopsDir = path.join(dir, 'loops');
   const superLoopsDir = path.join(dir, 'super-loops');
-  for (const folder of [loopTypesDir, superLoopsDir]) {
+  for (const folder of [loopsDir, superLoopsDir]) {
     if (!isFolder(folder)) {
       throw new Error(
         `CatalogUnreadable: ${dir} has no ${path.basename(folder)}/ folder. SUPERLOOPS_CATALOG must be a folder ` +
@@ -54,33 +88,58 @@ export function loadCatalog(dir) {
       );
     }
   }
-  const summaries = readSummaries(path.join(loopTypesDir, 'index.yaml'));
   const problems = [];
 
   // First every card's frontmatter, so that a link from one card to another resolves to that card's page.
-  const loopTypeCards = [];
-  for (const group of fs.readdirSync(loopTypesDir).filter((name) => isFolder(path.join(loopTypesDir, name))).sort()) {
-    for (const file of fs.readdirSync(path.join(loopTypesDir, group)).sort()) {
-      if (!file.endsWith('.md') || file === 'README.md') continue;
-      const rel = `loop-types/${group}/${file}`;
-      const card = readCard(dir, rel);
-      if (!card.data) {
-        problems.push({ card: rel, reason: card.problem ?? 'no frontmatter' });
-        continue;
-      }
-      const check = checker(rel, problems);
-      const id = check.id(card.data.id, file);
-      const title = check.text(card.data.title, 'title');
-      const cardGroup = check.text(card.data.group, 'group');
-      if (cardGroup !== undefined && cardGroup !== group) check.fail(`group ${JSON.stringify(cardGroup)} is not its folder, ${group}`);
-      const places = check.list(card.data.places, 'places');
-      const stages = check.list(card.data.stages, 'stages');
-      const qualities = check.list(card.data.qualities, 'qualities');
-      const summary = id === undefined ? undefined : summaries.get(id);
-      if (id !== undefined && !summary) {
-        check.fail(`loop-types/index.yaml has no summary for ${id} (python3 scripts/catalog.py index writes it)`);
-      }
-      if (check.ok) loopTypeCards.push({ rel, body: card.body, id, title, group, places, stages, qualities, summary });
+  const loopCards = [];
+  const loopFolders = fs
+    .readdirSync(loopsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('_'))
+    .map((entry) => entry.name)
+    .sort();
+  for (const folder of loopFolders) {
+    const rel = `loops/${folder}/card.md`;
+    if (!fs.existsSync(path.join(dir, rel))) {
+      console.warn(`[superloops] loops/${folder}/ has no card.md: it is not a loop, and has no page`);
+      continue;
+    }
+    const card = readCard(dir, rel);
+    if (!card.data) {
+      problems.push({ card: rel, reason: card.problem ?? 'no frontmatter' });
+      continue;
+    }
+    const { data } = card;
+    const check = checker(rel, problems);
+    for (const field of Object.keys(data).filter((field) => !LOOP_FIELDS.has(field))) {
+      check.fail(`${field} is not a field of a loop card (loops/loop.schema.json), so the site cannot show it`);
+    }
+    const fields = {
+      id: check.id(data.id, folder, 'its folder'),
+      title: check.text(data.title, 'title'),
+      summary: check.text(data.summary, 'summary'),
+      image: check.image(data.image, path.join(dir, 'loops', folder)),
+      sensor: check.text(data.sensor, 'sensor'),
+      ilities: check.list(data.ilities, 'ilities'),
+      places: check.list(data.places, 'places'),
+      stages: check.list(data.stages, 'stages'),
+      speed: check.list(data.speed, 'speed'),
+      needs: check.list(data.needs, 'needs'),
+      agent: check.list(data.agent, 'agent', { optional: true }),
+      related: check.list(data.related, 'related', { optional: true }),
+      links: check.links(data.links),
+      when: check.list(data.when, 'when', { optional: true }),
+      initiator: check.text(data.initiator, 'initiator', { optional: true }),
+      sync: check.text(data.sync, 'sync', { optional: true }),
+      assesses: check.list(data.assesses, 'assesses', { optional: true }),
+    };
+    if (check.ok) loopCards.push({ rel, body: card.body, ...fields });
+  }
+
+  // A related loop is a link to its page, so it must be a loop of the catalog.
+  const loopIds = new Set(loopCards.map((card) => card.id));
+  for (const card of loopCards) {
+    for (const id of card.related ?? []) {
+      if (!loopIds.has(id)) problems.push({ card: card.rel, reason: `related names ${id}, which is not a loop of the catalog` });
     }
   }
 
@@ -95,15 +154,15 @@ export function loadCatalog(dir) {
     }
     if (!card.data) continue; // a document about the super-loops, not a card
     const check = checker(rel, problems);
-    const id = check.id(card.data.id, file);
+    const id = check.id(card.data.id, file.replace(/\.md$/, ''), 'the file name');
     const title = check.text(card.data.title, 'title');
-    const phases = check.list(card.data.phases, 'phases');
-    const exits = check.list(card.data.exits, 'exits');
+    const phases = check.list(card.data.phases, 'phases', { optional: true }) ?? [];
+    const exits = check.list(card.data.exits, 'exits', { optional: true }) ?? [];
     if (check.ok) superLoopCards.push({ rel, body: card.body, id, title, phases, exits });
   }
 
   const pages = new Map();
-  for (const [cards, route] of [[loopTypeCards, 'loops'], [superLoopCards, 'super-loops']]) {
+  for (const [cards, route] of [[loopCards, 'loops'], [superLoopCards, 'super-loops']]) {
     const seen = new Map();
     for (const card of cards) {
       if (seen.has(card.id)) {
@@ -122,22 +181,28 @@ export function loadCatalog(dir) {
         console.warn(`[superloops] ${card.rel}: ${count} piece(s) of raw HTML, which the site does not show`),
     };
     return {
-      title: renderInline(card.title, options),
+      inline: (markdown) => renderInline(markdown, options),
       block: (markdown, dropTitle = false) => renderBlock(markdown, { ...options, dropTitle }),
     };
   };
 
   return {
     dir,
-    loopTypes: loopTypeCards.map((card) => {
-      const { title, block } = render(card);
-      const { id, rel, group, places, stages, qualities } = card;
-      return { id, path: rel, title, group, places, stages, qualities, summary: block(card.summary), sections: block(card.body, true) };
+    loopTypes: loopCards.map(({ rel, body, title, summary, image, ...fields }) => {
+      const { inline, block } = render({ rel });
+      return {
+        ...fields,
+        path: rel,
+        title: inline(title),
+        summary: inline(summary),
+        ...(image && { image: { ...image, src: `/loops/${fields.id}/${encodeURIComponent(image.file)}` } }),
+        sections: block(body, true),
+      };
     }),
     superLoops: superLoopCards.map((card) => {
-      const { title, block } = render(card);
+      const { inline, block } = render(card);
       const { id, rel, phases, exits } = card;
-      return { id, path: rel, title, phases, exits, sections: block(card.body, true) };
+      return { id, path: rel, title: inline(card.title), phases, exits, sections: block(card.body, true) };
     }),
   };
 }
@@ -188,52 +253,91 @@ function readCard(dir, rel) {
   return { data, body: source.slice(match[0].length) };
 }
 
-/** id -> summary, as loop-types/index.yaml states it. */
-function readSummaries(file) {
-  let index;
-  try {
-    index = parseYaml(fs.readFileSync(file, 'utf8'));
-  } catch (error) {
-    throw new Error(`CatalogUnreadable: ${file}: ${error.message.split('\n')[0]}`);
-  }
-  const entries = Array.isArray(index?.loop_types) ? index.loop_types : [];
-  return new Map(
-    entries.filter((e) => e && typeof e.summary === 'string' && e.summary.trim()).map((e) => [String(e.id), e.summary]),
-  );
-}
-
 /** The checks of a card's frontmatter fields; each failed one adds a problem for the card. */
 function checker(card, problems) {
+  const absent = (value) => value === undefined || value === null;
   const check = {
     ok: true,
     fail(reason) {
       check.ok = false;
       problems.push({ card, reason });
     },
-    /** A one-line value the page shows: a non-empty scalar. Undefined when it is not one. */
-    text(value, field) {
+    /**
+     * A one-line value the page shows: a non-empty scalar. Undefined when it is not one, or when the card does not
+     * have it and may leave it out (`optional`).
+     */
+    text(value, field, { optional = false } = {}) {
+      if (optional && absent(value)) return undefined;
       if (value !== null && typeof value === 'object') {
         check.fail(`${field} is not a single value`);
         return undefined;
       }
-      const text = value === undefined || value === null ? '' : String(value).trim();
+      const text = absent(value) ? '' : String(value).trim();
       if (!text) check.fail(`the frontmatter has no ${field}`);
       return text || undefined;
     },
-    /** The id: the page's address, so it must be the file's name. */
-    id(value, file) {
+    /** The id: the page's address, so it must be the name of the card's folder or file. */
+    id(value, expected, what) {
       const id = check.text(value, 'id');
-      if (id === undefined || `${id}.md` === file) return id;
-      check.fail(`id ${JSON.stringify(id)} does not match the file name`);
+      if (id === undefined || id === expected) return id;
+      check.fail(`id ${JSON.stringify(id)} is not ${what}, ${expected}`);
       return undefined;
     },
-    /** A list the page shows joined: absent or empty is none; a single value is a list of one. */
-    list(value, field) {
-      if (value === undefined || value === null) return [];
+    /**
+     * A list the page shows joined; a single value is a list of one. The card must have it, unless it may leave it
+     * out (`optional`): then undefined when it does.
+     */
+    list(value, field, { optional = false } = {}) {
+      if (absent(value)) {
+        if (!optional) check.fail(`the frontmatter has no ${field}`);
+        return undefined;
+      }
       const values = Array.isArray(value) ? value : [value];
       if (values.every((v) => v !== null && typeof v !== 'object')) return values.map(String);
       check.fail(`${field} is not a list of values`);
-      return [];
+      return undefined;
+    },
+    /** Where to read more: a list of entries, each with a title, and a url, an author and a note where it has them. */
+    links(value) {
+      if (absent(value)) {
+        check.fail('the frontmatter has no links');
+        return undefined;
+      }
+      if (!Array.isArray(value)) {
+        check.fail('links is not a list of entries');
+        return undefined;
+      }
+      return value.map((entry, index) => {
+        const at = `links[${index}]`;
+        if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) {
+          check.fail(`${at} is not an entry with a title`);
+          return undefined;
+        }
+        for (const field of Object.keys(entry).filter((field) => !LINK_FIELDS.has(field))) {
+          check.fail(`${at}.${field} is not a field of a link (title, url, author, note)`);
+        }
+        const link = { title: check.text(entry.title, `${at}.title`) };
+        for (const field of ['url', 'author', 'note']) {
+          const text = check.text(entry[field], `${at}.${field}`, { optional: true });
+          if (text !== undefined) link[field] = text;
+        }
+        return link;
+      });
+    },
+    /** The image: a file of the card's folder, which the site serves next to the page. Undefined when there is none. */
+    image(value, folder) {
+      const file = check.text(value, 'image', { optional: true });
+      if (file === undefined) return undefined;
+      if (file !== path.basename(file) || file === '.' || file === '..' || file.includes('\\')) {
+        check.fail(`image ${JSON.stringify(file)} is not the name of a file in the card's folder`);
+        return undefined;
+      }
+      const source = path.join(folder, file);
+      if (!fs.existsSync(source) || !fs.statSync(source).isFile()) {
+        check.fail(`image ${file} is not in the card's folder`);
+        return undefined;
+      }
+      return { file, source };
     },
   };
   return check;

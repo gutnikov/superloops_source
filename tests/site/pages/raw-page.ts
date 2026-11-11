@@ -23,7 +23,7 @@ export class RawPage {
   /** `site` is the origin of the site under test: the local build's server, or SITE_BASE_URL. */
   constructor(
     protected readonly page: Page,
-    private readonly site: string,
+    protected readonly site: string,
   ) {
     this.beacons = page.locator(`script[src^="${BEACON_SRC}"]`);
     this.linkedStylesheets = page.locator('link[rel~="stylesheet" i]');

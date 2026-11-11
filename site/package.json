@@ -2,7 +2,7 @@
   "name": "superloops-site",
   "private": true,
   "type": "module",
-  "description": "superloops.dev: raw pages built from the plugin's catalog at build time (spec SITE-1)",
+  "description": "superloops.dev: raw pages built from the plugin's catalog at build time (specs SITE-1, SITE-2)",
   "scripts": {
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev"
