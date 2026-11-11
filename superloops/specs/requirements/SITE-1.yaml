@@ -4,9 +4,9 @@ key: SITE-1
 source: "text from the owner in the session of 2026-11-11, and the plugin's catalog (the setup of specs: Sources)"
 title: "The site on superloops.dev: the loop types and the super-loops of the plugin's catalog"
 fetched: 2026-11-11
-status: questions                # draft | questions | approved | superseded
-approved_by: ""
-approved_at: ""
+status: approved                 # draft | questions | approved | superseded
+approved_by: "the owner (Alex Gutnikov), in the session"
+approved_at: "2026-11-11"
 
 requirements:
   - id: SITE-1#1
