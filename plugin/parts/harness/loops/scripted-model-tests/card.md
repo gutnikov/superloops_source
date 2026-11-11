@@ -20,6 +20,16 @@ links:
   - title: "Regression tests named by issue"
     url: "https://github.com/earendil-works/pi/tree/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/packages/coding-agent/test/suite/regressions"
     author: "pi (earendil-works)"
+  - title: "fakeContentGenerator.ts: strict and non-strict replay"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/core/fakeContentGenerator.ts#L83-L114"
+    author: "gemini-cli (Google)"
+  - title: "Integration tests: regenerating model responses"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/docs/integration-tests.md#L59-L76"
+    author: "gemini-cli (Google)"
+    note: "REGENERATE_MODEL_GOLDENS, and the warning to review the new responses for personal and system details."
+  - title: "test-rig.ts: record or replay"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/test-utils/src/test-rig.ts#L545-L557"
+    author: "gemini-cli (Google)"
 ---
 
 ## Why
@@ -47,6 +57,14 @@ error or an abort.
   live apart and run only when their credentials are present.
 - **A shared harness** that builds the session around the fake provider, so a test states only the script and the
   assertions.
+- **Scripts recorded from the real model, replayed in order.** A long script is recorded, not written by hand.
+  gemini-cli keeps one `.responses` file per integration test, a JSON line per model call; with
+  `REGENERATE_MODEL_GOLDENS=true` the CLI runs against the real model with `--record-responses` and the file is
+  written back over the golden. Otherwise the fake replays it in order and fails with `No more mock responses for
+  <method>, got request: …` or `Unexpected response type` when the code makes a call the script does not hold. A
+  non-strict mode takes the next response of the right kind, for calls whose order varies, such as background ones.
+  A regenerated golden is a diff a person reviews before it is committed: it can hold details of the machine or the
+  person who recorded it.
 - **Regressions named by their issue**: `test/suite/regressions/<issue>-<what>.test.ts`, 93 of them in pi, such as a
   queued slash command that runs as a follow-up and a retry after a lost network connection. Each script reproduces
   the failure its issue reported, red before the fix ([reproduction-gate](../reproduction-gate/card.md)).

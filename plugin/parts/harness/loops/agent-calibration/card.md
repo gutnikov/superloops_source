@@ -25,6 +25,17 @@ links:
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/packages/evals/evals/documentation-audit.eval.ts"
     author: "pi (earendil-works)"
     note: "an eval that checks the agent's reads as well as its verdict."
+  - title: "Caretaker triage eval: golden specs from human pull requests"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/tools/caretaker-agent/evals/triage/helpers/generate_golden_spec.md#L18-L30"
+    author: "gemini-cli (Google)"
+    note: "the Fairness Pruning Pass: files the human PR changed beyond the reported symptom are pruned."
+  - title: "Caretaker triage eval: a worktree at the issue's version"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/tools/caretaker-agent/evals/triage/runner.py#L45-L58"
+    author: "gemini-cli (Google)"
+  - title: "Caretaker triage eval: the summary"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/tools/caretaker-agent/evals/triage/helpers/summary.py#L249-L315"
+    author: "gemini-cli (Google)"
+    note: "autoclose_recall_rate and valid_kept_open_rate."
 ---
 
 ## Why
@@ -69,6 +80,13 @@ in use: each verdict's outcome is logged (confirmed, false positive, missed, ove
   the harness's `agent-formats.md`. For a reviewer, a guard or a refuter: broken copies that must fire and clean
   ones that must pass, usually made from the loop's own must-fire and must-pass cases. For a judge: results a
   person graded pass or fail, with a reason, under H5.
+- **Cases from history**, where a person already gave the answer. gemini-cli's triage eval builds each case from a
+  closed issue and the pull request a person merged for it; the expected files drop those the pull request changed
+  beyond the reported symptom, and the agent runs in a git worktree at the issue's version, on the code the reporter
+  had.
+- **The harm scored apart from the accuracy.** An agent that acts, such as one that closes items, is scored on the
+  wrong actions as well: gemini-cli's `valid_kept_open_rate` is the share of real issues its triage keeps open. Such
+  an agent acts on its own only at 100% on that measure, since a real bug closed costs more than spam left open.
 - **Runs and scoring.** Each run of the whole set is one `results/<run>.jsonl`; at least three runs, because the
   output differs from run to run. `loops.py eval-score <id> --record` scores agreement per case and overall, lists
   flaky cases, refuses runs older than the definition, and writes the registry and `report.md`.

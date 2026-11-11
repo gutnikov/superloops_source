@@ -15,6 +15,13 @@ links:
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/scripts/session-transcripts.ts"
     author: "pi (earendil-works)"
     note: "subagents find instructions the user repeated in the transcripts, with quotes, against AGENTS.md."
+  - title: "skill-extraction-agent.ts: auto memory's prompt"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/agents/skill-extraction-agent.ts#L176-L268"
+    author: "gemini-cli (Google)"
+    note: "the minimum signal gate, the signal priority, default to no-op."
+  - title: "memoryService.ts: which sessions, how often, which patches survive"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/services/memoryService.ts#L48-L59"
+    author: "gemini-cli (Google)"
   - title: "Designing Human-in-the-Loop for Agentic Workflows"
     author: "AlignX"
     note: "logging escalations and corrections by type"
@@ -52,6 +59,15 @@ one. The measure is that each kind of correction stops coming back.
   AGENTS.md, then the whole transcript in chunks, and writes down every instruction the user gave two or more times: a
   name, `NEW` or `EXISTING` against AGENTS.md, how often it came, exact quotes as evidence, and a draft rule. Each
   `NEW` pattern is logged as a correction of its kind; the harness engineer runs it weekly.
+- **Or a background agent proposes the rules, and a person approves each.** gemini-cli's auto memory, on in the
+  repository's own settings, reads sessions idle for 3 hours or more with at least 10 user messages, 10 new ones per
+  run and at most one run in 30 minutes. It ranks "User messages — strongest signal… corrections, interruptions,
+  redo instructions", reads "at least two sessions" before it proposes anything, and stops at a five-question gate,
+  such as "Is this broader than a single incident…? If no, STOP." Its default is no change: "Prefer 0-5 memory
+  patches and 0-2 skills per run." Every proposal is a patch in an inbox; code deletes one that has no hunks, targets
+  a file outside the memory directory or does not apply cleanly, and "the user must approve each patch". The shared
+  instructions are out of its reach: they are "managed by humans only". Use the same shape: a mined correction
+  arrives as a proposed patch for the steering loop, never as a direct edit of CLAUDE.md.
 - **Short, stable kinds**, such as `unstructured log line` or `test edited instead of code`, so that two corrections
   of one kind are seen as one kind. Reuse a kind already in `superloops/trace.jsonl` before writing a new one.
 - **Code before text.** CLAUDE.md is advice, not a guarantee. Prefer a [custom lint](../taste-invariants/card.md) or

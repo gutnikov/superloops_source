@@ -20,6 +20,14 @@ links:
     url: "https://github.com/earendil-works/pi/tree/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/scripts"
     author: "pi (earendil-works)"
     note: "check-ts-relative-imports.mjs, check-runtime-deps.mjs, check-pinned-deps.mjs, check-released-changelogs.mjs."
+  - title: "omissionPlaceholderDetector.ts"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/tools/omissionPlaceholderDetector.ts#L7-L106"
+    author: "gemini-cli (Google)"
+    note: "the edit and write tools refuse 'rest of methods ...' and the like."
+  - title: "Agent Session Drift Check (a workflow)"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.github/workflows/agent-session-drift-check.yml#L31-L132"
+    author: "gemini-cli (Google)"
+    note: "a comment on a PR that changes one file of a pair and not the other."
 ---
 
 ## Why
@@ -50,6 +58,12 @@ each convention into a check, and its error tells the agent how to fix the viola
   `api/billing.ts:88: unstructured log: pass the values as fields, log.info("charge failed", { orderId }); see
   docs/conventions/logging.md`. For an ESLint rule, `meta.docs.url` points at the convention's page, which editors
   link from the violation.
+- **A check for code the agent left out.** An agent that writes `// rest of methods ...` in place of code deletes
+  that code, and the build and the types may still pass on a comment. gemini-cli's edit and write tools refuse new
+  text with a line that is only such a placeholder: "rest of", "rest of method(s)", "rest of code", "unchanged code"
+  or "unchanged method(s)", followed by `...`, bare, after `//` or in parentheses. An edit may keep a placeholder its
+  old text already had. Run the same check over the added lines of the diff: `file:line: omission placeholder:
+  write the code out in full`.
 - **The `run`** runs all custom lints over the directory, prints `file:line: message` per violation, and exits
   non-zero on any.
 - **Cases.** One must-fire case per convention: a file that logs `"charge failed for " + orderId`; a schema named
@@ -71,3 +85,7 @@ each convention into a check, and its error tells the agent how to fix the viola
   as a dependency, no direct dependency without an exact version. One of them carries its fix in the message: "Released
   sections are fixed. Move new entries to ## [Unreleased] and restore the rest as in the tag." The others name only the
   rule and the files, and would cost the agent less with a fix text.
+- A rule over a pair of files fits a small check too. While gemini-cli migrates one implementation to another, a
+  workflow lists the pairs that must change together; a pull request that changes one file of a pair and not the
+  other gets a comment naming both, updated in place and deleted once both change. It warns and does not block: a
+  fix that belongs to one side only is fair, and the comment says so.

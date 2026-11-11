@@ -28,6 +28,13 @@ links:
     author: Rick Hightower
   - title: "Spec-driven development"
     author: Towards AI
+  - title: "exit-plan-mode.ts"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/tools/exit-plan-mode.ts#L117-L254"
+    author: "gemini-cli (Google)"
+    note: "the plan file checked before approval; a rejection's feedback returned to the agent."
+  - title: "snippets.ts: the plan's sections, and an approved plan"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/prompts/snippets.ts#L651-L656"
+    author: "gemini-cli (Google)"
 ---
 
 ## Why
@@ -63,6 +70,15 @@ instead (Towards AI).
   reports each step that is missing and each change the plan does not name
   ([agent code review](../agent-code-review/card.md)). Claude Code's best practices show such a review prompt, one
   that checks the work against the plan instead of hunting for bugs in general.
+- **The plan names its checks.** A plan with no verification step gives the reviewer of the diff nothing to hold the
+  work to. gemini-cli's plan grows with the task, and every size has one: **Changes** and **Verification** for a
+  simple task; **Verification & Testing** among the sections of a standard one; **Verification** and **Migration &
+  Rollback** for a complex one. Write the sections in the loop's `LOOP.md`.
+- **A rejection carries its reason.** gemini-cli returns "Plan rejected. User feedback: … Revise the plan based on
+  the feedback."; a rejection with no feedback makes the agent "Ask the user for specific feedback", not guess.
+- **A new requirement goes back to the person.** gemini-cli's prompt for an approved plan: "If you discover new
+  requirements or need to change the approach, confirm with the user and update this plan file". The committed plan
+  stays the one the diff is checked against.
 - **Plan mode by default.** Set `permissions.defaultMode` to `plan` in `.claude/settings.json` to make plan mode the
   default for the project's terminal sessions.
 - **Kept from getting around it.** Claude Code enforces the block on edits; the agent does not choose it. The one
@@ -70,4 +86,7 @@ instead (Towards AI).
   and an edit it tries runs without a prompt. Set `permissions.disableBypassPermissionsMode` to `"disable"` in a
   project that relies on this loop.
 - **What a machine checks.** The loop's `LOOP.md` has `validation: manual`: the approval is the person's. The
-  reviewer's report on the diff against the plan is the automated part.
+  reviewer's report on the diff against the plan is the automated part, and so is a check before the person reads:
+  the plan file exists in `plans/`, is not empty and has the verification section. gemini-cli refuses to ask for
+  approval of a missing or empty plan ("Plan file is empty. You must write content to the plan file before
+  requesting approval.").

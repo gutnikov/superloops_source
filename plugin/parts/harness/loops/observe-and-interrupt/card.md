@@ -11,7 +11,7 @@ needs: []
 when: [during]
 initiator: human
 sync: async
-related: [risky-action-gates, correction-becomes-rule, escalation-on-uncertainty]
+related: [risky-action-gates, correction-becomes-rule, escalation-on-uncertainty, stall-detector]
 links:
   - title: "Measuring AI agent autonomy in practice"
     url: "https://www.anthropic.com/research/measuring-agent-autonomy"
@@ -27,6 +27,12 @@ links:
   - title: "agent-loop.ts: the steering and follow-up queues"
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/packages/agent/src/agent-loop.ts#L184-L316"
     author: "pi (earendil-works)"
+  - title: "local-executor.ts: a subagent's call refused by the person"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/agents/local-executor.ts#L1340-L1364"
+    author: "gemini-cli (Google)"
+  - title: "confirmation.ts: the person edits the proposed change"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/scheduler/confirmation.ts#L127-L135"
+    author: "gemini-cli (Google)"
 ---
 
 ## Why
@@ -84,3 +90,10 @@ irreversible step goes through a [gate](../risky-action-gates/card.md), watched 
   queue and reaches the model before its next call, once the current tool calls finish; the loop checks the queue
   again after a long step such as compaction. A follow-up queue holds messages for when the agent would stop, and
   aborting the step is a separate action.
+- Refusing one step need not end the run. When a person refuses a tool call of a gemini-cli subagent, the subagent
+  goes on with "User rejected this operation. Please acknowledge this, rethink your strategy, and try a different
+  approach. If you cannot proceed without the rejected operation, summarize the issue and use `complete_task` to
+  report your findings and the blocker." Write the same in the instructions of a subagent that may meet a refusal.
+- A correction can be an edit. At gemini-cli's approval prompt the person can open the proposed change in an
+  editor, change it and see the new diff, as often as they like; the agent is then told "The confirmation step
+  modified the `new_string` content to be: …", so its next edit starts from the person's version.

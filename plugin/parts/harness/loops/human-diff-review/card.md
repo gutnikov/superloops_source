@@ -32,6 +32,14 @@ links:
   - title: "REST API endpoints for pull request review comments"
     url: "https://docs.github.com/en/rest/pulls/comments"
     author: "GitHub"
+  - title: "/review-frontend (a command)"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.gemini/commands/review-frontend.toml#L21-L27"
+    author: "gemini-cli (Google)"
+    note: "the person sorts the agent's findings before any is posted."
+  - title: ".gemini/config.yaml: the review bot"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.gemini/config.yaml#L4-L6"
+    author: "gemini-cli (Google)"
+    note: "comment_severity_threshold: 'HIGH'."
 ---
 
 ## Why
@@ -53,6 +61,13 @@ change, or whether the approach fits the codebase; a person reading the diff can
   is the right change, whether the approach fits the codebase, whether this should exist at all."
 - **AI review first.** Kilo: "AI review runs first to clear the obvious issues, then a human reviewer signs off on
   intent and design." The person is called only once the reviewer agents have no open high finding.
+- **The person sorts the AI's findings before they reach the PR.** gemini-cli's `/review-frontend` tells the agent:
+  "Discuss with me before making any comments on the issue. I will clarify which possible issues you identified are
+  problems, which ones you need to investigate further, and which ones I do not care about." Only then does it post,
+  with `gh pr comment`. Its review bot posts nothing below `HIGH` severity. Post an uncalibrated reviewer's findings
+  only after a person has sorted them, and log the sorting with `loops.py outcome <agent> --loop <loop-id>
+  --outcome …`: `false-positive` for a finding that is no problem, `overridden` for one the person does not care
+  about. It is the reviewer's calibration data.
 - **Small diffs.** Google's review guide: "100 lines is usually a reasonable size for a CL, and 1000 lines is
   usually too large." The loop's `LOOP.md` sets the limit; start at 400 changed lines, generated files and lock
   files not counted, and split a PR over it before asking. A large diff is how review turns into a rubber stamp

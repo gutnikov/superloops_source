@@ -25,6 +25,13 @@ links:
   - title: "agent-loop.ts: tool calls from a truncated response"
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/packages/agent/src/agent-loop.ts#L478-L513"
     author: "pi (earendil-works)"
+  - title: "edit.ts: the edit tool's errors and its answer on success"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/tools/edit.ts#L366-L380"
+    author: "gemini-cli (Google)"
+  - title: "tool-utils.ts: getToolSuggestion"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/utils/tool-utils.ts#L65-L92"
+    author: "gemini-cli (Google)"
+    note: "an unknown tool's name answered with the 3 closest names."
 ---
 
 ## Why
@@ -78,3 +85,9 @@ violation with a comment that gives the reason.
   When the model's output was cut off by the token limit, pi runs none of its tool calls and answers each with
   "Re-issue the tool call with complete arguments." [tool-use-telemetry](../tool-use-telemetry/card.md) counts how
   often each such error comes back.
+- gemini-cli's tool errors name the next action, not only the fault. A failed edit: "please use ReadFile to inspect
+  the target lines before retrying with an exact 'old_string'"; several matches: "set 'allow_multiple' to true"; an
+  unknown tool: `Tool "x" not found. Did you mean one of: …?`, with the 3 closest names by edit distance. A
+  successful edit answers with the changed lines and 5 lines around them, "so that the agent can avoid the need to
+  spend a turn doing a verification read". Give a project's own tools and hooks both halves: on failure what to do
+  next, on success the evidence that it worked.

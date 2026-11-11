@@ -9,7 +9,7 @@ stages: [local]
 speed: [seconds, minutes]
 needs: []
 agent: [judge]
-related: [acceptance-loop, verification-subagent, pre-commit-pre-push, autoformat-hook]
+related: [acceptance-loop, verification-subagent, pre-commit-pre-push, autoformat-hook, stall-detector]
 links:
   - title: "Hooks reference: Stop"
     url: "https://code.claude.com/docs/en/hooks"
@@ -22,6 +22,14 @@ links:
     note: "a Stop hook among the checks of done"
   - title: "claude-code-best-practice"
     url: "https://github.com/shanraisshan/claude-code-best-practice"
+  - title: "nextSpeakerChecker.ts"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/utils/nextSpeakerChecker.ts#L14-L18"
+    author: "gemini-cli (Google)"
+    note: "who speaks next after a turn with no tool call; on 'model' the client sends 'Please continue.'"
+  - title: "Hooks reference: AfterAgent"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/docs/hooks/reference.md#L163-L181"
+    author: "gemini-cli (Google)"
+    note: "the reason as a new prompt; clearContext clears the conversation before the retry."
 ---
 
 ## Why
@@ -82,6 +90,16 @@ passes.
 
 - A passing check shows only what the script tests: a hook over the unit tests lets the agent stop on a feature no
   test covers. The acceptance gate is the stronger check to put here.
+- **A narrower question than "done?".** An agent can stop right after announcing its next step. gemini-cli's
+  next-speaker check asks a small model only who speaks next, by rules in order: the model continues when its last
+  response "explicitly states an immediate next action *you* intend to take (e.g., "Next, I will...")" or was cut
+  off; the person speaks next after a question to them or a finished thought. On "model" the client sends "Please
+  continue." In Claude Code this is a prompt hook at Stop with that one condition; it is a judge, calibrated like
+  any other, and it never says the task is done.
+- **A retry in a fresh context.** When the transcript itself keeps the agent on a wrong track, the alternative to
+  another round is to start again with only the failures. gemini-cli's AfterAgent hook, its Stop hook, sends the
+  block reason "to the agent as a new prompt" and can clear the conversation first (`clearContext`); each retry
+  takes one turn of the session's budget of 100.
 
 ## Agent step
 

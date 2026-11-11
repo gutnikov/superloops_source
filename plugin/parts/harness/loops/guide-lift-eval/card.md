@@ -22,6 +22,10 @@ links:
     url: "https://martinfowler.com/articles/harness-engineering.html"
     author: "Böckeler"
     note: "with guides only, the agent never learns whether the rules worked."
+  - title: "skill_extraction.eval.ts: scratchpad versus summary-only index"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/evals/skill_extraction.eval.ts#L798-L858"
+    author: "gemini-cli (Google)"
+    note: "paired arms on fresh rigs, scored on relevant and distractor reads."
 ---
 
 ## Why
@@ -60,6 +64,12 @@ against a fake server.
   the run exits non-zero. Missing telemetry stays missing; it is never counted as zero.
 - **Repetitions for stability.** One run per arm cannot show stability. The report flags flakiness, no lift and
   negative deltas; pi repeats with `--runs-per-variant 5`.
+- **Lift on the process as well as the result.** When the guide is meant to steer what the agent reads, plant
+  relevant and distractor material and count the reads in each arm: two arms can pass at the same rate while one
+  finds the right files and the other wades through the wrong ones. gemini-cli's skill-extraction eval runs a
+  summary-only index against the same index with a scratchpad, each on a fresh rig, and passes only when the
+  scratchpad arm reads at least 2 relevant sessions and no fewer than the other, reads no more distractors, and
+  scores strictly higher on relevant minus distractor reads.
 - **A low score is data, not a failure.** The suite fails only when an invariant of the harness breaks. A task the
   agent fails is a result.
 - **`run`** runs the cohort for one guide and prints one line per task, `<task>: without <p>% with <q>% lift <d>`,

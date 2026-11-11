@@ -38,6 +38,10 @@ The catalog's loops of this level:
   model, is measured on the same tasks with and without the guide.
 - [tool-use-telemetry](../loops/tool-use-telemetry/card.md) is a detector over the agent's own tools: failure rates
   and kinds per tool, model and file type, read from the session transcripts.
+- [check-incubation](../loops/check-incubation/card.md) is the gate of a new check: it blocks only after a record of
+  passes on a schedule, and a blocking check that flakes is its remediation's entry.
+- [repo-health-agent](../loops/repo-health-agent/card.md) is a detector over how the project runs: the flow metrics
+  of the repository, one change per run, confirmed by the same metric weeks later.
 
 ## Its signal
 

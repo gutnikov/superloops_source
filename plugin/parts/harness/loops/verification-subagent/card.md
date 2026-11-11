@@ -19,6 +19,10 @@ links:
   - title: "Boris Cherny on X"
     url: "https://x.com/bcherny/status/2007179861115511237"
     note: "a verify-app subagent"
+  - title: "/review-and-fix (a command)"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.gemini/commands/review-and-fix.toml#L74-L90"
+    author: "gemini-cli (Google)"
+    note: "the manager verifies each worker's ticket by running the checks, then reverts or commits."
 ---
 
 ## Why
@@ -61,6 +65,14 @@ One round takes minutes. The verification subagent can be the fourth role of the
   a complete, correct change. Each run three times and scored with `loops.py eval-score <id> --record`.
 - **Wiring**: the loop's `run` at the gate, at the end of the task or as a CI job on the pull request. Log what
   happened to each verdict: `loops.py outcome <id> --loop <loop> --outcome confirmed|false-positive|missed|overridden`.
+
+## Notes
+
+- An orchestrator that hands tickets to workers checks each the same way: by running, not by reading the worker's
+  report. gemini-cli's `/review-and-fix` turns review findings into tickets and spawns one worker per ticket; the
+  manager's rule is "IGNORE worker logs. DIRECTLY verify" with `git status`, `git diff`, build, tests, lint and type
+  check. A ticket that fails is reverted with `git reset --hard`, and one that passes is committed, so every commit
+  on the branch passed the checks on its own.
 
 ## Agent step
 

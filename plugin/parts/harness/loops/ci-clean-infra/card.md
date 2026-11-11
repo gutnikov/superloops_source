@@ -18,6 +18,13 @@ links:
   - title: "gh run view"
     url: "https://cli.github.com/manual/gh_run_view"
     author: "GitHub"
+  - title: "CI Replicate & Status (a skill)"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.gemini/skills/ci/SKILL.md#L24-L61"
+    author: "gemini-cli (Google)"
+    note: "poll every 15 seconds, stop at the first failure, run the suggested local command at once."
+  - title: "ci.mjs: the failure report and the local command"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.gemini/skills/ci/scripts/ci.mjs#L238-L275"
+    author: "gemini-cli (Google)"
 ---
 
 ## Why
@@ -45,6 +52,12 @@ checks run locally first and the number of rounds is limited.
   pulls before its next change.
 - **Logs the agent can read.** `gh run view --log-failed` shows "the log for any failed steps in a run or specific
   job"; `--exit-status` makes the command "Exit with non-zero status if run failed".
+- **A watcher that fails fast and names the local command.** Waiting for the whole run spends the minutes a round
+  costs. gemini-cli's `ci` skill finds the branch's runs itself, polls every 15 seconds, and stops at the first poll
+  that sees a failed job. It prints the failures grouped by test file, with stack traces and install noise dropped,
+  at most 10 per file and 500 characters each, then the command that reruns exactly those files locally (`npm test
+  -w <workspace> -- <files>`, or `npm run lint:all` for lint), and exits 1. The agent runs that command before it
+  reads any code.
 - **A limit on CI rounds: two, then a person.** Stripe loops on a lint step "locally before pushing an agent's
   branch", runs the full CI suite once, gives the agent "one more chance to fix the failing test locally", and "After
   the second push and CI run, we send the branch back to its human operator for manual scrutiny", because of

@@ -46,6 +46,23 @@ links:
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/AGENTS.md#git"
     author: "pi (earendil-works)"
     note: "rules for several sessions in one checkout."
+  - title: "policy-engine.ts: shell commands"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/policy/policy-engine.ts#L493-L670"
+    author: "gemini-cli (Google)"
+    note: "a parse failure falls back to the default; redirection and substitution never upgrade; every subcommand checked."
+  - title: "commandSafety.ts: commands that always ask"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/sandbox/utils/commandSafety.ts#L781-L862"
+    author: "gemini-cli (Google)"
+  - title: "shell-safety-regression.test.ts"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/policy/shell-safety-regression.test.ts#L36-L80"
+    author: "gemini-cli (Google)"
+    note: "command strings whose decision must not loosen."
+  - title: "shell.ts: a sandbox denial becomes a request to widen the sandbox"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/tools/shell.ts#L1092-L1236"
+    author: "gemini-cli (Google)"
+  - title: "sandboxDenialUtils.ts: what counts as a denial"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/sandbox/utils/sandboxDenialUtils.ts#L64-L120"
+    author: "gemini-cli (Google)"
 ---
 
 ## Why
@@ -78,6 +95,19 @@ comment to Claude as the reason, and Claude continues working; "No" with no comm
   stands where the action happens. Production credentials stay out of the agent's environment, and a deploy runs from
   a CI environment with required reviewers: on GitHub, the job waits until one of the reviewers, up to six people or
   teams, approves it.
+- **Judge every part of a compound command.** A rule on the whole string misses `make build && rm -rf data`.
+  gemini-cli's policy engine parses the command and checks each subcommand: one denied part denies the whole, and
+  one part that needs a person makes the whole need one. A redirection or a `$(…)` turns an allowed command into one
+  that asks: it "never upgrades". `rm -f` or `-rf`, `sudo` before such a command, `find -exec` or `-delete`, `git`
+  with a config override and a working directory outside the workspace always ask. A command that does not parse
+  asks, and is denied when nobody is there to answer. Where the project classifies commands itself, in a
+  PreToolUse hook, give it these rules and a regression suite of command strings, such as `echo hi && ls` with only
+  `echo` allowed, which must ask.
+- **A sandbox's refusal is a request to a person, not a puzzle.** In gemini-cli, a sandboxed command that fails with
+  a permission or network denial (`operation not permitted`, `could not resolve host`, …) becomes a request to widen
+  the sandbox: the paths it needed, widened to their nearest existing folder, and the network. On approval the same
+  command runs again with that access; on refusal the agent gets the denial with the output. The same denial, keyed
+  on the first 200 characters of its error, is not asked twice.
 - **Tools that call tools go through the same gate.** A code-mode script, a subagent or a batch tool can call other
   tools. In pi, those nested calls run through the same pipeline as the model's own calls, with schema validation and
   the permission hooks (`runToolCall`). A gate that sees only the calls the model makes directly can be walked around.
