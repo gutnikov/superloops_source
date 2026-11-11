@@ -10,7 +10,8 @@ clock: false
 domains: {}
 rules: {}
 
-screens: {}
+screens:
+  CycleIndexPage: {route: /cycles, pom: cycleIndexPage}
 
 states: {}
 
