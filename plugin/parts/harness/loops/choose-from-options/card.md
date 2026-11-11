@@ -20,6 +20,14 @@ links:
   - title: "Human-in-the-loop cycles (in Russian)"
     author: "Alexander Gutnikov"
     note: "unpublished note, 2026-11-08"
+  - title: "snippets.ts: the Consult step of plan mode"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/prompts/snippets.ts#L603-L609"
+    author: "gemini-cli (Google)"
+    note: "the depth of consultation in proportion to the task; no draft in the same turn."
+  - title: "ask-user.ts: validation"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/tools/ask-user.ts#L57-L64"
+    author: "gemini-cli (Google)"
+    note: "a choice question takes 2 to 4 options."
 ---
 
 ## Why
@@ -43,6 +51,11 @@ give is recorded as a rule, so the same choice is not asked again.
 - **Options that differ in substance.** Each option is named by its trade-off ("one call, a larger payload" against
   "paged, two calls"), not by a cosmetic change. If the agent cannot name a trade-off, there is no question of
   taste: it decides by the project's conventions and says what it decided.
+- **As many options as the choice deserves.** gemini-cli's plan mode scales the question to the task: for a simple
+  one the agent states its approach and stops for a yes; where several approaches are viable it shows pros, cons and
+  its recommendation; for a complex one it "MUST present at least two viable approaches with detailed trade-offs".
+  It "MUST NOT proceed … in the same turn", and its question tool takes 2 to 4 options. One option is a statement to
+  confirm, not a choice; more than 4 means the agent has not narrowed the question yet.
 - **Show them, do not describe them.** UI: a screenshot of each option side by side, rendered from real components
   (the [`ui-prototypes`](../../../ui-prototypes/README.md) part makes one prototype file per option). An API: the
   call and the response of each. A name: a real call site with each name. A module: the tree and one import of

@@ -13,6 +13,14 @@ links:
   - title: "Testing pi Interactive Mode with tmux (a skill)"
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/.pi/skills/interactive-testing.md"
     author: "pi (earendil-works)"
+  - title: "useFlickerDetector.ts"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/cli/src/ui/hooks/useFlickerDetector.ts#L21-L42"
+    author: "gemini-cli (Google)"
+    note: "a frame taller than the terminal, while the height is constrained, counts as a flicker."
+  - title: "flicker.test.ts"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/integration-tests/flicker.test.ts#L20-L41"
+    author: "gemini-cli (Google)"
+    note: "a prompt typed into the CLI in a pseudo-terminal, then the flicker metric must be absent."
 ---
 
 ## Why
@@ -41,6 +49,12 @@ a passing smoke test.
 - Waits on the screen's content, not only fixed sleeps. Pi's skill captures after `sleep 3`, which a slow machine
   can outrun; polling `capture-pane` until the expected text appears does not depend on the machine. Poll every 0.2
   seconds for up to 10 seconds per step; a step that times out is red.
+- **A rendering rule the app counts itself.** What a capture of the final screen cannot show, such as a frame drawn
+  taller than the terminal and scrolled away, the app reports as a metric. gemini-cli's UI measures its root element
+  on every render and counts `gemini_cli.ui.flicker.count` when it is taller than the terminal; `flicker.test.ts`
+  types a prompt into the CLI in an 80×80 pseudo-terminal, waiting for each character's echo, replays the model's
+  reply, and fails if the metric exists. `run` reads such counters after the scenario and fails on any that is not
+  zero.
 - **`run`** starts the app in tmux, plays a scenario file (the keys to send and the text expected on the screen after
   each step), and prints the first step whose text did not appear, with the captured screen. It exits non-zero on
   such a step, and kills the session either way.

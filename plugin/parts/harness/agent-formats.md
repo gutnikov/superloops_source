@@ -64,6 +64,25 @@ What an investigator returns. It never blocks.
  "next": "Run migrations in the release step before the app's health check."}
 ```
 
+## When an agent does not return its format
+
+The loop that runs an agent checks what it returns before anything reads it:
+
+- **The output is validated against the format's schema.** An object that does not match goes back to the agent as
+  an error that names each field: what is missing, what has the wrong type. The agent fixes it and returns again,
+  within its turn limit.
+- **Returning is a tool call, the only way to finish.** An agent that stops without returning has failed; its prose
+  is not parsed for a verdict.
+- **Limits, then one last turn.** Each agent has a turn limit and a time limit, 30 turns and 10 minutes by default.
+  When the agent reaches one of them, or stops without returning, it gets one more turn, of at most a minute: it
+  must return its best answer now, say that the work was interrupted, and call nothing else.
+- **The loop always learns why it ended.** What reaches the loop is the result and one of `done`, `timeout`,
+  `max-turns`, `no-result` or `aborted`. Anything but `done` is not a pass: an advising agent's loop prints the reason,
+  and a `gate` agent's loop fails.
+
+gemini-cli's subagents finish this way: through `complete_task`, its argument checked against the agent's schema,
+with a grace turn of 60 seconds.
+
 ## Evals
 
 `superloops/agents/<agent-id>/evals/<case>/` holds what the agent gets (its `input/`, in the shape its loop gives it)
@@ -101,3 +120,11 @@ What happened to one verdict in real use, appended to `superloops/agent-outcomes
 
 `outcome`: `confirmed`, `false-positive` (it fired and was wrong), `missed` (a failure it should have caught got
 through), `overridden` (a person decided against it).
+
+## Sources
+
+- gemini-cli (Google), [`local-executor.ts`: the rule to finish through `complete_task`](https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/agents/local-executor.ts#L1495-L1506)
+  and [the final warning](https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/agents/local-executor.ts#L423-L447);
+  [`complete-task.ts`: the schema check](https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/tools/complete-task.ts#L82-L107);
+  [`types.ts`: 30 turns and 10 minutes](https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/agents/types.ts#L51-L56);
+  [`local-invocation.ts`: the termination reason the caller gets](https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/agents/local-invocation.ts#L313-L321).

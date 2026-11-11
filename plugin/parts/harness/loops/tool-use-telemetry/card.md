@@ -22,6 +22,13 @@ links:
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/scripts/session-context-stats.mjs"
     author: "pi (earendil-works)"
     note: "context use per session, filtered by model, cwd or the commands a session ran."
+  - title: "edit.ts: the match strategies, each logged"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/tools/edit.ts#L306-L389"
+    author: "gemini-cli (Google)"
+    note: "exact, flexible, regex, then fuzzy; an EditStrategyEvent for the one that matched."
+  - title: "EditStrategyEvent and EditCorrectionEvent"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/telemetry/types.ts#L1968-L2018"
+    author: "gemini-cli (Google)"
 ---
 
 ## Why
@@ -53,6 +60,12 @@ or the guide.
 
 - **Transcripts kept.** The agent's session files stay on disk: `~/.pi/agent/sessions` for pi,
   `~/.claude/projects/<project>/*.jsonl` for Claude Code.
+- **Events from the tool itself**, where you own the tool. A transcript shows that an edit failed, not how close
+  it came. gemini-cli's edit tool tries an exact match, then whitespace-flexible, regex and fuzzy matches, and logs
+  an `edit_strategy` event naming the one that succeeded; when an LLM rewrites a failed edit, it logs an
+  `edit_correction` event, `success` or `failure`. A rising share of non-exact matches is the warning before the
+  failure rate rises. Wrap a tool you do not own, such as a hook on the edit, and log the same: the kind of failure
+  and whether the retry succeeded.
 - **Windows, not all history.** Compare a window after a change with the one before it. Pi's scripts take `--since`,
   and by default start at the birth time of a given file, such as the build that changed the tool.
 - **Filters and JSON.** `--model`, `--ext`, `--failed-only` and `--json`, so that a script or `loops.py stats` can read

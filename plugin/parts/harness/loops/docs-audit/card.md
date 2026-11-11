@@ -15,6 +15,13 @@ links:
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/packages/evals/evals/documentation-audit.eval.ts"
     author: "pi (earendil-works)"
     note: "one run per page, read-only tools, a verdict through a submit tool, and a check that the agent read the page and the source."
+  - title: "Procedural guide: auditing the docset (a skill reference)"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.gemini/skills/docs-writer/references/docs-auditing.md#L109-L154"
+    author: "gemini-cli (Google)"
+    note: "a software-engineer pass for undocumented features, and a writer who logs a decision per finding."
+  - title: "Docs audit (a weekly workflow)"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.github/workflows/docs-audit.yml#L3-L66"
+    author: "gemini-cli (Google)"
 ---
 
 ## Why
@@ -49,6 +56,12 @@ does not decide, the verdict is `inconclusive`.
   evidence.
 - **On a change**, audit the pages that name a command, a setting or a module the change touched; **on a schedule**,
   audit every page. Pi runs the full audit on demand, because it reads every page.
+- **The other direction: features with no page.** A page audit finds wrong claims, not missing pages. On the
+  schedule, list what the code defines for users, such as commands, tools and settings, and check that each has a
+  page: gemini-cli's weekly audit has an engineer pass over `packages/cli/src/commands/`, `packages/core/src/tools/`
+  and `settings.ts`. A writer then decides each finding, logs why it was accepted, modified or rejected "for a final
+  check by a human in the PR", applies the accepted ones and regenerates the pages built from code. The auditor
+  stays read-only; the writer's pull request goes to the docs owners for review.
 - **`run`** audits the pages it is given and prints one line per page: `<page>: match`, `<page>: inconclusive:
   <why>`, or `<page>: mismatch: "<claim>" vs <path>:<symbol>: <what a user sees>`. It exits non-zero on a mismatch
   only once the auditor is `gate` in `superloops/agents.yaml`; until then it prints the line and exits 0.

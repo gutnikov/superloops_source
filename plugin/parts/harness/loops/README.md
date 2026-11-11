@@ -163,6 +163,7 @@ _The work is what the person meant: the intent, the plan and the result match wh
 - [Observe and interrupt](observe-and-interrupt/card.md): The person does not approve every step. They watch from the side and step in when they see the work going the wrong way.
 - [Plan approval](plan-approval/card.md): The agent studies the code read-only and proposes a plan; a person edits and approves it, and the agent then works by the plan on its own.
 - [Result demo](result-demo/card.md): The agent shows the working feature: a link to a preview environment, screenshots, a before/after video, recorded command output. The person judges the behaviour, not the code.
+- [Stall detector](stall-detector/card.md): A hook hashes every tool call; the same call or cycle of calls five times in a row tells the agent to step back, and a second stall in the same task stops it for a person.
 - [Steering: a repeated correction becomes a rule](correction-becomes-rule/card.md): Every correction a person makes is logged at the phase that should have caught it; the second of a kind is an escape, and it becomes a lint, a test or a line in CLAUDE.md.
 - [Task restatement](task-restatement/card.md): The agent restates the task in its own words: what it understood, what is out of scope, and what will show it is done. A person answers "yes" or corrects the restatement.
 - [Triage: every signal goes to one super-loop, with its oracle](triage/card.md): Triage merges each incoming error, alert, bot's PR, user's message or ticket with any open item on the same thing, and routes it to one super-loop; the route decides the oracle.
@@ -173,6 +174,7 @@ _The work is what the person meant: the intent, the plan and the result match wh
 
 _Behaviour can be checked by tests, and the tests catch what they should._
 
+- [A new check incubates before it blocks](check-incubation/card.md): A new test or eval runs many times on a schedule without blocking; it blocks pull requests only after a record of passes, and a blocking check that flakes goes back to quarantine.
 - [Code coverage](code-coverage/card.md): The agent runs coverage and writes tests for the uncovered branches.
 - [Mutation testing](mutation-testing/card.md): The agent sees surviving mutants — code changes the tests did not notice — and writes tests that catch them.
 - [Run the tests first](run-tests-first/card.md): Before changing anything the agent runs the whole suite. It learns the state of the project and which tests already fail, so later it does not mistake them for its own regressions.
@@ -267,6 +269,7 @@ _A change reaches where it runs, reproducibly and safely: builds, environments, 
 - [Configuration check](config-validation/card.md): Two checks catch configuration errors: a validator checks the configuration against its schema; a smoke start runs with each configuration profile.
 - [Isolated reproducible environment](isolated-environment/card.md): At the start of every task, the agent gets a clean environment: a devbox, a devcontainer, or a worktree with its own instance of the app, so the sensors give the same result for the same code.
 - [Preview environments per PR](preview-environments/card.md): Every PR gets its own deployed environment. The agent runs e2e, DAST, Lighthouse and load tests against it and reads its logs.
+- [Repository health agent](repo-health-agent/card.md): Scripts record the repository's flow metrics daily; an agent picks the worst trend, tests competing causes and proposes one change; a critic approves it before a draft PR.
 
 ### Usability
 

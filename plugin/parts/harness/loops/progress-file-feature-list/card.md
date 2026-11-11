@@ -24,6 +24,9 @@ links:
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/AGENTS.md#chord-v2-code-style"
     author: "pi (earendil-works)"
     note: "the carry-over ledger of deferred work."
+  - title: "chatCompressionService.ts: the summary's second pass"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/context/chatCompressionService.ts#L770-L800"
+    author: "gemini-cli (Google)"
 ---
 
 ## Why
@@ -83,3 +86,8 @@ feature passes when its acceptance tests are green.
 - Deferred work needs the same file. Pi builds one package in vertical slices: anything a slice leaves for later goes
   into the "Carry-over" section under the slice that will do it, in the same change, and that slice's spec and build
   must include every entry filed under it. Work put off in one session is then where the next session reads it.
+- A progress entry is a summary, and a summary loses details. Before the session commits, it re-reads its entry
+  against what it did: a file path, a command's result or a constraint the person gave that is missing from the
+  entry is one the next session will not have. gemini-cli gives every summary of its history this second pass: "Did you omit
+  any specific technical details, file paths, tool results, or user constraints mentioned in the history? If
+  anything is missing or could be more precise, generate a FINAL, improved <state_snapshot>."
