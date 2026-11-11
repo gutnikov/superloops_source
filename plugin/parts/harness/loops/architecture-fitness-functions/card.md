@@ -26,6 +26,17 @@ links:
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/scripts/check-entry-graphs.mjs"
     author: "pi (earendil-works)"
     note: "a budget per entry point of a package: the modules it must not reach."
+  - title: "deny.toml: a migration ratchet on reqwest"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/deny.toml#L251-L271"
+    author: "Codex (OpenAI)"
+    note: "only the named wrappers may depend on reqwest directly; each one is migration debt."
+  - title: "verify_cargo_workspace_manifests.py: a stale exception fails"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/.github/scripts/verify_cargo_workspace_manifests.py#L325-L355"
+    author: "Codex (OpenAI)"
+  - title: "verify_tui_core_boundary.py"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/.github/scripts/verify_tui_core_boundary.py#L14-L36"
+    author: "Codex (OpenAI)"
+    note: "the TUI must not import codex-core; the message names the boundary to use instead."
 ---
 
 ## Why
@@ -56,6 +67,14 @@ belongs in, and moves the code there.
 - **Old violations do not block new work.** On an existing codebase, record today's violations and fail only on new
   ones: dependency-cruiser's `--baseline` with `--ignore-known`, ArchUnit's `FreezingArchRule`. The agent never adds
   to the baseline; it shrinks as code moves.
+- **The exception list is a ratchet.** An entry that no longer matches any code fails the check, so the list cannot
+  outlive the debt it records, and a migration's progress is the list getting shorter. Codex's manifest check fails
+  with "remove the stale `[features]` exception from `MANIFEST_FEATURE_EXCEPTIONS`"; its `cargo-deny` config lets
+  only named crates use `reqwest` directly, with the reason "new direct reqwest dependencies must use
+  codex-http-client; temporary wrappers track migration debt". Each entry carries a comment: an intended exception, or
+  a temporary one to remove when the migration reaches it.
+- **A boundary rule names the way across.** Codex's TUI check prints `codex-tui must not depend on or import codex-core
+  directly`, then the fix: "Use the app-server protocol/client boundary instead".
 - **The `run`**: `depcruise --output-type err-long --config .dependency-cruiser.js src`, or the ArchUnit test class.
   It prints each violating dependency (`from → to`) with the rule's name and text. dependency-cruiser exits with the
   number of violations of severity `error`; ArchUnit fails with an `AssertionError` that names the rule and each

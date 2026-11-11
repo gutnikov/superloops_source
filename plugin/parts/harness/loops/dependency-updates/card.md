@@ -21,6 +21,10 @@ links:
   - title: "Dependabot options reference"
     url: "https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference"
     author: "GitHub"
+  - title: "dependabot.yaml"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/.github/dependabot.yaml#L5-L10"
+    author: "Codex (OpenAI)"
+    note: "weekly updates for every ecosystem, each with a 7-day cooldown."
 ---
 
 ## Why
@@ -44,6 +48,11 @@ The loop has two parts:
 
 - **The bot's config is in the repository**, `renovate.json` or `.github/dependabot.yml`, with a schedule and a label
   on every PR it opens (both support `labels`). Dependabot `groups` puts packages that move together into one PR.
+- **A new release waits a week.** A version published minutes ago is the one most likely to be withdrawn or, in a
+  supply-chain attack, compromised. Dependabot's `cooldown` (`default-days: 7`) and Renovate's `minimumReleaseAge`
+  hold an update back until the release is that old. Codex sets 7 days on every ecosystem it updates: Cargo, GitHub
+  Actions, the Rust toolchain, Docker and Bun. A security fix goes through
+  [dependency-scanning-sbom](../dependency-scanning-sbom/card.md), not through the cooldown.
 - **Start the worker on red bot PRs.** A CI job starts the worker when a check fails on a PR with the bot's label.
   Give it 3 rounds per PR; after the third, it comments on the PR with what it tried, and a person takes it.
 - **The update must not change behaviour.** The gate of the PR is

@@ -31,6 +31,17 @@ links:
   - title: "VictoriaTraces"
     url: "https://docs.victoriametrics.com/victoriatraces/"
     author: "VictoriaMetrics"
+  - title: "turn_phase_trace.rs: a test that asserts the app's own spans"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/tests/suite/turn_phase_trace.rs#L85-L115"
+    author: "Codex (OpenAI)"
+    note: "an in-memory exporter behind the production export filter, one subprocess per case."
+  - title: "turn_phase_trace.rs: span order and the time breakdown"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/tests/suite/turn_phase_trace.rs#L293-L299"
+    author: "Codex (OpenAI)"
+  - title: "turn_critical_path.rs"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/analytics/src/turn_critical_path.rs#L1-L48"
+    author: "Codex (OpenAI)"
+    note: "\"Missing capture never becomes a zero-duration measurement.\""
 ---
 
 ## Why
@@ -57,6 +68,15 @@ The agent fixes the cause and runs the scenario again; the fix holds once the sa
 - **Span budgets are a file** in the loop's folder: per user journey, the longest a span may take. OpenAI's example:
   "no span in these four critical user journeys exceeds two seconds". The budgets are references a person approves
   (H5).
+- **Tests for the instrumentation itself.** A span that is never emitted, or ends in the wrong order, makes every
+  later query wrong without failing anything. Test it like code: install an in-memory exporter behind the same
+  export filter production uses, run a scenario, and assert on the finished spans, their order and their parents.
+  Codex polls for each expected span for up to 10 seconds, asserts that sampling ends before a tool call is accepted,
+  and checks the turn's time breakdown (inference, tools, review, waiting on the user, unknown): a direct tool call
+  must show time in `tools` and none in `unknown`. Run each case in its own process when the tracing setup is
+  global, as Codex does.
+- **A measure that was not captured is missing, not zero.** Codex: "Missing capture never becomes a zero-duration
+  measurement." A zero would pass every budget; `run` prints `missing` for it and fails.
 - **The `run`** runs the scenario, queries the failed spans and the spans over budget, and prints one line per span,
   `<service> <span>: <status>`: `error (<status message>) trace <id>` or `slow 2.4s > 2s trace <id>`. It exits
   non-zero when it prints any line, and when the scenario left no traces at all: the instrumentation is broken.

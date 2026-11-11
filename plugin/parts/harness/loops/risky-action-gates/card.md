@@ -12,7 +12,7 @@ when: [during]
 initiator: rule
 sync: blocking
 assesses: [action-risk]
-related: [isolated-environment, escalation-on-uncertainty, db-migration-lint]
+related: [isolated-environment, escalation-on-uncertainty, db-migration-lint, approval-reviewer-agent]
 links:
   - title: "Configure permissions"
     url: "https://code.claude.com/docs/en/permissions"
@@ -63,6 +63,27 @@ links:
   - title: "sandboxDenialUtils.ts: what counts as a denial"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/sandbox/utils/sandboxDenialUtils.ts#L64-L120"
     author: "gemini-cli (Google)"
+  - title: "codex-execpolicy README: prefix rules with match and not_match examples"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/execpolicy/README.md#L5-L24"
+    author: "Codex (OpenAI)"
+    note: "examples validated at load time; a forbidden rule's justification names the alternative; the strictest decision wins."
+  - title: "exec_policy.rs: the message for a forbidden command"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/src/exec_policy.rs#L1169-L1210"
+    author: "Codex (OpenAI)"
+  - title: "exec_policy.rs: prefixes never offered as a saved rule"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/src/exec_policy.rs#L64-L153"
+    author: "Codex (OpenAI)"
+  - title: "exec_policy.rs: when a proposed rule is dropped"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/src/exec_policy.rs#L1065-L1127"
+    author: "Codex (OpenAI)"
+    note: "a banned prefix, a rule that already matches, or a rule that would not allow every segment."
+  - title: "on_request.md: how the agent asks, and the prefix_rule it may propose"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/prompts/templates/permissions/approval_policy/on_request.md#L22-L51"
+    author: "Codex (OpenAI)"
+  - title: "exec_policy.rs: a rules file that does not parse"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/src/exec_policy.rs#L729-L744"
+    author: "Codex (OpenAI)"
+    note: "the user's rules are dropped for the managed policy or an empty one, with a warning."
 ---
 
 ## Why
@@ -103,6 +124,18 @@ comment to Claude as the reason, and Claude continues working; "No" with no comm
   asks, and is denied when nobody is there to answer. Where the project classifies commands itself, in a
   PreToolUse hook, give it these rules and a regression suite of command strings, such as `echo hi && ls` with only
   `echo` allowed, which must ask.
+- **Each rule carries its examples.** Codex's policy rules take `match` and `not_match` examples, "validated at load
+  time (think of them as unit tests)": a rule whose example does not behave fails to load, with its location. Where
+  several rules match, the strictest decision wins: forbidden, then prompt, then allow. A forbidden rule's
+  justification reaches the agent as the reason, with the alternative: "`git push` rejected: Use `jj` instead of
+  `git`." A rules file that does not parse fails closed: the gated commands ask, and the error is shown. Dropping
+  the file's rules, forbidden ones included, would turn its mistakes into permissions.
+- **Saving an approval saves a narrow rule.** When an approval should not come back, save a rule for the prefix, not
+  the command. Codex lets the agent propose the prefix with its request ("You should rarely pass the entire command";
+  never for `rm`, never with a heredoc), and drops a proposal that is a shell, an interpreter or a wrapper (`bash -c`,
+  `python`, `node -e`, `npm run`, `env`, `git`, `rm`, `sudo`, among 89 prefixes), one that a rule already matches, or one
+  that would not allow every segment of the command. Only the person's "approve and save" writes it to the rules
+  file.
 - **A sandbox's refusal is a request to a person, not a puzzle.** In gemini-cli, a sandboxed command that fails with
   a permission or network denial (`operation not permitted`, `could not resolve host`, …) becomes a request to widen
   the sandbox: the paths it needed, widened to their nearest existing folder, and the network. On approval the same
@@ -145,3 +178,5 @@ comment to Claude as the reason, and Claude continues working; "No" with no comm
 - Auto mode's classifier blocks production deploys and migrations by default, but it is a model's judgement.
   Anthropic reports a 17% false-negative rate on real overeager actions, and says auto mode "is not a drop-in
   replacement for careful human review on high-stakes infrastructure."
+- A reviewer agent can answer the prompts that are not irreversible in the person's place, and leave these to the
+  person: [approval-reviewer-agent](../approval-reviewer-agent/card.md).

@@ -35,6 +35,14 @@ links:
   - title: "snippets.ts: the plan's sections, and an approved plan"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/prompts/snippets.ts#L651-L656"
     author: "gemini-cli (Google)"
+  - title: "Codex: the approved plan handed to a fresh thread"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/src/session/approved_plan.rs#L20-L134"
+    author: "Codex (OpenAI)"
+    note: "the file must be a regular file, byte-identical to the approved text, before the agent is told to read it."
+  - title: "Codex: Plan mode's instructions"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/collaboration-mode-templates/templates/plan.md#L86-L128"
+    author: "Codex (OpenAI)"
+    note: "2-4 options and a recommended default; an unanswered question becomes an assumption; decision complete; a revision replaces the plan."
 ---
 
 ## Why
@@ -79,6 +87,15 @@ instead (Towards AI).
 - **A new requirement goes back to the person.** gemini-cli's prompt for an approved plan: "If you discover new
   requirements or need to change the approach, confirm with the user and update this plan file". The committed plan
   stays the one the diff is checked against.
+- **The plan leaves no decision to the implementer.** Codex's Plan mode asks until the plan is "decision complete":
+  each open question comes with 2–4 options and a recommended default, and an unanswered one proceeds with the
+  default "and record it as an assumption in the final plan", where the person sees it at approval. A revision is
+  "a complete replacement" of the plan, not a patch on it, so the approved file is one coherent text.
+- **Approve into a clean context.** The planning conversation holds the options the person rejected. Codex offers
+  "Yes, clear context and implement": a new thread whose first message is "Read the approved plan at {path} and
+  implement it." Before it sends that, it checks the file is a regular file, not a symlink, and byte-identical to the
+  text the person approved; otherwise it passes the approved text inline. Start the implementing session from the
+  committed plan file, and check it against the approved version first.
 - **Plan mode by default.** Set `permissions.defaultMode` to `plan` in `.claude/settings.json` to make plan mode the
   default for the project's terminal sessions.
 - **Kept from getting around it.** Claude Code enforces the block on edits; the agent does not choose it. The one

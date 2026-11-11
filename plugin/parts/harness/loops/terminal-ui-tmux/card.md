@@ -21,6 +21,16 @@ links:
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/integration-tests/flicker.test.ts#L20-L41"
     author: "gemini-cli (Google)"
     note: "a prompt typed into the CLI in a pseudo-terminal, then the flicker metric must be absent."
+  - title: "test_backend.rs: a VT100 parser as the terminal"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/tui/src/test_backend.rs#L13-L22"
+    author: "Codex (OpenAI)"
+  - title: "resize_reflow.rs: a tmux smoke test against a mock model server"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/tui/tests/suite/resize_reflow.rs#L15-L56"
+    author: "Codex (OpenAI)"
+  - title: "resize_reflow.rs: waiting on capture-pane"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/tui/tests/suite/resize_reflow.rs#L655-L667"
+    author: "Codex (OpenAI)"
+    note: "poll every 100 ms until the text appears; time out with the last capture."
 ---
 
 ## Why
@@ -49,6 +59,15 @@ a passing smoke test.
 - Waits on the screen's content, not only fixed sleeps. Pi's skill captures after `sleep 3`, which a slow machine
   can outrun; polling `capture-pane` until the expected text appears does not depend on the machine. Poll every 0.2
   seconds for up to 10 seconds per step; a step that times out is red.
+- **A terminal emulator in the test process for every change.** tmux is slow and needs a built binary. For the
+  checks after each edit, render the UI into an in-process VT100 parser of a fixed size and assert on its screen,
+  with escape sequences and scrollback interpreted as a terminal would. Codex's `VT100Backend` wraps a `vt100::Parser`
+  "to mock a 'real' terminal", and the TUI has 1,350 snapshot assertions on its screen contents. tmux stays for what
+  only the real binary shows: startup, resizes, the shell around it.
+- **A scripted model behind the tmux run.** Point the app at a mock model server, so the smoke test needs no key and
+  the reply is the same every run ([scripted-model-tests](../scripted-model-tests/card.md)). Codex's resize smoke
+  test starts the binary in a 120×40 session against a mock server, splits the window to force a resize, polls
+  `capture-pane` every 100 ms for up to 15 seconds, and fails with the last capture.
 - **A rendering rule the app counts itself.** What a capture of the final screen cannot show, such as a frame drawn
   taller than the terminal and scrolled away, the app reports as a metric. gemini-cli's UI measures its root element
   on every render and counts `gemini_cli.ui.flicker.count` when it is taller than the terminal; `flicker.test.ts`

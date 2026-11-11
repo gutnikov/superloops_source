@@ -42,6 +42,17 @@ links:
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.gemini/skills/async-pr-review/scripts/async-review.sh#L70-L157"
     author: "gemini-cli (Google)"
     note: "CI's result reused, only the failing test files re-run, the change exercised by hand."
+  - title: "Codex /review: the review rubric"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/prompts/templates/review/rubric.md#L10-L95"
+    author: "Codex (OpenAI)"
+    note: "what counts as a finding, rule attribution to AGENTS.md lines, P0-P3, a confidence per finding, an overall verdict."
+  - title: "Codex /review: the reviewer subagent's restrictions"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/src/tasks/review.rs#L104-L121"
+    author: "Codex (OpenAI)"
+  - title: "A scoped AGENTS.md as a review contract"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/exec-server/src/sandbox_integrity/AGENTS.md#L24-L36"
+    author: "Codex (OpenAI)"
+    note: "accepted limitations listed next to the code; \"not a blanket exemption\"."
 ---
 
 ## Why
@@ -85,6 +96,13 @@ At OpenAI almost all review happens between agents.
 - **A size limit as well as a round limit.** An approved diff of more than 500 changed lines goes to a person (H4)
   instead of becoming a PR: a reviewer's pass over that much code is not to be trusted alone. The caretaker agent
   stops at 500 lines and after 5 rounds, and an issue it has tried to fix in 2 runs goes to a person.
+- **What counts as a finding**, in each reviewer's instructions. Codex's `/review` flags a bug only if "The bug was
+  introduced in the commit (pre-existing bugs should not be flagged)", and a claim that the change breaks something
+  elsewhere must "identify the other parts of the code that are provably affected"; when nothing is certain, "prefer
+  outputting no findings". A finding that rests on a project rule cites the AGENTS.md lines that state it. Each
+  finding has a priority from P0 to P3, a confidence from 0 to 1, and a location that overlaps the diff and spans at
+  most 10 lines; the review ends with "patch is correct" or "patch is incorrect" and its own confidence. Map them
+  onto Findings: P0 and P1 are `high`, P2 `medium`, P3 `low`.
 - **The `run`** runs the reviewers on the diff and prints their Findings, one JSON line each. It exits non-zero for a
   high finding the verifier confirmed, but only for a reviewer that is calibrated; until then it prints the findings
   and exits 0.
@@ -108,6 +126,11 @@ At OpenAI almost all review happens between agents.
   files named in the failed job's log are run again. One agent exercises the changed code by hand, with "Do NOT
   modify any source code" ([agentic-manual-testing](../agentic-manual-testing/card.md)); a last one reads every log
   and exit code and recommends.
+- **Accepted limitations, written where the code is.** A reviewer re-raises a known, accepted gap in every round. Codex
+  keeps a "scope and review contract" in a scoped AGENTS.md next to such code: the invariants, then "accepted
+  limitations of this phase, not requests to duplicate backend implementations. Review against this scope." It
+  closes with what stays a finding: "Regressions in explicit policy handling, executor context, or reporting remain
+  actionable; this is not a blanket exemption". Reviewers read the scoped AGENTS.md of every file in the diff.
 - The security lens has its own loop, [security-review-agent](../security-review-agent/card.md). A subagent that
   tries to prove a claim of done wrong, by running things, is [verification-subagent](../verification-subagent/card.md).
 

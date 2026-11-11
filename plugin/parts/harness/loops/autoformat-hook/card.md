@@ -17,6 +17,10 @@ links:
   - title: "Automate actions with hooks: auto-format code after edits"
     url: "https://code.claude.com/docs/en/hooks-guide#auto-format-code-after-edits"
     author: "Anthropic"
+  - title: "Codex: Validating your work (the default instructions)"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/protocol/src/prompts/base_instructions/default.md#L149-L157"
+    author: "Codex (OpenAI)"
+    note: "formatting tried up to 3 times, then named in the final message; unrelated bugs left alone."
 ---
 
 ## Why
@@ -70,5 +74,10 @@ fail on it. When the formatter cannot parse the file, the hook reports the error
 
 ## Notes
 
+- **A limit on the agent's own formatting attempts.** When the hook's formatter keeps failing on a file, the agent
+  should not spend the session on it. Codex's default instructions: "If there are issues you can iterate up to 3 times
+  to get formatting right, but if you still can't manage it's better to save the user time and present them a
+  correct solution where you call out the formatting in your final message." Put the same line in CLAUDE.md; the
+  check at commit and in CI still fails the file.
 - The hook formats; it does not check types or lint. Those are their own loops, such as
   [lsp-diagnostics](../lsp-diagnostics/card.md) after each edit.

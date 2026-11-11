@@ -30,6 +30,16 @@ links:
   - title: "test-rig.ts: record or replay"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/test-utils/src/test-rig.ts#L545-L557"
     author: "gemini-cli (Google)"
+  - title: "responses.rs: protocol invariants on every request the agent sends"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/tests/common/responses.rs#L1634-L1773"
+    author: "Codex (OpenAI)"
+    note: "every tool output has its call in the same input, and every call has its output."
+  - title: "responses.rs: a sequence of replies, each requested exactly once"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/tests/common/responses.rs#L1553-L1592"
+    author: "Codex (OpenAI)"
+  - title: "responses.rs: pausing the stream before an event"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/tests/common/responses.rs#L630-L643"
+    author: "Codex (OpenAI)"
 ---
 
 ## Why
@@ -65,6 +75,17 @@ error or an abort.
   non-strict mode takes the next response of the right kind, for calls whose order varies, such as background ones.
   A regenerated golden is a diff a person reviews before it is committed: it can hold details of the machine or the
   person who recorded it.
+- **The fake checks what the code sends, on every request.** A test that asserts only on the events it sees passes
+  on a history the real API would reject. Codex's mock server checks each request body it receives, whatever the test
+  asserts: every tool output has its call in the same input and every call has its output, or the test fails with
+  `function_call_output without matching call in input: <id>` or `Function call output is missing for call id: <id>`.
+  Put the provider's rules there once, and every test checks the history after a compaction, an abort or a resume.
+- **A scripted reply that is never requested fails as well.** Codex mounts a sequence "in order for each POST" and
+  "asserts the exact number of expected calls": a code path that skips a call fails the test, as one that makes an
+  extra call does.
+- **A reply can be held mid-stream.** A gate on one chunk or event of the stream releases it only when the test says
+  so, and the test interrupts, steers or queues input at that exact point. Codex: "Pause before the next matching
+  event until the sender is released."
 - **Regressions named by their issue**: `test/suite/regressions/<issue>-<what>.test.ts`, 93 of them in pi, such as a
   queued slash command that runs as a follow-up and a retry after a lost network connection. Each script reproduces
   the failure its issue reported, red before the fix ([reproduction-gate](../reproduction-gate/card.md)).
