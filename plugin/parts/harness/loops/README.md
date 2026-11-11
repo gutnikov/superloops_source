@@ -176,6 +176,7 @@ _The work is what the person meant: the intent, the plan and the result match wh
 _Behaviour can be checked by tests, and the tests catch what they should._
 
 - [A new check incubates before it blocks](check-incubation/card.md): A new test or eval runs many times on a schedule without blocking; it blocks pull requests only after a record of passes, and a blocking check that flakes goes back to quarantine.
+- [A test must pay for its upkeep](test-admission/card.md): Before adding a test, the agent names the contract it protects, the regression that breaks it and why no existing test catches it, and shows it failing; a test without the three answers is not added.
 - [Code coverage](code-coverage/card.md): The agent runs coverage and writes tests for the uncovered branches.
 - [Mutation testing](mutation-testing/card.md): The agent sees surviving mutants — code changes the tests did not notice — and writes tests that catch them.
 - [Run the tests first](run-tests-first/card.md): Before changing anything the agent runs the whole suite. It learns the state of the project and which tests already fail, so later it does not mistake them for its own regressions.
@@ -226,6 +227,7 @@ _It works with other systems, versions, platforms and locales: integrability, in
 - [Integration tests with emulators](integration-tests-emulators/card.md): The agent starts the real dependencies of the code (database, queue, cloud emulators), runs the tests against them and sees the errors in how the code works with those dependencies.
 - [Lint and run database migrations](db-migration-lint/card.md): A migration linter points at a dangerous operation. The agent rewrites the migration, then applies it and rolls it back on a throwaway database.
 - [Platform matrix](platform-matrix/card.md): CI runs the tests on several operating systems, runtimes and browsers. The agent sees which exact combination failed and fixes it.
+- [Translations stamped with their source text](translation-sync/card.md): Each translation records a hash of the text it was translated from; a changed original makes it stale, and a check fails on broken params, link ids and code spans.
 
 ### Performance
 
@@ -280,6 +282,7 @@ _People can use it: accessibility, UX, interaction._
 - [Accessibility checks (axe, ARIA)](accessibility-checks/card.md): `@axe-core/playwright` finds WCAG violations and gives the selector for each one. `toMatchAriaSnapshot` catches structural problems that axe misses.
 - [Agent navigation by the accessibility tree](accessibility-tree-navigation/card.md): The agent drives the page by Playwright MCP's accessibility snapshot instead of pixels; a button it cannot find by role and name means poor accessibility and a broken scenario.
 - [AI judges on telemetry](ai-judges-telemetry/card.md): An AI judge is an LLM that checks a sample of responses and a sample of logs. It marks the anomalies it finds.
+- [Layout continuity under CPU stress](visual-stability-oracle/card.md): A probe samples the layout of named regions on every frame while the CPU is slowed; declared invariants catch jumps, flashes, blank frames and overlaps that a final screenshot never shows.
 - [UX evaluator with thresholds](ux-evaluator/card.md): A separate agent walks the app with Playwright MCP like a user, grades depth, functionality, design and code, and once calibrated fails a sprint below any threshold; the generator gets a breakdown.
 - [Visual check with screenshots](visual-screenshot-check/card.md): The agent takes a screenshot, compares it with the mockup, lists the differences and fixes them.
 

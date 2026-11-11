@@ -26,6 +26,9 @@ links:
   - title: "check-lockfile-commit.mjs"
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/scripts/check-lockfile-commit.mjs"
     author: "pi (earendil-works)"
+  - title: "opencode .husky/pre-push: the toolchain version first"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.husky/pre-push#L1-L20"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -52,6 +55,10 @@ files and commits again.
 - **A lockfile change is a decision.** Pi's pre-commit blocks a staged `package-lock.json` unless the change only
   updates workspace metadata or `PI_ALLOW_LOCKFILE_CHANGE=1` is set, and its AGENTS.md tells the agent not to set it
   unless the user wants the lockfile committed.
+- **The toolchain version before the checks.** A hook run by another version of the runtime or package manager can
+  pass where CI fails, or fail where CI passes. opencode's pre-push hook first fails when Bun is outside the range of
+  the `packageManager` field in `package.json`, and warns on any other version than the exact one, before it runs
+  `bun run check`.
 - **The hooks**, with the pre-commit framework: `.pre-commit-config.yaml` lists them, each with its `stages`, and
   `default_install_hook_types: [pre-commit, pre-push]`, so that `pre-commit install` installs both. A hook fails when
   it exits non-zero or modifies files ("Files were modified by this hook").

@@ -21,6 +21,13 @@ links:
     author: "oasdiff"
   - title: "oasdiff GitHub Action"
     url: "https://www.oasdiff.com/docs/github-action"
+  - title: "opencode AGENTS.md: Experimental API"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/AGENTS.md#L172-L181"
+    author: "opencode (anomalyco)"
+    note: "new endpoints and new default behaviours start experimental; shipped API moves keep deprecated aliases until the next minor."
+  - title: "experimental-identifiers.test.ts"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/protocol/test/experimental-identifiers.test.ts#L7-L24"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -55,6 +62,13 @@ that the break is wanted.
 - **Retiring an endpoint goes through deprecation.** Mark it `deprecated: true` with an `x-sunset` date; oasdiff lets
   it be removed "At the sunset date or anytime later" without a breaking-change error, and "An earlier removal will
   be considered a breaking change."
+- **New API starts experimental.** A new endpoint is not yet a contract: opencode's rule, "New endpoints and new
+  default behaviors start experimental", under `/api/experimental/…` with an `experimental.*` id and a description
+  that says it "may change without compatibility guarantees". Run the break check over the stable API only, and
+  test the boundary both ways: opencode fails when a route under `/api/experimental` lacks the `experimental.` id or
+  a route outside it has one, and asserts more than 100 operations were read, so an empty list cannot pass.
+  Graduating a route moves it out and notes it in the changelog; a breaking move of shipped API keeps the old names
+  as `@deprecated` aliases until the next minor.
 - **`run`** compares the schema files in the directory with those on main and prints one line per break: buf's
   `file:line:column:message` as it is, and oasdiff's changes with the path, the method and the change. It exits
   non-zero on any break at the blocking level.

@@ -42,6 +42,19 @@ links:
   - title: "file_update.rs: the lines that failed to match"
     url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/apply-patch/src/file_update.rs#L152-L160"
     author: "Codex (OpenAI)"
+  - title: "opencode edit.ts: the hint after an edit that missed"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/tool/plugin/edit.ts#L190-L241"
+    author: "opencode (anomalyco)"
+    note: "\"may already be applied\", or the closest lines numbered like a read: lines vote for the start, at least half agree, at most 12 lines."
+  - title: "opencode runtime.ts: invalid arguments"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/tool/runtime.ts#L90-L101"
+    author: "opencode (anomalyco)"
+  - title: "opencode tool-input-repair.ts: repairs only where the schema is unambiguous"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/plugin/tool-input-repair.ts#L8-L24"
+    author: "opencode (anomalyco)"
+  - title: "anti-slop: require-safety-comment-for-type-assertion"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/script/oxlint/anti-slop/rules/require-safety-comment-for-type-assertion.ts#L81-L92"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -82,6 +95,10 @@ violation with a comment that gives the reason.
 - **Every suppression carries its reason**: `// eslint-disable-next-line <rule> -- <reason>`. `run` fails on a
   disable comment without `--` and a reason. Böckeler: this "keeps the suppressions manageable, visible and
   reviewable."
+- **For the riskiest escape hatches, ask for the invariant, not a disable.** opencode's anti-slop rules flag every
+  type assertion except `as const` that has no `SAFETY:` comment before it: "State the checked invariant immediately
+  before the assertion or its containing statement." The comment must say what was checked, so the reviewer can
+  check it too; a disable comment only says the rule was in the way.
 - **The `run`**: the linter with the formatter, `file:line: <rule>: <message>. How to fix: <instruction>`, and a
   non-zero exit on any error.
 - **Cases.** Must fire: a function with six parameters against `max-params: 4`; a function over the complexity
@@ -112,3 +129,10 @@ violation with a comment that gives the reason.
   verification failed: Failed to find expected lines in <path>:` followed by the lines it expected. The match is
   tried exact, then without trailing whitespace, then trimmed, then with typographic punctuation folded to ASCII.
   Order a project's own gates the same way: the cheap mechanical check before the person.
+- opencode's edit tool answers a miss with what the next call needs. When `newString` (20 characters or more) is
+  already in the file: "newString is already in the file, so this edit may already be applied." Otherwise "The
+  closest lines in the file:", numbered as a read shows them: each line of `oldString` votes for where the match
+  starts, at least half must agree, and at most 12 lines of 200 characters are shown, only when the agent may read
+  the file. Invalid arguments list up to 5 issues by path, echo the arguments and end "Update the arguments and call
+  the tool again." Input is repaired silently only where the schema leaves one reading, such as `"20"` for a number
+  field; a call to a `bash` tool that does not exist runs as `shell`, and the result says "Call "shell" directly."

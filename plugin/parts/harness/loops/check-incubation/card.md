@@ -9,8 +9,25 @@ stages: [ci, scheduled]
 speed: [minutes, days]
 needs: [ci]
 agent: [worker]
-related: [agent-calibration, llm-evals, ci-clean-infra, steering-loop, scripted-model-tests]
+related: [agent-calibration, llm-evals, ci-clean-infra, steering-loop, scripted-model-tests, test-admission]
 links:
+  - title: "app-e2e-tests skill: before you push"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.opencode/skills/app-e2e-tests/SKILL.md#L113-L117"
+    author: "opencode (anomalyco)"
+    note: "repeat 10 times at CI concurrency with no retries; delay a response 0.6-1.5 s to force the race."
+  - title: "app-e2e-tests skill: decide which side is wrong"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.opencode/skills/app-e2e-tests/SKILL.md#L78-L83"
+    author: "opencode (anomalyco)"
+  - title: "unit-tests skill: before you push"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.opencode/skills/unit-tests/SKILL.md#L134-L137"
+    author: "opencode (anomalyco)"
+  - title: "tui-tests skill: a regression is not a flake; force the race; the negative control"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.opencode/skills/tui-tests/SKILL.md#L73-L81"
+    author: "opencode (anomalyco)"
+  - title: "Quarantined browser tests"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/app/e2e/QUARANTINE.md#L1-L12"
+    author: "opencode (anomalyco)"
+    note: "fix or delete within 14 days; never quarantine your own failure."
   - title: "Behavioral evals: policies, stability before check-in, the promotion process"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/evals/README.md#L94-L108"
     author: "gemini-cli (Google)"
@@ -106,6 +123,13 @@ signal to promote it.
   a new eval file that uses `ALWAYS_PASSES`.
 - **A deflake command** that runs a test N times with retries off and fails on any failure: gemini-cli's
   `deflake.js` passes `--retry=0`, since its integration suite otherwise retries each test twice.
+- **Deflake at CI conditions, and force the race.** Repeat at the concurrency CI uses, with retries off: opencode
+  runs unit tests with `--rerun-each 10 --randomize`, browser tests with `--repeat-each=10 --workers=5 --retries=0`
+  and once fully parallel "to prove that order does not matter", and reruns a file while another suite loads the
+  machine, as CI does. For a suspected race, slow the one thing it depends on, such as a timer or a response:
+  opencode: "CPU throttling at 4x and 6x did not reproduce the tooltip or title-anchor races, but delayed responses
+  did", so a test holds the suspect response for 0.6-1.5 s. Then a negative control: make the awaited condition
+  impossible, and the test must fail fast with its evidence, not hang until the timeout.
 - **A history** of the scheduled runs, one line per check, run and model. Keep it longer than the promotion window:
   7 nights of history kept for 7 days leave no margin for one missed night.
 - **A report of what the filter left out.** Every pull-request run lists the checks it skipped as unstable. A check
@@ -115,6 +139,9 @@ signal to promote it.
   runner retries every test once "so one transient failure does not fail full-CI outright", and keeps a list of tests
   with longer timeouts headed "Do not add new tests here"; a list closed to new entries only shrinks, but only a
   report of retries shows which tests should leave the blocking tier.
+- **A quarantine with an expiry.** Each quarantined check has a row: its failure signature, the date it first failed
+  and its owner. opencode's rule: "fix a quarantined test or delete it within 14 days of quarantine… Never quarantine
+  a test that fails because of your own change". A larger timeout, a retry or a skip on one platform is not a fix.
 - **`run`** reads the pull request's diff, the deflake results and the history, and prints one line per check it
   touches: `<check>: new, blocking tier`, `<check>: deflake <passed>/<runs>`, `<check>: promote (<n>/<n> runs over 7
   nights)` or `<check>: quarantine (failed on main at <commit>)`. It exits non-zero when the pull request adds a check
@@ -137,6 +164,10 @@ signal to promote it.
   Findings and preparation errors must not change sandbox construction, permissions, approvals, or command
   execution." Promote it to enforcing on the record of its findings, as for a test; its telemetry carries bounded
   tags only, never paths or error text.
+- A flake can be the product's bug. opencode: "Three of eight investigated e2e flakes were product bugs"; when a user
+  could hit the interleaving, fix the product and keep the assertion. A failure that repeats on one branch is that
+  branch's regression: a TUI test failed in 21 of 29 runs on one stack of pull requests and in 0 of about 102
+  elsewhere. Compare the failure rate on the branch with the rate on main before calling a failure a flake.
 - A failure from the provider, such as a 503, is not a failure of the check. Retry it, and record it apart from the
   check's results so that it moves no check between tiers ([llm-evals](../llm-evals/card.md)).
 

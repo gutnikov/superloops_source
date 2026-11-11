@@ -41,6 +41,20 @@ links:
     url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/ext/goal/templates/goals/budget_limit.md#L1-L16"
     author: "Codex (OpenAI)"
     note: "injected once into the running turn when the goal's token budget runs out."
+  - title: "opencode /goal: the reviewer's prompt"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/plugin/goal/judge.txt#L1-L20"
+    author: "opencode (anomalyco)"
+    note: "a separate turn with no tools; done, continue, blocked, paused or wait; \"When in doubt, answer 'continue'\"."
+  - title: "opencode /goal: the limits"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/plugin/goal.ts#L15-L19"
+    author: "opencode (anomalyco)"
+    note: "50 rounds, 3 stalls, 30 minutes of waiting on background work."
+  - title: "opencode /goal: the idle hook and the stall rule"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/plugin/goal.ts#L138-L203"
+    author: "opencode (anomalyco)"
+  - title: "opencode /goal: the objective added back after compaction"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/plugin/goal.ts#L218-L231"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -121,6 +135,14 @@ passes.
 - **A token budget as a stop.** A goal with a budget ends when the budget runs out: Codex injects one message into
   the running turn, "do not start new substantive work… Wrap up this turn soon", and starts no further turns. Set a
   budget on every unattended goal; the Stop hook's cap counts only blocks, not the tokens spent between them.
+- **A reviewer turn between the two.** opencode's `/goal` judges in a separate turn of the same session, with the
+  whole transcript and no tools: "The assistant claiming the goal is met is not evidence", and "When in doubt,
+  answer 'continue'". On `continue` the agent gets the reason and a next step. `wait` is allowed only while one of
+  the session's own background commands runs, never for a dev server, and 30 minutes with nothing running pause the
+  goal. The goal also pauses after 50 rounds, and after 3 stalled rounds in a row: the reviewer's reason is the same
+  as last time, or the agent called no tool. The objective reaches the reviewer as `<untrusted_objective>`, and
+  after a compaction it is added back to the history. Whichever judge you use, count its repeated reasons: a judge
+  that says the same thing three times is watching a [stall](../stall-detector/card.md).
 
 ## Agent step
 

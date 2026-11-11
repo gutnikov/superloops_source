@@ -27,6 +27,16 @@ links:
   - title: "chatCompressionService.ts: the summary's second pass"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/context/chatCompressionService.ts#L770-L800"
     author: "gemini-cli (Google)"
+  - title: "opencode compaction.ts: the summary template, a nudge, then a failure"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/session/compaction.ts#L173-L204"
+    author: "opencode (anomalyco)"
+    note: "Objective, Requirements, Decisions, Work State (Completed, Active, Blocked), Next Move, Relevant Files, Important Context."
+  - title: "opencode compaction.ts: the nudge"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/session/compaction.ts#L247-L248"
+    author: "opencode (anomalyco)"
+  - title: "opencode compaction.ts: the check that the template was filled"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/session/compaction.ts#L486-L521"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -91,3 +101,8 @@ feature passes when its acceptance tests are green.
   entry is one the next session will not have. gemini-cli gives every summary of its history this second pass: "Did you omit
   any specific technical details, file paths, tool results, or user constraints mentioned in the history? If
   anything is missing or could be more precise, generate a FINAL, improved <state_snapshot>."
+- A progress entry has a shape a script can check. opencode's compaction summary must use a fixed template:
+  Objective, Requirements, Decisions, Work State with Completed, Active and Blocked, Next Move, Relevant Files (at
+  most 15) and Important Context. A reply with none of the template's headings gets one nudge, "Return the summary as
+  text using the exact section headings from the template", and then fails as "Compaction summary did not match the
+  required template". Give the progress file the same headings, and let the commit hook reject an entry without them.

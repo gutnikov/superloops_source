@@ -33,6 +33,16 @@ links:
   - title: "confirmation.ts: the person edits the proposed change"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/scheduler/confirmation.ts#L127-L135"
     author: "gemini-cli (Google)"
+  - title: "opencode snapshot.ts: the working tree captured at each step"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/snapshot.ts#L133-L148"
+    author: "opencode (anomalyco)"
+    note: "tracked files and untracked files up to 2 MiB, in a separate git directory."
+  - title: "opencode revert.ts: a revert restores every file changed after the message"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/session/revert.ts#L22-L40"
+    author: "opencode (anomalyco)"
+  - title: "opencode permission.ts: a refusal with feedback reaches every waiting request"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/permission.ts#L317-L337"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -97,3 +107,11 @@ irreversible step goes through a [gate](../risky-action-gates/card.md), watched 
 - A correction can be an edit. At gemini-cli's approval prompt the person can open the proposed change in an
   editor, change it and see the new diff, as often as they like; the agent is then told "The confirmation step
   modified the `new_string` content to be: …", so its next edit starts from the person's version.
+- A rewind can cover the shell as well. opencode captures the whole working tree at each step into a separate git
+  directory, tracked files and untracked ones up to 2 MiB, and records which files each step changed; a revert to a
+  message restores every file changed after it, whichever tool changed it. Where the runtime's checkpoints cover only
+  its own edit tools, run the agent in a git worktree and commit at each step the person may want to go back to.
+- A refusal can carry the correction. In opencode, a refusal with a message fails the tool call with that message
+  and the agent goes on; a refusal without one ends the step ("The user declined this tool call"). The same feedback
+  reaches every request waiting in that session, since "Feedback applies to the whole batch, so parallel asks don't
+  end the step."

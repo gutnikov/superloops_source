@@ -146,7 +146,7 @@ loops:
     speed: [seconds]
     needs: []
     agent: [reviewer]
-    related: [human-acceptance-criteria, behaviour-invariance]
+    related: [human-acceptance-criteria, behaviour-invariance, prompt-snapshots, visual-stability-oracle]
   - id: architecture-fitness-functions
     title: "Architecture fitness functions"
     path: architecture-fitness-functions/card.md
@@ -309,7 +309,7 @@ loops:
     speed: [minutes, days]
     needs: [ci]
     agent: [worker]
-    related: [agent-calibration, llm-evals, ci-clean-infra, steering-loop, scripted-model-tests]
+    related: [agent-calibration, llm-evals, ci-clean-infra, steering-loop, scripted-model-tests, test-admission]
   - id: choose-from-options
     title: "Choose from options"
     path: choose-from-options/card.md
@@ -507,7 +507,7 @@ loops:
     speed: [minutes]
     needs: [browser]
     agent: [explorer]
-    related: [agentic-manual-testing, browser-console-devtools, progress-file-feature-list, acceptance-loop]
+    related: [agentic-manual-testing, browser-console-devtools, progress-file-feature-list, acceptance-loop, visual-stability-oracle]
   - id: error-tracking
     title: "Error tracking (Sentry)"
     path: error-tracking/card.md
@@ -1214,7 +1214,19 @@ loops:
     stages: [local, ci]
     speed: [seconds, minutes]
     needs: []
-    related: [e2e-browser, agentic-manual-testing, health-checks-smoke]
+    related: [e2e-browser, agentic-manual-testing, health-checks-smoke, accessibility-tree-navigation]
+  - id: test-admission
+    title: "A test must pay for its upkeep"
+    path: test-admission/card.md
+    summary: "Before adding a test, the agent names the contract it protects, the regression that breaks it and why no existing test catches it, and shows it failing; a test without the three answers is not added."
+    sensor: computational
+    ilities: [testability, maintainability]
+    places: [delivery/work, remediation/work, maintenance/work]
+    stages: [local, ci]
+    speed: [seconds, minutes]
+    needs: []
+    agent: [reviewer]
+    related: [mutation-testing, red-green-tdd, reproduction-gate, code-coverage, agent-code-review, check-incubation]
   - id: tool-use-telemetry
     title: "Tool-use telemetry from agent sessions"
     path: tool-use-telemetry/card.md
@@ -1238,6 +1250,18 @@ loops:
     needs: [traces]
     agent: [investigator]
     related: [perf-budgets-telemetry, load-testing, structured-logs, metrics-promql]
+  - id: translation-sync
+    title: "Translations stamped with their source text"
+    path: translation-sync/card.md
+    summary: "Each translation records a hash of the text it was translated from; a changed original makes it stale, and a check fails on broken params, link ids and code spans."
+    sensor: computational
+    ilities: [compatibility, usability]
+    places: [delivery/work, delivery/release, maintenance/work]
+    stages: [local, ci]
+    speed: [seconds]
+    needs: []
+    agent: [worker]
+    related: [i18n-pseudolocalization, executable-docs, approved-fixtures]
   - id: triage
     title: "Triage: every signal goes to one super-loop, with its oracle"
     path: triage/card.md
@@ -1312,26 +1336,37 @@ loops:
     needs: [browser]
     agent: [judge]
     related: [approved-fixtures, ux-evaluator, e2e-browser, llm-judge-calibration]
+  - id: visual-stability-oracle
+    title: "Layout continuity under CPU stress"
+    path: visual-stability-oracle/card.md
+    summary: "A probe samples the layout of named regions on every frame while the CPU is slowed; declared invariants catch jumps, flashes, blank frames and overlaps that a final screenshot never shows."
+    sensor: computational
+    ilities: [usability, performance]
+    places: [delivery/work, remediation/oracle, maintenance/gate]
+    stages: [local]
+    speed: [minutes]
+    needs: [browser]
+    related: [e2e-browser, visual-screenshot-check, check-incubation, lighthouse-ci]
 
 # The loops at each place: <super-loop>/<phase>, or harness:<super-loop>/<phase> at the harness level
 # (super-loops/). The Phases table of each super-loop names the same loops, except in the work phase.
 by_place:
   delivery/entry: [production-users, triage]
   delivery/oracle: [acceptance-loop, choose-from-options, human-acceptance-criteria, interview, plan-approval, spec-check, task-restatement, user-feedback]
-  delivery/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approval-reviewer-agent, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, benchmarks-vs-baseline, browser-console-devtools, build, bundle-size-budget, check-incubation, choose-from-options, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, docs-audit, document-review, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, metrics-promql, mutation-testing, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, progress-file-feature-list, prompt-snapshots, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, scripted-model-tests, secret-scanning, simplification-pass, stall-detector, stop-hook, structured-logs, taste-invariants, terminal-ui-tmux, traces-opentelemetry, type-check, visual-screenshot-check]
+  delivery/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approval-reviewer-agent, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, benchmarks-vs-baseline, browser-console-devtools, build, bundle-size-budget, check-incubation, choose-from-options, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, docs-audit, document-review, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, metrics-promql, mutation-testing, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, progress-file-feature-list, prompt-snapshots, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, scripted-model-tests, secret-scanning, simplification-pass, stall-detector, stop-hook, structured-logs, taste-invariants, terminal-ui-tmux, test-admission, traces-opentelemetry, translation-sync, type-check, visual-screenshot-check, visual-stability-oracle]
   delivery/gate: [acceptance-loop, agent-audit-trail, contract-tests, human-diff-review, result-demo, ux-evaluator, verification-subagent]
-  delivery/release: [canary-feature-flags, changelog-audit, dast, exploratory-testing, health-checks-smoke, lighthouse-ci, load-testing, preview-environments, risky-action-gates, terminal-ui-tmux]
+  delivery/release: [canary-feature-flags, changelog-audit, dast, exploratory-testing, health-checks-smoke, lighthouse-ci, load-testing, preview-environments, risky-action-gates, terminal-ui-tmux, translation-sync]
   delivery/confirmation: [canary-feature-flags, error-tracking, metrics-promql, production-users, release-confirmation, slo-degradation, structured-logs]
   remediation/entry: [ai-judges-telemetry, backup-restore-rollback, chaos-engineering, dast, docs-audit, error-tracking, exploratory-testing, fuzzing, production-users, sample-audit, security-review-agent, slo-degradation, triage]
-  remediation/oracle: [agentic-manual-testing, browser-console-devtools, debugger-repl, fuzzing, reproduction-gate, scripted-model-tests, structured-logs, traces-opentelemetry, user-feedback]
-  remediation/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approval-reviewer-agent, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, browser-console-devtools, bug-failing-test-fix, build, bundle-size-budget, check-incubation, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, mutation-testing, observe-and-interrupt, platform-matrix, pre-commit-pre-push, profiling, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, secret-scanning, stall-detector, stop-hook, taste-invariants, terminal-ui-tmux, type-check, visual-screenshot-check]
+  remediation/oracle: [agentic-manual-testing, browser-console-devtools, debugger-repl, fuzzing, reproduction-gate, scripted-model-tests, structured-logs, traces-opentelemetry, user-feedback, visual-stability-oracle]
+  remediation/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approval-reviewer-agent, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, browser-console-devtools, bug-failing-test-fix, build, bundle-size-budget, check-incubation, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, mutation-testing, observe-and-interrupt, platform-matrix, pre-commit-pre-push, profiling, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, secret-scanning, stall-detector, stop-hook, taste-invariants, terminal-ui-tmux, test-admission, type-check, visual-screenshot-check]
   remediation/gate: [agent-audit-trail, human-diff-review, reproduction-gate, verification-subagent]
   remediation/release: [canary-feature-flags, changelog-audit, health-checks-smoke, risky-action-gates]
   remediation/confirmation: [canary-feature-flags, error-tracking, metrics-promql, release-confirmation, slo-degradation, structured-logs]
   maintenance/entry: [compliance-mutants, coupling-analysis, dependency-scanning-sbom, dependency-updates, garbage-collection, knowledge-base-doc-lint, triage]
   maintenance/oracle: [approved-fixtures, behaviour-invariance, benchmarks-vs-baseline, code-coverage, coupling-analysis, mutation-testing, run-tests-first]
-  maintenance/work: [accessibility-checks, agent-code-review, agentic-manual-testing, approval-reviewer-agent, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, build, bundle-size-budget, ci-clean-infra, compliance-mutants, config-validation, dependency-scanning-sbom, dependency-updates, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, garbage-collection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, profiling, prompt-snapshots, property-based-tests, risky-action-gates, sast, scripted-model-tests, secret-scanning, simplification-pass, stall-detector, stop-hook, taste-invariants, terminal-ui-tmux, type-check, visual-screenshot-check]
-  maintenance/gate: [agent-audit-trail, api-breaking-changes, behaviour-invariance, contract-tests, db-migration-lint, human-diff-review, prompt-snapshots, verification-subagent]
+  maintenance/work: [accessibility-checks, agent-code-review, agentic-manual-testing, approval-reviewer-agent, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, build, bundle-size-budget, ci-clean-infra, compliance-mutants, config-validation, dependency-scanning-sbom, dependency-updates, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, garbage-collection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, profiling, prompt-snapshots, property-based-tests, risky-action-gates, sast, scripted-model-tests, secret-scanning, simplification-pass, stall-detector, stop-hook, taste-invariants, terminal-ui-tmux, test-admission, translation-sync, type-check, visual-screenshot-check]
+  maintenance/gate: [agent-audit-trail, api-breaking-changes, behaviour-invariance, contract-tests, db-migration-lint, human-diff-review, prompt-snapshots, verification-subagent, visual-stability-oracle]
   maintenance/release: [canary-feature-flags, changelog-audit, health-checks-smoke, load-testing, risky-action-gates]
   maintenance/confirmation: [canary-feature-flags, error-tracking, metrics-promql, perf-budgets-telemetry, release-confirmation, slo-degradation, structured-logs]
   discovery/entry: [production-users, triage]

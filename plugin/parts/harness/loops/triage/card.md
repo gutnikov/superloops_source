@@ -53,6 +53,17 @@ links:
   - title: "Codex: Issue Translator (a workflow)"
     url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/.github/workflows/issue-translator.yml#L33-L143"
     author: "Codex (OpenAI)"
+  - title: "opencode: PR standards (a workflow)"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.github/workflows/triage-pr-standards.yml#L86-L107"
+    author: "opencode (anomalyco)"
+    note: "the title convention, a linked issue, the template filled; one comment updated in place."
+  - title: "opencode: the 72-hour window"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.github/workflows/triage-compliance-close.yml#L79-L98"
+    author: "opencode (anomalyco)"
+    note: "measured from when the compliance comment was created, so editing it does not reset the clock."
+  - title: "opencode close-prs.ts: old PRs without community support"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/script/github/close-prs.ts#L124-L153"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -142,6 +153,18 @@ ticket. Triage handles it before any work starts on it:
 - An item that waits on its reporter needs an end. gemini-cli closes an issue 14 days after it asked for information
   without an answer, and marks an inactive one stale at 60 days, then closes it 14 days after the stale label was
   added; an answer removes the label, and each comment says what will happen and when.
+- A pull request has a contract too, and a bot can hold it to it. opencode's PR-standards check runs on every
+  open, edit and push of a PR from outside the team. It wants a conventional title (`feat:`, `fix:`, `docs:`,
+  `chore:`, `refactor:`, `test:`), a linked issue for a fix, and the template filled in: every section present, a
+  description that is more than its placeholder, a type of change ticked, "How did you verify your code works?"
+  answered, at least 2 checklist boxes ticked. A miss adds a `needs:*` label and one comment, edited in place, that
+  lists "What needs to be fixed" and gives "**72 hours**"; a job every 30 minutes closes the PR once the comment is
+  72 hours old, and editing does not reset the clock. When the PR is fixed, the label goes, the comment is deleted and
+  the bot says thanks. An agent that opens PRs reads that list as its failures, like a red check.
+- The backlog of PRs needs an end as well. Daily, opencode closes open PRs older than a month with fewer than 2
+  positive reactions, "Due to the high volume of PRs from users and AI agents": at most 50 per run, a dry run by
+  default when started by hand, and a label that keeps a PR a maintainer reopened after an appeal from being closed
+  again.
 
 ## Agent step
 

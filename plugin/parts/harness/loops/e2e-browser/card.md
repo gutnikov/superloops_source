@@ -9,7 +9,7 @@ stages: [local, ci]
 speed: [minutes]
 needs: [browser]
 agent: [explorer]
-related: [agentic-manual-testing, browser-console-devtools, progress-file-feature-list, acceptance-loop]
+related: [agentic-manual-testing, browser-console-devtools, progress-file-feature-list, acceptance-loop, visual-stability-oracle]
 links:
   - title: "Effective harnesses for long-running agents"
     url: "https://anthropic.com/engineering/effective-harnesses-for-long-running-agents"
@@ -20,6 +20,13 @@ links:
   - title: "Dialogs"
     url: "https://playwright.dev/docs/dialogs"
     author: "Playwright"
+  - title: "opencode site AGENTS.md: check in a production build"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/services/site/AGENTS.md#L27"
+    author: "opencode (anomalyco)"
+    note: "\"a change that only works hydrated looks right there\" (in vite dev)."
+  - title: "opencode app-e2e-tests skill: run in built mode, as CI does"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.opencode/skills/app-e2e-tests/SKILL.md#L107"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -50,6 +57,11 @@ after its e2e check ([progress-file-feature-list](../progress-file-feature-list/
 - **Native dialogs in specs.** Playwright auto-dismisses `alert`, `confirm` and `prompt` dialogs unless the test
   handles them with `page.on('dialog')`. A scenario with a native dialog is checked by a spec that handles it, not by
   a free walk that cannot see it.
+- **The build users get, not the dev server.** A dev server renders and bundles differently from production, and a
+  change can work in one and not the other. opencode's site pages render as static HTML in production but hydrated
+  under `vite dev`, "so a change that only works hydrated looks right there"; its e2e skill says "Run in built mode,
+  as CI does", since dev mode serves unbundled modules with the API on another origin. Walk the scenario against a
+  production build served locally; keep the dev server for the edit loop.
 - **`run`** is the e2e suite in a headless browser against a fresh server. It prints each failed test as
   `file:line: message` with the step that failed, and exits non-zero on any failure.
 - **Cases.** Must fire: a copy where the unit tests pass but the submit button's handler is not attached; a copy

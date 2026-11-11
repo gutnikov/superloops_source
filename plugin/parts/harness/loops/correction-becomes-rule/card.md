@@ -42,6 +42,13 @@ links:
     url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/state/src/runtime/memories.rs#L441-L500"
     author: "Codex (OpenAI)"
     note: "used within max_unused_days, ranked by usage_count."
+  - title: "opencode /learn (a command)"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.opencode/command/learn.md#L5-L42"
+    author: "opencode (anomalyco)"
+    note: "lessons from errors that took several attempts, written into the AGENTS.md nearest the code."
+  - title: "opencode glossary: a rule keeps its source"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.opencode/glossary/README.md#L58-L63"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -90,6 +97,13 @@ one. The measure is that each kind of correction stops coming back.
   verified first when it "is likely to drift and is cheap to verify", and called possibly stale when it is not. For
   rules from this loop, have the agent name the rule it applied in its final message; a rule no session named in 30
   days goes back to the person who approved it, to keep or remove.
+- **The agent's own struggles count as corrections too.** opencode's `/learn` mines the session for "errors that
+  took multiple attempts" and "Debugging breakthroughs when error messages were misleading", skips "Things already
+  in an AGENTS.md", and writes 1 to 3 lines per lesson into the AGENTS.md nearest the code it concerns, since parent
+  AGENTS.md files "are automatically loaded" when the agent reads a file there. It has no approval step and no
+  repeat threshold; here a lesson from `/learn` is logged as a correction of its kind and becomes a rule on its
+  second occurrence like any other. Each rule carries its source: opencode's glossary asks to "Add or update the
+  `Sources` section whenever you add a new rule"; here each rule names its trace entry or its pull request.
 - **Short, stable kinds**, such as `unstructured log line` or `test edited instead of code`, so that two corrections
   of one kind are seen as one kind. Reuse a kind already in `superloops/trace.jsonl` before writing a new one.
 - **Code before text.** CLAUDE.md is advice, not a guarantee. Prefer a [custom lint](../taste-invariants/card.md) or

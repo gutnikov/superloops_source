@@ -18,6 +18,13 @@ links:
     url: "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
     author: "Kubernetes"
     note: "the exit code of kubectl rollout status, the progress deadline, kubectl rollout undo."
+  - title: "opencode schedule.ts: a condition polled with no model call"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/schema/src/schedule.ts#L214-L234"
+    author: "opencode (anomalyco)"
+    note: "`until` polls every 30 seconds by default, wakes once when it passes, and gives up after 24 hours."
+  - title: "opencode shell.ts: a background command resumes the agent"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/tool/plugin/shell.ts#L30-L31"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -63,6 +70,12 @@ change is fresh. The startup logs show why the service did not start.
 
 - Green here means the version starts and answers, not that the change works for users. That is
   [release-confirmation](../release-confirmation/card.md), which waits for real traffic.
+- **When the agent itself waits for a deploy, it should not spend turns polling.** A model that sleeps and re-reads
+  `/ready` pays a turn per poll and drifts. Poll outside the model: opencode's `schedule_create` with `until`
+  runs a shell check "with no model call", every 30 seconds by default, wakes the session once when the command
+  exits 0 and its output matches, and gives up after 24 hours. A background command does the same for a single
+  long step: the agent ends its turn and is "resumed automatically when the command finishes", with the output and
+  the exit code. Keep this card's limits in the check itself: every 5 s for up to 2 minutes, then red.
 
 ## Agent step
 

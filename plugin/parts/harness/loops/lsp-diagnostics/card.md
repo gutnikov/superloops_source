@@ -18,6 +18,10 @@ links:
     note: "connecting a language server that has no plugin"
   - title: "Best practices for Claude Code"
     url: "https://code.claude.com/docs/en/best-practices"
+  - title: "opencode docs: LSP best practices"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/services/site/src/docs/v1/content/lsp.mdx#L68-L72"
+    author: "opencode (anomalyco)"
+    note: "LSP is opt-in: \"it is not always a net positive\"."
 ---
 
 ## Why
@@ -72,3 +76,8 @@ same turn, before it builds or runs the tests.
 
 - In cloud sessions, Claude Code does not start plugin language servers, so the agent gets no diagnostics there.
   A project whose agent runs in the cloud relies on the type-check and build loops alone.
+- When not to use this loop. opencode keeps LSP off unless the config turns it on: it "is not always a net positive.
+  Language servers can get out of sync, use significant memory, vary by version or project, and slow down agent
+  workflows. In many projects it is better to have the agent run lint, typecheck, or other diagnostic CLI tools
+  directly". Turn this loop on where the [type-check](../type-check/card.md) takes long enough that a diagnostic per
+  edit saves rounds; where it takes seconds, run it and name the command in AGENTS.md.

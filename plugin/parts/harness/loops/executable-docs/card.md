@@ -22,6 +22,16 @@ links:
   - title: "Schemathesis: checks reference"
     url: "https://schemathesis.readthedocs.io/en/stable/reference/checks/"
     note: "response_schema_conformance validates each response body against the schema."
+  - title: "sdk-docs.ts: guide blocks pinned to the source, TSDoc on every export"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/script/sdk-docs.ts#L1-L11"
+    author: "opencode (anomalyco)"
+    note: "\"The GUI plugin SDK is learned from editor hovers and the guide, so both are checked.\""
+  - title: "sdk-docs.ts: what it prints"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/script/sdk-docs.ts#L194-L250"
+    author: "opencode (anomalyco)"
+  - title: "opencode gui-plugins AGENTS.md: SDK docs"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/gui-plugins/AGENTS.md#L23-L27"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -53,6 +63,13 @@ The agent fixes the code or the doc, whichever is wrong, and runs the loop again
   document. Run it against the API started locally or on a preview.
 - **Generated docs.** Every generated doc names its generator in its first line. `run` runs the generator into a
   temporary directory and diffs the result with the committed file.
+- **Hand-written examples pinned to the code by name.** A guide's example that is not a doctest still compares with
+  the code it shows: opencode marks a guide block `<!-- source: path#name -->`, and its check fails when the block
+  differs from that declaration as it is now, `README.md:<line>  the code block differs from <path>#<name> at its
+  line <n>`. The fix runs one way, from the code to the guide; the code is never reworded to fit the guide. The
+  same check fails on an exported declaration, member or parameter without its doc comment or `@param`, and on any
+  `ctx.<member>` that the guide or the package's AGENTS.md names and no context declares, so the agent's own
+  instructions cannot point at an API that is gone.
 - **The `run`** prints one line per failure: `file:line: example failed: expected 120, got 720` for a doctest,
   `GET /orders/{id}: response does not match the schema: <the check's message>` for the API,
   `docs/generated/db-schema.md: out of date, run <generator>` for a generated doc. It exits non-zero on any failure.
