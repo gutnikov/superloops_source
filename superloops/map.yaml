@@ -55,9 +55,11 @@ pains:
 # The spec part's facts, filled when specs are set up (superloops's parts/spec/profile.md): where requirements are
 # written down, who reads the spec, how tests reach the app, and the risks the spec's layers are chosen by.
 spec:
-  docs: []          # where PRDs, designs and policies live
+  docs:             # where PRDs, designs and policies live
+    - "the owner's words in the session (no tracker issues yet)"
+    - "the plugin's catalog: plugin/parts/harness/loop-types/ and plugin/parts/harness/super-loops/"
   running_app: ""   # the URL of a running app the spec can be checked against, if any
   readers: []       # who else reads the spec: developers, qa, product, business, auditors
-  e2e: ""           # playwright | cypress | none
+  e2e: none         # playwright | cypress | none
   seeding: ""       # how tests put the app into a state: a testing API, a fixtures folder
-  risks: []         # money | permissions | concurrency | timers | integrations | public-api | multi-team | regulated
+  risks: [integrations]   # money | permissions | concurrency | timers | integrations | public-api | multi-team | regulated
