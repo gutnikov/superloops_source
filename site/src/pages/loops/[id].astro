@@ -1,5 +1,7 @@
 ---
-// A loop type's page: what its card holds (SITE-1#1, #2), each field of the LoopType read model a data-field.
+// A loop's page: every field of its card (SITE-1#1, #2; SITE-2#1-#4), each field of the LoopType read model a
+// data-field (seam 7 of tests/site/README.md). A field the card does not have is not on the page; a list the card
+// has but empty says none. The image, where the card has one, comes right under the title.
 import Page from '../../layouts/Page.astro';
 import { getCatalog } from '../../lib/site.mjs';
 
@@ -8,28 +10,57 @@ export function getStaticPaths() {
 }
 
 const { card } = Astro.props;
-const lists = [
-  ['Places', 'places', card.places],
-  ['Stages', 'stages', card.stages],
-  ['Qualities', 'qualities', card.qualities],
-].filter(([, , values]) => values.length > 0);
+
+/** A list as the page shows it: the card's values in its order, joined; none when the card has it but empty. */
+const joined = (values?: string[]) => values && (values.length ? values.join(', ') : 'none');
+
+// The axes of a loop where a person gives the signal (when, initiator, sync, assesses) follow the sensor they qualify.
+const facts = [
+  ['Sensor', 'sensor', card.sensor],
+  ['When', 'when', joined(card.when)],
+  ['Initiator', 'initiator', card.initiator],
+  ['Sync', 'sync', card.sync],
+  ['Assesses', 'assesses', joined(card.assesses)],
+  ['Ilities', 'ilities', joined(card.ilities)],
+  ['Places', 'places', joined(card.places)],
+  ['Stages', 'stages', joined(card.stages)],
+  ['Speed', 'speed', joined(card.speed)],
+  ['Needs', 'needs', joined(card.needs)],
+  ['Agent', 'agent', joined(card.agent)],
+].filter(([, , value]) => value !== undefined);
 ---
 
 <Page title={`${card.title.text} · superloops`}>
   <h1 data-field="title" set:html={card.title.html} />
+  {card.image && <img data-field="image" src={card.image.src} alt={card.title.text} />}
+  <p data-field="summary" set:html={card.summary.html} />
   <dl>
-    <dt>Group</dt>
-    <dd data-field="group">{card.group}</dd>
     {
-      lists.map(([label, field, values]) => (
+      facts.map(([label, field, value]) => (
         <>
           <dt>{label}</dt>
-          <dd data-field={field}>{values.join(', ')}</dd>
+          <dd data-field={field}>{value}</dd>
         </>
       ))
     }
-    <dt>Summary</dt>
-    <dd data-field="summary" set:html={card.summary} />
+    {
+      card.related && (
+        <>
+          <dt>Related</dt>
+          <dd data-field="related">{card.related.length === 0 ? 'none' : card.related.map((id, i) => <>{i > 0 && ', '}<a href={`/loops/${id}/`}>{id}</a></>)}</dd>
+        </>
+      )
+    }
   </dl>
   <div data-field="sections" set:html={card.sections} />
+  <h2>Read more</h2>
+  {
+    card.links.length === 0 ? (
+      <p data-field="links">none</p>
+    ) : (
+      <ul data-field="links">
+        {card.links.map((link) => <li>{link.url ? <a href={link.url}>{link.title}</a> : link.title}{link.author && `, by ${link.author}`}{link.note && ` — ${link.note}`}</li>)}
+      </ul>
+    )
+  }
 </Page>
