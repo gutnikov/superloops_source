@@ -1,17 +1,195 @@
 # superloops.dev: Event Model. Format: plugin/parts/event-model/format.md.
 # Check: python3 plugin/parts/event-model/scripts/em.py check --strict superloops/specs/model/
-# The slices come with the requirements of the site (superloops/specs/requirements/); until then the model is empty.
+#
+# The site has no accounts and no forms: what a visitor sees is built from the plugin's catalog when main changes,
+# and Cloudflare serves it. So the slices are translations (the catalog and Cloudflare answer) and views (the pages).
+# For now the pages are raw and the home page is a link to GitHub (SITE-1?2): structure and content come later.
 
 system: superloops.dev
 actors: [Visitor]
-externals: {}
+externals:
+  Catalog:
+    outcomes: {valid: catalogValid, invalid: catalogWithInvalidCard}
+  Cloudflare:
+    outcomes: {deploys: cloudflareDeploys, fails: cloudflareFails}
 clock: false
 
 domains: {}
 rules: {}
 
-screens: {}
+screens:
+  HomePage: {route: /, pom: homePage}
+  LoopTypePage: {route: "/loops/<id>/", pom: loopTypePage}
+  SuperLoopPage: {route: "/super-loops/<id>/", pom: superLoopPage}
+  VersionFile: {route: /version.txt, pom: versionFile}
 
-states: {}
+states:
+  catalogOnMain:
+    given: []
+    note: "the repository at a commit of main: the catalog as it is in plugin/parts/harness (96 loop types in 12 groups, 6 super-loop cards); no site built from it yet"
+  siteBuilt:
+    extends: catalogOnMain
+    given: [LoopTypePublished, SuperLoopPublished]
+    note: "the site built from that commit, not deployed yet"
+  siteLive:
+    extends: siteBuilt
+    given: [SiteDeployed]
+    note: "superloops.dev serves the site of the previous commit of main"
 
-slices: []
+slices:
+  - id: T01
+    name: Publish the loop types
+    type: translation
+    external: Catalog
+    trigger: external
+    reads: []
+    reqs: [SITE-1#1, SITE-1#2]
+    command:
+      name: PublishLoopType
+      fields: {id: ext, title: ext, group: ext, places: ext, stages: ext, qualities: ext, summary: ext, sections: ext}
+    errors: [CardInvalid]
+    events:
+      LoopTypePublished:
+        stream: Site
+        fields: {id: cmd, title: cmd, group: cmd, places: cmd, stages: cmd, qualities: cmd, summary: cmd, sections: cmd}
+    specs:
+      - name: every card of the catalog has a page with what the card holds
+        given: catalogOnMain
+        external: {Catalog: valid}
+        then:
+          events: [LoopTypePublished]
+          see:
+            - {screen: LoopTypePage, field: LoopType.title, is: "Unit tests, red/green TDD"}
+            - {screen: LoopTypePage, field: LoopType.group, is: "testing"}
+            - {screen: LoopTypePage, field: LoopType.places, is: "delivery/work, remediation/work"}
+            - {screen: LoopTypePage, field: LoopType.stages, is: "local"}
+            - {screen: LoopTypePage, field: LoopType.qualities, is: "testability, correctness"}
+            - {screen: LoopTypePage, field: LoopType.summary, is: "The agent writes a test and makes sure it fails (red). Then it writes the implementation until the run is green, and refactors."}
+            - {screen: LoopTypePage, field: LoopType.sections, is: "Loop, Set up, Notes, Agent step, Related, Sources, with the card's text"}
+      - name: a card the site cannot show stops the build
+        given: siteLive
+        external: {Catalog: invalid}
+        then: {error: CardInvalid}
+
+  - id: T02
+    name: Publish the super-loops
+    type: translation
+    external: Catalog
+    trigger: external
+    reads: []
+    reqs: [SITE-1#3]
+    command:
+      name: PublishSuperLoop
+      fields: {id: ext, title: ext, phases: ext, exits: ext, sections: ext}
+    errors: [CardInvalid]
+    events:
+      SuperLoopPublished:
+        stream: Site
+        fields: {id: cmd, title: cmd, phases: cmd, exits: cmd, sections: cmd}
+    specs:
+      - name: every super-loop card has a page with what the card holds
+        given: catalogOnMain
+        external: {Catalog: valid}
+        then:
+          events: [SuperLoopPublished]
+          see:
+            - {screen: SuperLoopPage, field: SuperLoop.title, is: "Remediation: from a problem to a fix confirmed in use"}
+            - {screen: SuperLoopPage, field: SuperLoop.phases, is: "entry, oracle, work, gate, release, confirmation"}
+            - {screen: SuperLoopPage, field: SuperLoop.exits, is: "confirmed, not-confirmed, inconclusive, mitigated"}
+            - {screen: SuperLoopPage, field: SuperLoop.sections, is: "Super-loop, Oracle, Phases, Gate, Confirmation, Exits, Trace, When a project needs it, Sources, with the card's text"}
+      - name: a super-loop card the site cannot show stops the build
+        given: siteLive
+        external: {Catalog: invalid}
+        then: {error: CardInvalid}
+
+  - id: T03
+    name: Deploy the site
+    type: translation
+    external: Cloudflare
+    trigger: external
+    reads: []
+    reqs: [SITE-1#4, SITE-1#5, SITE-1#6]
+    command:
+      name: DeploySite
+      fields: {version: ext}
+    errors: [DeployFailed]
+    events:
+      SiteDeployed:
+        stream: Site
+        fields: {version: cmd}
+    specs:
+      - name: a deploy puts the commit's site on superloops.dev
+        given: siteBuilt
+        external: {Cloudflare: deploys}
+        then:
+          events: [SiteDeployed]
+          see:
+            - {screen: VersionFile, field: SiteVersion.version, is: "the short hash of the deployed commit of main"}
+            - {screen: HomePage, field: Home.repository, is: "a link to https://github.com/gutnikov/superloops"}
+            - {screen: HomePage, field: Page.analytics, is: "the Cloudflare Web Analytics beacon, and no banner"}
+            - {screen: LoopTypePage, field: Page.analytics, is: "the Cloudflare Web Analytics beacon, and no banner"}
+            - {screen: SuperLoopPage, field: Page.analytics, is: "the Cloudflare Web Analytics beacon, and no banner"}
+            - {screen: LoopTypePage, field: Page.stylesheets, is: "none: no linked stylesheet, no style element, no style attribute"}
+      - name: a failed deploy leaves the previous site on superloops.dev
+        given: siteLive
+        external: {Cloudflare: fails}
+        then: {error: DeployFailed}
+
+  - id: V01
+    name: Loop type
+    type: view
+    reqs: [SITE-1#8]
+    read_model:
+      name: LoopType
+      fields:
+        title: [LoopTypePublished.title]
+        group: [LoopTypePublished.group]
+        places: [LoopTypePublished.places]
+        stages: [LoopTypePublished.stages]
+        qualities: [LoopTypePublished.qualities]
+        summary: [LoopTypePublished.summary]
+        sections: [LoopTypePublished.sections]
+    screens: [LoopTypePage]
+
+  - id: V03
+    name: Super-loop
+    type: view
+    reqs: [SITE-1#8]
+    read_model:
+      name: SuperLoop
+      fields:
+        title: [SuperLoopPublished.title]
+        phases: [SuperLoopPublished.phases]
+        exits: [SuperLoopPublished.exits]
+        sections: [SuperLoopPublished.sections]
+    screens: [SuperLoopPage]
+
+  - id: V04
+    name: Site version
+    type: view
+    read_model:
+      name: SiteVersion
+      fields:
+        version: [SiteDeployed.version]
+    screens: [VersionFile]
+
+  - id: V05
+    name: Home
+    type: view
+    reqs: [SITE-1#6]
+    read_model:
+      name: Home
+      fields:
+        repository: [config]
+    screens: [HomePage]
+
+  - id: V06
+    name: Page
+    type: view
+    reqs: [SITE-1#5, SITE-1#7]
+    read_model:
+      name: Page
+      fields:
+        analytics: [config]
+        stylesheets: [config]
+    screens: [HomePage, LoopTypePage, SuperLoopPage]

@@ -1,0 +1,74 @@
+# Requirements from one source: a ticket or a text. Ids are stable: spec elements refer to them in `reqs:`.
+
+key: SITE-1
+source: "text from the owner in the session of 2026-11-11, and the plugin's catalog (the setup of specs: Sources)"
+title: "The site on superloops.dev: the loop types and the super-loops of the plugin's catalog"
+fetched: 2026-11-11
+status: questions                # draft | questions | approved | superseded
+approved_by: ""
+approved_at: ""
+
+requirements:
+  - id: SITE-1#1
+    kind: functional
+    text: "The site tells about the different types of agent loops."
+    prod:
+      signal: "a loop type's page is opened on superloops.dev: by the synthetic check right after the deploy (SITE-1?4)"
+      match: {path_prefix: "/loops/"}
+      min: 1
+  - id: SITE-1#2
+    kind: functional
+    text: "What the cards in plugin/parts/harness/loop-types/ hold is what the site shows."
+    prod:
+      signal: "a loop type's page is opened on superloops.dev: by the synthetic check right after the deploy (SITE-1?4)"
+      match: {path_prefix: "/loops/"}
+      min: 1
+  - id: SITE-1#3
+    kind: functional
+    text: "What the cards in plugin/parts/harness/super-loops/ hold is what the site shows."
+    prod:
+      signal: "a super-loop's page is opened on superloops.dev: by the synthetic check right after the deploy (SITE-1?4)"
+      match: {path_prefix: "/super-loops/"}
+      min: 1
+  - id: SITE-1#4
+    kind: constraint
+    text: "The site is on superloops.dev."
+  - id: SITE-1#5
+    kind: functional
+    text: "Every page carries Cloudflare Web Analytics, with no banner."
+    prod:
+      signal: "page views of superloops.dev appear in Cloudflare Web Analytics"
+      match: {host: superloops.dev}
+      min: 1
+  - id: SITE-1#6
+    kind: functional
+    text: "For now the home page is just a link to GitHub; the structure and the content come later."
+    prod:
+      signal: "the home page is opened on superloops.dev: by the synthetic check right after the deploy (SITE-1?4)"
+      match: {path: "/"}
+      min: 1
+  - id: SITE-1#7
+    kind: nfr
+    text: "No styles: the pages are raw."
+    metric: "no page links a stylesheet or carries a style element or a style attribute: 0 of all pages"
+  - id: SITE-1#8
+    kind: constraint
+    text: "The site is in English only."
+
+questions:
+  - id: SITE-1?1
+    reason: H1
+    text: "In what language is the site: English only, as the plugin, or English and Russian?"
+    answer: "English only (the owner, 2026-11-11)."
+  - id: SITE-1?2
+    reason: H4
+    text: "Which pages besides a page per loop type and per super-loop: the home page with the super-loops, the groups and the version, and a page per group; or also pages by place (super-loop/phase); or also the plugin's README and the install command on the home page?"
+    answer: "For now nothing, just a link to GitHub. The structure and the content come later. No styles either: raw (the owner, 2026-11-11)."
+  - id: SITE-1?3
+    reason: H1
+    text: "Does every page carry Cloudflare Web Analytics (no cookies), whose page views are the production signal of SITE-1#1-#3?"
+    answer: "Yes, with no banner (the owner, 2026-11-11)."
+  - id: SITE-1?4
+    reason: H1
+    text: "What confirms a release: the agent opens every kind of page on superloops.dev right after the deploy, or real visits within a window, or pages indexed in Search Console?"
+    answer: "Synthetic: right after the deploy the agent opens every kind of page on superloops.dev and checks the version and the content against the spec, then checks Cloudflare for errors (4xx/5xx) (the owner, 2026-11-11)."
