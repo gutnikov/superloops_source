@@ -1,0 +1,63 @@
+# What superloops found in the project: the facts the map of its super-loops is drawn from. superloops rebuilds them from
+# what it sees and never asks for them twice; what only the user can say is in superloops.md next to this file.
+#
+# The map and the loops are chosen from these facts (superloops's parts/harness/profile.md, "From the profile to the map
+# and the loops"). Keep them current: when the project changes, update this file from what you see.
+#
+# A place is <super-loop>/<phase>, such as delivery/confirmation (superloops's parts/harness/super-loops/README.md).
+
+version: 1
+
+# The project's own commands, as found in the repository.
+stack:
+  languages: [python, markdown]
+  build: null
+  test: null
+  lint: "claude plugin validate . && claude plugin validate ./plugin && python3 plugin/parts/harness/scripts/catalog.py check"
+
+# Where a change goes after the agent writes it, besides edit, local, commit, task and continuous, which are always
+# there. Values from a loop's trigger: ci, scheduled, preview, staging, production.
+stages: [production]
+
+# The super-loops the project has work for, each with where its work comes from now, e.g.
+#   delivery: "Jira tickets of the PAY project"
+#   remediation: "Sentry alerts; nothing else watches production"
+# Keys: delivery, remediation, maintenance, discovery. A super-loop with no work in this project goes under
+# not_here instead, with the reason, e.g. discovery: "every idea the product team brings gets built".
+super_loops:
+  delivery: "the owner's ideas, given to the agent in a session; GitHub issues of gutnikov/superloops from now on (none yet)"
+  remediation: "what the owner finds running the plugin on a real project (b63f7d7: what the first init on saas-test found); GitHub issues from now on"
+  discovery: "the research and notes behind the loop catalog (plugin/parts/harness/loop-types/README.md, human/README.md)"
+not_here:
+  maintenance: "nothing to update yet: the scripts need only Python 3 and PyYAML, and no model is pinned; the site's npm packages will bring it"
+
+# Where a change ends now: the last stage it reaches, and what confirms it there, e.g.
+# "production, by the deploy job; nothing confirms it after the deploy".
+ends_at: "production for the plugin: a push to main is what /plugin install gets, and nothing checks it after the push until the owner runs it on a project; the site does not exist yet"
+
+# Where the project's own systems record the exits of its super-loops: files of JSON lines, each with at, action
+# (deploy, confirm, rollback), version, result and evidence, e.g. "~/.saas-test/prod/deploys.jsonl". loops.py stats
+# reads them; what no system records goes into superloops/trace.jsonl through loops.py trace.
+trace: []
+
+# The checks the project already runs, each as "<name>: <places> — <where it runs, what it does>", e.g.
+#   - "golangci-lint: delivery/work remediation/work maintenance/work — CI job lint, on every merge request"
+# The name before the colon labels the check on the map. Reused, not rebuilt.
+existing_checks: []
+
+# The failures the loops must catch first: breaks-build, not-really-working, conventions, escapes, aging, security,
+# performance, compatibility, or the user's own words. Each as "<pain>: <the place that should catch it> — <evidence>",
+# e.g.
+#   - "escapes: delivery/confirmation — 2 of the last 10 releases rolled back"
+pains:
+  - "not-really-working: delivery/gate — the plugin's mistakes show only in a real run on a project: 0.1.1 (b63f7d7) is what the first init on saas-test found, and bb 0.1.1 (21e45e2) fixed end-to-end gaps"
+
+# The spec part's facts, filled when specs are set up (superloops's parts/spec/profile.md): where requirements are
+# written down, who reads the spec, how tests reach the app, and the risks the spec's layers are chosen by.
+spec:
+  docs: []          # where PRDs, designs and policies live
+  running_app: ""   # the URL of a running app the spec can be checked against, if any
+  readers: []       # who else reads the spec: developers, qa, product, business, auditors
+  e2e: ""           # playwright | cypress | none
+  seeding: ""       # how tests put the app into a state: a testing API, a fixtures folder
+  risks: []         # money | permissions | concurrency | timers | integrations | public-api | multi-team | regulated
