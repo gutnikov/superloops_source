@@ -84,3 +84,8 @@ code, acceptance tests, fixtures and Page Objects, where the project keeps them.
 
 The scripts need Python 3; the spec's also need PyYAML. The text-quality part needs the `claude` CLI and network
 access.
+
+## License
+
+[MIT](LICENSE). The files in [`plugin/parts/text-quality/en/review/sources/`](plugin/parts/text-quality/en/review/sources/README.md)
+keep their own licences, listed in that folder's README: public domain, CC0 1.0 and the Open Government Licence v3.0.

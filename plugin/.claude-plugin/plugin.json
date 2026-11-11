@@ -6,5 +6,6 @@
     "name": "Alex Gutnikov",
     "url": "https://github.com/gutnikov"
   },
-  "repository": "https://github.com/gutnikov/superloops"
+  "repository": "https://github.com/gutnikov/superloops",
+  "license": "MIT"
 }

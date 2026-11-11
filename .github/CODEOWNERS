@@ -1,0 +1,5 @@
+# The plugin's texts are instructions an agent runs on its users' machines,
+# so every change to the plugin and to this file needs the owner's review.
+/plugin/            @gutnikov
+/.claude-plugin/    @gutnikov
+/.github/           @gutnikov
