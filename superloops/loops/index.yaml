@@ -4,7 +4,7 @@ loops:
   - id: spec-check
     title: "Spec check"
     type: spec-check
-    status: validated
+    status: active
     trigger: [edit, ci]
     places: [delivery/oracle]
     validation: cases

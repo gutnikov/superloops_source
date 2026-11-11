@@ -5,14 +5,14 @@ layers:
   - id: model
     type: event-model
     path: superloops/specs/model/
-    status: validated
+    status: active
     why: "spine: every page and action of the site as an example a test can be derived from; the outside systems (Cloudflare, Search Console) with all their outcomes, for the risk named in the setup: integrations"
     check: "python3 plugin/parts/event-model/scripts/em.py check --strict superloops/specs/model/"
     loop: spec-check
   - id: glossary
     type: glossary
     path: superloops/specs/glossary.yaml
-    status: validated
+    status: active
     why: "one name per thing: tests, fixtures and Page Objects reuse the names"
     check: "python3 plugin/parts/spec/scripts/specs.py check (a word from a term's `not` in the model is a warning; the spec-check loop fails on it)"
     loop: spec-check
