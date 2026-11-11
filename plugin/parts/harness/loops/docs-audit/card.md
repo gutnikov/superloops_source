@@ -22,6 +22,14 @@ links:
   - title: "Docs audit (a weekly workflow)"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.github/workflows/docs-audit.yml#L3-L66"
     author: "gemini-cli (Google)"
+  - title: "champion-kit: the stale guidance check (a scheduled routine)"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/champion-kit/skills/routines/SKILL.md#L36-L38"
+    author: "Anthropic"
+    note: "CLAUDE.md and skills against the code; output only file:line, a category word and a count; no edits."
+  - title: "champion-kit: the scout output contract"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/champion-kit/skills/patterns/SKILL.md#L29-L37"
+    author: "Anthropic"
+    note: "at most 50 values, each checked by a pattern; one bad value discards the whole return."
 ---
 
 ## Why
@@ -62,6 +70,14 @@ does not decide, the verdict is `inconclusive`.
   and `settings.ts`. A writer then decides each finding, logs why it was accepted, modified or rejected "for a final
   check by a human in the PR", applies the accepted ones and regenerates the pages built from code. The auditor
   stays read-only; the writer's pull request goes to the docs owners for review.
+- **The agent's own guidance is a page too.** Anthropic's champion-kit runs a monthly scheduled check that compares
+  CLAUDE.md and the skills with the code and outputs only a `file:line` citation per stale line, one category word
+  (renamed, removed, moved, command or other) and a count; it makes no edits, and a person fixes the lines in an
+  interactive session. Keep the scheduled run's output to such values: an unattended run that quotes text can carry
+  an injected instruction into the next session.
+- **Check what a read-only scout returns.** The same plugin caps a scout's return at 50 values and checks each against
+  a pattern: counts `^[0-9]{1,6}$`, paths that match a safe pattern and exist, links to an approved repository only.
+  One value that fails discards the whole return, and no returned value is ever put into a shell command.
 - **`run`** audits the pages it is given and prints one line per page: `<page>: match`, `<page>: inconclusive:
   <why>`, or `<page>: mismatch: "<claim>" vs <path>:<symbol>: <what a user sees>`. It exits non-zero on a mismatch
   only once the auditor is `gate` in `superloops/agents.yaml`; until then it prints the line and exits 0.

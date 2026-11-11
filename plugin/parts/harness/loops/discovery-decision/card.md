@@ -18,6 +18,26 @@ links:
     url: "https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions"
     author: "Michael Nygard"
     note: "2011: a decision record kept with the code."
+  - title: "math-proof siege: the claims ledger"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-proof/skills/siege/SKILL.md#L354-L367"
+    author: "Anthropic"
+    note: "PROVED, REFUTED and OPEN lines, appended and never rewritten; RETRACT removes one from force."
+  - title: "math-proof siege: the targeting, audit and retrieval rules"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-proof/skills/siege/SKILL.md#L444-L469"
+    author: "Anthropic"
+  - title: "math-proof siege: the plan verdict and its four answers"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-proof/skills/siege/SKILL.md#L119-L135"
+    author: "Anthropic"
+  - title: "math-proof siege: the progress test"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-proof/skills/siege/SKILL.md#L549-L558"
+    author: "Anthropic"
+  - title: "ledger.py: the round's verdict, computed by the script"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-proof/skills/siege/scripts/ledger.py#L483-L545"
+    author: "Anthropic"
+  - title: "ledger.py: the wave floor"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-proof/skills/siege/scripts/ledger.py#L364-L368"
+    author: "Anthropic"
+    note: "3 in 10 of a wave, at least 1, must come back answered or partial."
 ---
 
 ## Why
@@ -46,6 +66,16 @@ The person who asked decides: build it, drop it, or ask again.
   - the evidence that would answer it
   - the answer, with each claim and its evidence: a link, a screenshot, a measurement or a quote
   - the decision, with its date and who made it
+- **A claims ledger, for an investigation that runs over many rounds.** Anthropic's math-proof siege keeps, next to a
+  summary that is rewritten each round, a ledger that is only appended: one sentence per claim, `PROVED`, `REFUTED`
+  or `OPEN`, with the file that holds its evidence; a claim leaves force only by a `RETRACT` line. A script, not the
+  agent that writes the summary, reads the ledger after each plan and prints one verdict: run the next wave of
+  queries, conclude, retry the plan with a named correction, or stop. It refuses to conclude early unless two
+  independent checks of the full written argument are in the ledger, each naming files that exist. Its other rules:
+  at least half of each round's work attacks the claims still open; a round that only narrows the open question is
+  logged as "main line stalled", and the next round goes at that question itself; a wave in which fewer than 3 in
+  10 queries come back is an outage, and the run stops; and before relying on an earlier result, the agent "read[s]
+  that result's answer file", not the summary's paraphrase of it.
 - **Two calls to the person who asked**: the question is agreed under H1 before the work, and the decision is asked
   for under H4 after it. Each call is logged with `loops.py hitl`, and each answer is written into the record.
 - **Throwaway work stays out.** Prototypes live where the product does not build them (the

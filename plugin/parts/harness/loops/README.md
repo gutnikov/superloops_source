@@ -124,6 +124,7 @@ By the main quality attribute each loop checks, the first of its `ilities`.
 
 _The product does what it was specified to do: functional suitability, completeness, faultlessness._
 
+- [A proof pack for a rewrite](migration-proof-pack/card.md): After a rewrite or an upgrade, a script re-runs the evidence and computes one verdict per module from six checks: tests ran, same outputs, fresh inputs, a canary, rules traced, legacy untouched.
 - [Acceptance loop: from requirements to green acceptance tests](acceptance-loop/card.md): A requirement becomes an approved spec, then acceptance tests that fail; the agent works until they pass. The gate reports, per requirement, whether its tests were red before and green after.
 - [Agentic manual testing](agentic-manual-testing/card.md): The agent tries the code by hand with `python -c`, temporary files, `curl` or a browser; each defect it finds becomes a permanent test, written red/green.
 - [Behaviour invariance](behaviour-invariance/card.md): Maintenance must change no expected value. The gate fails on a changed expected value, red tests or a measure not improved against the baseline; a changed expected value goes back to triage.
@@ -159,6 +160,7 @@ _The work is what the person meant: the intent, the plan and the result match wh
 - [Choose from options](choose-from-options/card.md): On questions of taste — UI, naming, the shape of an API, the structure of a module — the agent makes 2–3 options. The person picks one and briefly explains why.
 - [Diff review by a person](human-diff-review/card.md): The person comments on the PR; the agent fixes the comments and replies in the thread.
 - [Discovery decision](discovery-decision/card.md): The agent answers an agreed question with prototypes, probes and spikes; the gate checks that each claim names evidence that exists and no spike code is in main, and a refuter tests each claim.
+- [Does the skill trigger](skill-trigger-eval/card.md): Realistic queries that should and should not use a skill run several times against its description; a loop rewrites it on a training split and keeps the best on held-out queries.
 - [Escalation on uncertainty](escalation-on-uncertainty/card.md): The agent stops by itself and asks a question when it cannot choose between options or has found a contradiction in the requirements.
 - [Interview](interview/card.md): Before writing code the agent asks the person about requirements, edge cases and trade-offs, and writes the answers into a spec in the repository.
 - [Observe and interrupt](observe-and-interrupt/card.md): The person does not approve every step. They watch from the side and step in when they see the work going the wrong way.
@@ -206,6 +208,7 @@ _The code is easy to read, change and extend: modularity, analysability, modifia
 _Confidentiality, integrity, privacy, compliance, audit and licences._
 
 - [A reviewer agent answers approval prompts](approval-reviewer-agent/card.md): A read-only reviewer model answers the agent's permission prompts in place of a person: it scores the action's risk and where its authorization came from, and a denial forbids a workaround.
+- [Agents in CI run with their guards on](agent-ci-hardening/card.md): A CI check finds every workflow job that runs an agent and fails when one lacks the egress firewall, the reviewed permission mode or a model that supports it; exemptions carry a reason.
 - [Audit trail of agent actions](agent-audit-trail/card.md): The agent leaves evidence: commands with their output, screenshots, videos, commits. The reviewer checks the evidence instead of re-running everything.
 - [Compliance hardening with mutants](compliance-mutants/card.md): An LLM takes one concern, such as data leaks, and writes mutants for it and tests that catch them; a mutation run shows the tests fail on the mutants and pass on the real code.
 - [DAST](dast/card.md): OWASP ZAP scans the running preview from the outside: passively on every deploy, with attacks before a release. The agent fixes each alert the scan fails on.

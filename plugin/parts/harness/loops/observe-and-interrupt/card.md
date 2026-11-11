@@ -43,6 +43,9 @@ links:
   - title: "opencode permission.ts: a refusal with feedback reaches every waiting request"
     url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/permission.ts#L317-L337"
     author: "opencode (anomalyco)"
+  - title: "Claude Code changelog: Bash edits are not restored by /rewind (2.1.309)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L853"
+    author: "Anthropic"
 ---
 
 ## Why
@@ -109,8 +112,9 @@ irreversible step goes through a [gate](../risky-action-gates/card.md), watched 
   modified the `new_string` content to be: …", so its next edit starts from the person's version.
 - A rewind can cover the shell as well. opencode captures the whole working tree at each step into a separate git
   directory, tracked files and untracked ones up to 2 MiB, and records which files each step changed; a revert to a
-  message restores every file changed after it, whichever tool changed it. Where the runtime's checkpoints cover only
-  its own edit tools, run the agent in a git worktree and commit at each step the person may want to go back to.
+  message restores every file changed after it, whichever tool changed it. Claude Code's `/rewind` is the other case:
+  edits made through Bash, `sed -i` included since 2.1.309, are not restored. Where the runtime's checkpoints cover
+  only its own edit tools, run the agent in a git worktree and commit at each step the person may want to go back to.
 - A refusal can carry the correction. In opencode, a refusal with a message fails the tool call with that message
   and the agent goes on; a refusal without one ends the step ("The user declined this tool call"). The same feedback
   reaches every request waiting in that session, since "Feedback applies to the whole batch, so parallel asks don't

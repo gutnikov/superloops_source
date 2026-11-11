@@ -8,7 +8,7 @@ places: [harness:delivery/gate, harness:maintenance/gate]
 stages: [local, scheduled]
 speed: [minutes, hours]
 needs: []
-related: [llm-evals, correction-becomes-rule, docs-audit, agent-calibration]
+related: [llm-evals, correction-becomes-rule, docs-audit, agent-calibration, skill-trigger-eval]
 links:
   - title: "Pi evals: documentation-lift evals"
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/packages/evals/README.md"
@@ -26,6 +26,16 @@ links:
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/evals/skill_extraction.eval.ts#L798-L858"
     author: "gemini-cli (Google)"
     note: "paired arms on fresh rigs, scored on relevant and distractor reads."
+  - title: "skill-creator: both arms in one turn; an existing skill's baseline is its old version"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/skill-creator/skills/skill-creator/SKILL.md#L169-L186"
+    author: "Anthropic"
+  - title: "skill-creator grader: critique the evals"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/skill-creator/skills/skill-creator/agents/grader.md#L68-L80"
+    author: "Anthropic"
+    note: "an assertion that would also pass for a clearly wrong output; an outcome no assertion covers."
+  - title: "skill-creator analyzer: per-assertion patterns"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/skill-creator/skills/skill-creator/agents/analyzer.md#L210-L218"
+    author: "Anthropic"
 ---
 
 ## Why
@@ -70,6 +80,14 @@ against a fake server.
   summary-only index against the same index with a scratchpad, each on a fresh rig, and passes only when the
   scratchpad arm reads at least 2 relevant sessions and no fewer than the other, reads no more distractors, and
   scores strictly higher on relevant minus distractor reads.
+- **For a changed guide, the baseline is the previous version.** "No guide" answers whether a new guide helps; for a
+  change, Anthropic's skill-creator snapshots the old version before the edit and runs it as the other arm, and
+  starts both arms in the same turn so they run under the same conditions.
+- **The evals are graded too.** The grader's second step is "Critique the Evals": it flags an assertion "that passed
+  but would also pass for a clearly wrong output" and an important outcome no assertion covers. An analyst pass then
+  sorts each assertion across the arms: always passing in both does not tell the arms apart, always failing in both
+  is broken or out of reach, passing without the guide and failing with it means the guide hurts, and one that
+  varies from run to run is flaky. Drop or rewrite the first two before reading the lift.
 - **A low score is data, not a failure.** The suite fails only when an invariant of the harness breaks. A task the
   agent fails is a result.
 - **`run`** runs the cohort for one guide and prints one line per task, `<task>: without <p>% with <q>% lift <d>`,

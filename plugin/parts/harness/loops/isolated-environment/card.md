@@ -30,6 +30,17 @@ links:
     author: "Anthropic"
   - title: "git-worktree"
     url: "https://git-scm.com/docs/git-worktree"
+  - title: "Claude Code devcontainer: init-firewall.sh verifies itself"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/.devcontainer/init-firewall.sh#L106-L136"
+    author: "Anthropic"
+    note: "default drop, REJECT \"for immediate feedback\"; example.com must fail and api.github.com must answer, or exit 1."
+  - title: "Claude Code: HIPAA settings example, Check a computer"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/examples/settings/README-hipaa.md#L116-L127"
+    author: "Anthropic"
+    note: "after you deploy, and again after every edit."
+  - title: "Claude Code changelog: sandbox.failIfUnavailable (2.1.83)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L7737"
+    author: "Anthropic"
 ---
 
 ## Why
@@ -76,13 +87,20 @@ away. It takes one of three forms:
   but "dev containers do not prevent a malicious project from exfiltrating anything accessible inside the container,
   including the Claude Code credentials"; restrict its network egress as well. A worktree is no boundary: it is a
   directory on the same machine.
+- **The boundary tests itself.** A limit on egress that was never tried is a claim. Anthropic's devcontainer firewall
+  ends its setup with two probes: `https://example.com` must not answer, and `api.github.com` must, or the script
+  prints "ERROR: Firewall verification failed" and exits 1. The blocked traffic is rejected, not dropped, "for
+  immediate feedback". Anthropic's HIPAA settings example runs the same pair after deploying, "and again after every
+  edit": a `curl` to an arbitrary host fails, one to the Git host answers. Set `sandbox.failIfUnavailable` (Claude
+  Code 2.1.83) so a sandbox that cannot start ends the session instead of running it unsandboxed.
 - **`run`** builds two environments from the same commit, runs the project's quick suite in each, tears both down, and
   prints one line per check, `<check>: <status>`: `build: ok`, `same results: ok` or the tests whose results differ,
-  `no collision: ok` (ports and database names differ), `teardown: ok` or what was left behind. It exits non-zero on
+  `no collision: ok` (ports and database names differ), `egress: ok` (the blocked probe failed and the allowed one
+  answered), `teardown: ok` or what was left behind. It exits non-zero on
   any failed check.
 - **Cases.** Must fire: a setup script with a fixed port, so the second environment cannot start; a setup that shares
   one database name, so the two runs see each other's data; a test that passes only when a file from an earlier run is
-  in the temporary directory. Must pass: the clean setup.
+  in the temporary directory; a firewall rule that lets an arbitrary host through. Must pass: the clean setup.
 - **Wiring.** The harness that starts the agent builds the environment before the session, and a SessionStart hook
   adds its address to the agent's context. CI runs `run` on every change to the setup files (`init.sh`,
   `.devcontainer/`), and a PreToolUse hook denies the agent's writes to them during a task.
