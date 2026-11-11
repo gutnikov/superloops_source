@@ -76,6 +76,9 @@ spec-check: 1 finding(s). Fix each in the spec, or turn it into a question for t
 - `.github/workflows/spec-check.yml`, job `spec-check`: on every pull request and every push to `main`. It checks out
   the change, puts the base commit in a worktree (the pull request's base, or the push's previous `main`) and runs
   that commit's `run` and checkers on the change, so a change cannot weaken the check that judges it. Where the base
-  has no `run` yet, it uses the change's own.
+  has no `run` yet, it uses the change's own. First real runs, 2026-11-11: it passed this loop's own pull request
+  ([run 42990352039](https://github.com/gutnikov/superloops/actions/runs/42990352039)) and fired on a scratch pull
+  request with a screen named `CycleIndexPage`
+  ([run 42990418541](https://github.com/gutnikov/superloops/actions/runs/42990418541)).
 - `superloops/` and `.github/` are in `.github/CODEOWNERS`: a change to the spec, this loop or its workflow needs the
   owner's review on the protected `main`.
