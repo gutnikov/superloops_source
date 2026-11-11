@@ -18,6 +18,23 @@ links:
     url: "https://martinfowler.com/articles/harness-engineering.html"
     author: "Birgitta Böckeler"
     note: "performance requirements fed forward as skills, performance tests fed back."
+  - title: "opencode app benchmarks (strobe)"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/app/perf/README.md#L3-L33"
+    author: "opencode (anomalyco)"
+    note: "two builds in interleaved pairs of fresh launches; one primary metric per case with an interval; counts that must stay exact."
+  - title: "strobe: run, A/A, the results block in a pull request"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/app/perf/README.md#L49-L88"
+    author: "opencode (anomalyco)"
+  - title: "strobe: why it changed, leaks, bisect"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/app/perf/README.md#L104-L139"
+    author: "opencode (anomalyco)"
+  - title: "strobe: writing a case"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/app/perf/README.md#L165-L166"
+    author: "opencode (anomalyco)"
+    note: "\"Do not throttle the CPU or the network: make the workload bigger instead.\""
+  - title: "opencode app AGENTS.md: benchmark before changing session or timeline code"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/app/AGENTS.md#L3-L4"
+    author: "opencode (anomalyco)"
   - title: "pytest-benchmark: Usage"
     url: "https://pytest-benchmark.readthedocs.io/en/latest/usage.html"
   - title: "gemini-cli performance tests"
@@ -66,6 +83,18 @@ but faster at range scanning". One total would have hidden both halves, so compa
 - **Against the previous version**, a tool can keep the runs. pytest-benchmark saves a run with `--benchmark-save` or
   `--benchmark-autosave`, compares with the latest saved run with `--benchmark-compare`, and with
   `--benchmark-compare-fail=mean:5%` it will "Fail test if performance regresses according to given EXPR".
+- **Against the base branch, built side by side.** Where the code has no fixed baseline number, build the base ref
+  next to the change and run the two in alternating pairs of fresh launches (A B, B A, …), so drift on the machine
+  hits both sides. opencode's rule: "Before changing session or timeline code, benchmark it against `origin/dev`
+  with strobe". Each case decides one primary metric with an interval. Some cases also count what must not happen
+  and compare the count exactly: 0 transcript requests on a warm tab switch, 0 layout shifts.
+- **A check of the method first.** Run the same build on both sides: opencode, "The same build on both sides must
+  come out 'same'". Refuse a setup that cannot give a fair number, such as a hidden window, a software GPU, a
+  throttled CPU or a busy machine, and a run that landed on the wrong page; do not throttle to make a difference
+  visible, "make the workload bigger instead".
+- **A moved verdict brings its explanation.** When a result moves, profile one launch per side and read what moved
+  ([profiling](../profiling/card.md)); to find the commit that moved it, bisect along the first-parent line. The
+  results go into the pull request as a generated block that the tool refuses to update once someone edits it.
 - **`run`** prints one line per operation, `<benchmark>: <result> vs <baseline> (<ratio>): <status>`, where the
   status is `ok` or `slower than allowed`, and exits non-zero when any operation is slower than its threshold allows.
 - **Cases.** Must fire: a copy with a deliberate slowdown on one operation (a linear scan in lookup). Must pass: the

@@ -17,6 +17,16 @@ links:
   - title: "Claude Code GitHub Actions: run on a schedule"
     url: "https://code.claude.com/docs/en/github-actions#run-on-a-schedule"
     author: "Anthropic"
+  - title: "check-bot-scope.yml: a bot branch may change only its one file"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.github/workflows/check-bot-scope.yml#L25-L63"
+    author: "opencode (anomalyco)"
+  - title: "validate.sh: the exact shape the bot may publish"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.github/nix-hashes/validate.sh#L1-L27"
+    author: "opencode (anomalyco)"
+  - title: "publish.sh: trusted scripts, auto-merge, the bot closes its own stale pull request"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.github/nix-hashes/publish.sh#L1-L64"
+    author: "opencode (anomalyco)"
+    note: "\"Uses git, gh and jq only; never runs repository code.\""
 ---
 
 ## Why
@@ -46,6 +56,13 @@ At OpenAI, most of these PRs took under a minute to review and were merged autom
 - **What may merge on its own.** A PR fixes one principle, changes under 100 lines, keeps every test's expected value
   and every public API, its CI is green, and the reviewer passes it. Anything else waits for a person. A PR still open
   after a week is closed by the next run, and its finding is listed for a person in the score file.
+- **A scope check per bot branch, for what merges with no review.** A bot whose pull request merges on its own gets
+  a required check that holds its branch to its one job. opencode's hashes bot may change only `nix/hashes.json`:
+  on `bot/nix-hashes` the check fails with `bot/nix-hashes may change only nix/hashes.json` when the diff holds any
+  other file, then validates the file's exact shape (three systems, each an SRI hash, under 4096 bytes, in canonical
+  form). The bot's publishing step runs only scripts from the trusted commit and "never runs repository code"; it
+  closes its own pull request when the base branch already has the change, and only a pull request from the same
+  repository counts as the bot's, since "a fork can use the same branch name".
 - **The `run`** prints the reviewer's Verdict for each open PR of the loop, one line per PR, `<PR>: merge` or
   `<PR>: wait (<reason>)`. It exits non-zero for any `wait`, but only once the reviewer is calibrated; until then it
   prints the verdicts and exits 0, and every PR waits for a person.

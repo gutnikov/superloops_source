@@ -25,6 +25,16 @@ links:
   - title: "Hooks reference"
     url: "https://code.claude.com/docs/en/hooks"
     author: "Anthropic"
+  - title: "opencode AGENTS.md: Checks"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/AGENTS.md#L198-L203"
+    author: "opencode (anomalyco)"
+    note: "a fast checker while iterating; when the two disagree, tsc is the source of truth."
+  - title: "opencode desktop AGENTS.md: the fast checker skips test files"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/desktop/AGENTS.md#L11"
+    author: "opencode (anomalyco)"
+  - title: "check.yml: CI runs the official compiler"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.github/workflows/check.yml#L33-L35"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -51,6 +61,12 @@ the checker again until it reports nothing.
 - **Suppressions count as errors.** A new `# type: ignore`, `@ts-ignore`, `@ts-expect-error` or cast to `any` in the
   diff is reported like a type error. A suppression the project accepts carries a reason on the same line, and the
   reviewer sees it.
+- **A fast checker while iterating, the official one as the judge.** A faster checker keeps the loop after each edit
+  short; the compiler that ships stays the source of truth in CI. opencode's agents run `bun typecheck` locally and
+  "Never run `tsc` directly"; CI runs `typecheck:tsc`, and "When the two disagree, `tsc` is the source of truth". A
+  disagreement is reproduced with the official compiler and reported upstream as a minimal repro, and errors that only
+  one checker can raise by design are listed so they are not reported. Know what the fast checker skips: opencode's
+  desktop note, "`bun typecheck` does not cover test files. Run `bun test <file>` for every test file you touch."
 - **`run`** runs the checker, then scans the diff for new suppressions. It prints `file:line: message` for each and
   exits non-zero on any.
 - **Cases.** Must fire: a copy that passes a string where a number is expected; a copy that silences that error with a

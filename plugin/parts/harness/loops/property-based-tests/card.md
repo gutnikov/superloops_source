@@ -20,6 +20,16 @@ links:
   - title: "fast-check: Introduction"
     url: "https://fast-check.dev/docs/introduction/"
     author: "fast-check"
+  - title: "patchmark: differential fuzzing against commonmark.js and micromark"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/patchmark/test/fuzz-differential.test.ts#L5-L32"
+    author: "opencode (anomalyco)"
+    note: "5,000 seeded core cases and 2,000 GFM cases, half generated, half mutated from spec examples; zero diffs."
+  - title: "fuzz-known.ts: the known divergences, as a function"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/patchmark/test/fuzz-known.ts#L8-L31"
+    author: "opencode (anomalyco)"
+  - title: "commonmark-spec.test.ts: streaming invariance"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/patchmark/test/commonmark-spec.test.ts#L128-L161"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -54,6 +64,16 @@ A property that finds no counterexample within the run's number of examples pass
   more examples than the default of 100.
 - **A narrowed property is reviewed.** A changed `assume`, a tighter input strategy or a deleted property shows in
   the test diff and goes through the review of test changes ([red-green-tdd](../red-green-tdd/card.md)).
+- **Another implementation as the oracle.** Where a reference implementation exists, the property is "same output
+  as the reference" on generated and mutated inputs. opencode's Markdown parser is compared with commonmark.js on
+  5,000 seeded cases and with micromark on 2,000 GFM cases, half generated and half mutated from the spec's examples,
+  and must produce zero diffs; a failing case shows `{case, md, got}` against the reference's output. A disagreement
+  the project accepts is written as a function that decides it, not a list of inputs: when the code agrees with
+  commonmark.js and only micromark differs, the bug is micromark's. A function stays correct as the generator finds
+  new inputs; a list does not.
+- **The same answer however the input arrives.** For a streaming parser, feed every input whole, one character at a
+  time, in random chunks and in token-sized chunks, and require the same output: opencode runs every CommonMark and
+  GFM spec example this way, chunks of 1 to 19 characters from a seeded generator.
 - **`run`** is the property tests. It prints each falsified property as `file:line: <property> falsified by <minimal
   input>` and exits non-zero on any.
 - **Cases.** Must fire: an encoder whose round trip loses a non-ASCII character; a sort that drops duplicates. Must

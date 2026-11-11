@@ -22,6 +22,20 @@ links:
     url: "https://newsletter.kentbeck.com/p/genie-wants-to-leap"
     author: "Kent Beck"
     note: "agents that disable or delete tests."
+  - title: "subagent-eviction: one reproduction run on the base, on the fix and as a control"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/script/drive/subagent-eviction.md#L26-L50"
+    author: "opencode (anomalyco)"
+    note: "BEFORE asserts the known bug; AFTER asserts the fix; DEMO_EVICT=false must wake even on the base."
+  - title: "subagent-eviction.ts: the evidence must agree"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/script/drive/subagent-eviction.ts#L127-L152"
+    author: "opencode (anomalyco)"
+  - title: "timeline-suspense: a desired test and a forensic test"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/app/e2e/reproduction/timeline-suspense/timeline-suspense.repro.ts#L9-L45"
+    author: "opencode (anomalyco)"
+  - title: "timeline-suspense: its Playwright config"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/app/e2e/reproduction/timeline-suspense/playwright.config.ts#L11"
+    author: "opencode (anomalyco)"
+    note: "retries: 0."
 ---
 
 ## Why
@@ -45,6 +59,15 @@ them.
   one folder, so `run` finds a problem's reproduction without a separate index.
 - **Red first.** The reproduction's run from before the fix is kept: a CI job on the commit that adds the
   reproduction, or a run in the task's evidence. The gate compares this run with the run after the fix.
+- **Red on the base, not only red once.** Where the fix is in a pull request, run the same reproduction on a clean
+  checkout of the base branch and on the fix, and add a control arm that removes the trigger: opencode's
+  `subagent-eviction` script runs with `DEMO_LABEL=BEFORE` on "an immutable base checkout" and asserts the known
+  bug, with `AFTER` on the fix, and "`DEMO_EVICT=false` is a control and must wake even on the base". The control
+  shows that the trigger, not the harness, causes the failure. The expected results of the three runs are a table
+  next to the script.
+- **Evidence from several sources must agree.** The script checks the answer, the notifications the API returns
+  and the marker in the database, and fails with `Inconsistent completion evidence` when they disagree, before it
+  judges the bug. One source alone can be wrong in the same way as the code.
 - **A protected suite.** The agent fixing the problem cannot change the other tests: a PreToolUse hook denies its
   writes to them, and the final run of the gate happens in CI. A test that has to change goes through a person.
 - **The gate is the `run`.** One line per problem, `<problem id>: <status>`: `no reproduction`,
@@ -62,6 +85,9 @@ them.
   for a bug. This gate checks the record that loop leaves: red before the fix, green after it, no other test
   weakened, and a bug no test can catch handed to the confirmation.
 - It is to remediation what the [acceptance loop](../acceptance-loop/card.md) is to delivery.
+- A bug in a mechanism no assertion reaches can get two tests: a `forensic:` test that proves the mechanism on the
+  base, and a `desired:` test of the behaviour the fix must give, run with retries off (opencode's
+  `timeline-suspense` reproduction).
 - When the problem is in code around a model, the reproduction runs against a scripted model, so it fails the same
   way every time ([scripted-model-tests](../scripted-model-tests/card.md)).
 

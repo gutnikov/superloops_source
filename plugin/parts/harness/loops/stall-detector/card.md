@@ -45,6 +45,16 @@ links:
   - title: "Codex /goal: the no-progress check in the continuation prompt"
     url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/ext/goal/templates/goals/continuation.md#L18-L21"
     author: "Codex (OpenAI)"
+  - title: "opencode /goal: a stall is the reviewer's same reason, or a round with no tool call"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/test/plugin/goal.test.ts#L103-L135"
+    author: "opencode (anomalyco)"
+  - title: "opencode max-steps.ts: the last step at the step cap"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/session/runner/max-steps.ts#L1-L16"
+    author: "opencode (anomalyco)"
+    note: "tools off; the model states the limit, what is done, what remains and what to do next."
+  - title: "opencode llm.ts: two continuations after a truncated response"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/session/runner/llm.ts#L346-L376"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -104,8 +114,14 @@ A hook sees only tool calls. An agent that restates the same plan in text withou
 - gemini-cli runs this check inside the agent, on by default, with the same thresholds: 5 repeats, cycles of up to 5
   calls, the last 25 calls kept. It also checks the streamed text, which a hook cannot see: a chunk of 50 characters
   that appears 10 times, close together, is a stall; code blocks, tables and lists do not count.
-- The cap on turns or tokens is the last resort, and it ends the task with nothing to show. This loop ends it earlier,
-  with the repeated calls in front of the person.
+- The cap on turns or tokens is the last resort. This loop ends a stalled task earlier, with the repeated calls in
+  front of the person. Make the cap end in a handoff, not in silence: at opencode's step cap the last step runs with
+  tools off and a prompt that requires a "Statement that maximum steps for this agent have been reached", what was
+  done, the tasks left and what to do next. The tool definitions stay in that request "to preserve the provider's
+  cached prefix".
+- A response cut off at the output limit is a stall of its own. opencode answers it with "Do not apologize, recap,
+  or repeat yourself. Break the remaining work into smaller pieces.", and fails the step after two such
+  continuations in a row.
 - Whether the agent made progress between two identical runs of the build is a judgement the hash cannot make. Leave
   the threshold at 5: lower, and an agent waiting on a slow command trips it.
 - **An agent that restarts itself stalls in other ways.** Where a runtime starts the next turn on its own, as
@@ -116,6 +132,11 @@ A hook sees only tool calls. An agent that restates the same plan in text withou
   the empty-turn count. Its prompt adds the rules the hashes cannot apply: "status restatements and unexecuted plans
   are no progress"; a wait counts only while it polls a handle "confirmed live now"; and "Treat equivalent blockers
   as the same condition across turns even when their wording or stated next step changes."
+- **A judge that repeats itself.** Where a reviewer decides whether to continue, its reason is a signal too.
+  opencode's `/goal` counts a round as stalled when the reviewer gives the same reason as last time, compared with
+  case and spaces ignored, or when the agent called no tool since the last continuation; 3 stalled rounds in a row
+  pause the goal with "Not making progress". Its test shows why the reason counts even when tools ran: "The flaky
+  test still fails." given four times in a row pauses the goal, though the agent called tools in every round.
 - Repeated denials are a stall too: an agent that tries variants of a refused action gives different hashes each
   time. [approval-reviewer-agent](../approval-reviewer-agent/card.md) counts denials per turn and interrupts it.
 

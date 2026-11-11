@@ -21,6 +21,12 @@ links:
     url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/protocol/src/prompts/base_instructions/default.md#L149-L157"
     author: "Codex (OpenAI)"
     note: "formatting tried up to 3 times, then named in the final message; unrelated bugs left alone."
+  - title: "opencode formatter.ts: the formatter's output ignored, a failure only logged"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/formatter.ts#L65-L91"
+    author: "opencode (anomalyco)"
+  - title: "opencode edit.ts: the diff returned to the agent is taken after formatting"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/tool/plugin/edit.ts#L347-L353"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -79,5 +85,9 @@ fail on it. When the formatter cannot parse the file, the hook reports the error
   to get formatting right, but if you still can't manage it's better to save the user time and present them a
   correct solution where you call out the formatting in your final message." Put the same line in CLAUDE.md; the
   check at commit and in CI still fails the file.
+- **Show the agent the file as formatted.** opencode's edit tool returns its diff against the file after the
+  formatter ran, so the agent's next `oldString` matches what is on disk. It is also the counterexample to "A
+  failure reaches the agent": its formatter runs with stdout and stderr ignored, and a non-zero exit is only logged,
+  so the agent never learns that a file was left unformatted. Keep the exit 2 with the formatter's error.
 - The hook formats; it does not check types or lint. Those are their own loops, such as
   [lsp-diagnostics](../lsp-diagnostics/card.md) after each edit.

@@ -20,6 +20,12 @@ links:
   - title: "py-spy"
     url: "https://github.com/benfred/py-spy"
     author: "Ben Frederickson"
+  - title: "opencode-dev skill: compare three sources to find the broken layer"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.opencode/skills/opencode-dev/SKILL.md#L89-L93"
+    author: "opencode (anomalyco)"
+  - title: "opencode-dev skill: confirming a leak"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.opencode/skills/opencode-dev/SKILL.md#L172-L179"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -52,6 +58,14 @@ whether the fix moved anything.
   fixes without a gain, the agent reports to a person with the profiles.
 - **Memory.** In Go, `-memprofile` gives the memory profile in the same format. py-spy samples where the time goes;
   for Python memory, the project picks a memory profiler and writes it in the loop's `LOOP.md`.
+- **A leak takes two snapshots.** opencode: "A single snapshot explains what retains memory at one point in time, but
+  does not by itself prove a leak." Take a baseline, run a repeated workload, let collection run, take a second
+  snapshot and compare growth and retainer paths. Compare the heap with the process's RSS as well: a large gap points
+  at native allocations or mappings no JavaScript retainer path explains.
+- **Find the layer before the line.** For a wrong or slow screen, compare the same data at each layer: opencode's
+  skill reads the live API, the durable `event` rows in the database (opened read-only) and the client's projection,
+  to tell whether the fault is in the server state, the client data layer or the rendering. Profile only the layer
+  where the data first goes wrong.
 - **`run`** profiles the workload in the directory it is given, compares with the base profile saved there, and prints
   the top 20 entries as `<function>: <before>% -> <after>%`. It exits non-zero when the workload's total samples did
   not fall by at least 5% against the base: the fix moved nothing.

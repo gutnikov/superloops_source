@@ -8,7 +8,7 @@ places: [delivery/work, remediation/work, maintenance/work, delivery/release]
 stages: [local, ci]
 speed: [seconds, minutes]
 needs: []
-related: [e2e-browser, agentic-manual-testing, health-checks-smoke]
+related: [e2e-browser, agentic-manual-testing, health-checks-smoke, accessibility-tree-navigation]
 links:
   - title: "Testing pi Interactive Mode with tmux (a skill)"
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/.pi/skills/interactive-testing.md"
@@ -31,6 +31,25 @@ links:
     url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/tui/tests/suite/resize_reflow.rs#L655-L667"
     author: "Codex (OpenAI)"
     note: "poll every 100 ms until the text appears; time out with the last capture."
+  - title: "opencode simulation: the semantic snapshot and stale-target clicks"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/simulation/src/frontend/actions.ts#L130-L171"
+    author: "opencode (anomalyco)"
+  - title: "opencode simulation protocol: a semantic node"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/protocol/src/simulation.ts#L300-L311"
+    author: "opencode (anomalyco)"
+    note: "id, role, label, and focused, selected, expanded, disabled."
+  - title: "opencode simulation: a click on a stale target fails"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/simulation/src/frontend/actions.ts#L263-L288"
+    author: "opencode (anomalyco)"
+  - title: "opencode simulation: the network denies what is not registered"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/simulation/src/backend/network.ts#L67-L76"
+    author: "opencode (anomalyco)"
+  - title: "opencode simulation: the driver endpoint is loopback only"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/simulation/src/manifest.ts#L12-L21"
+    author: "opencode (anomalyco)"
+  - title: "opencode-dev skill: PNG evidence"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.opencode/skills/opencode-dev/SKILL.md#L48-L51"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -68,6 +87,15 @@ a passing smoke test.
   the reply is the same every run ([scripted-model-tests](../scripted-model-tests/card.md)). Codex's resize smoke
   test starts the binary in a 120×40 session against a mock server, splits the window to force a resize, polls
   `capture-pane` every 100 ms for up to 15 seconds, and fails with the last capture.
+- **Targets by role, not by position.** Coordinates go stale when the layout moves. opencode's simulation gives the
+  driver a snapshot of the TUI as a tree of semantic nodes with roles and states (`opencode-ui-snapshot-v1`); a
+  duplicate id is an error, and a click names its semantic target and fails with `semantic click target is stale or
+  unavailable` when that element is gone. Its capture keeps each span's foreground and background colours and the
+  images on screen, so a check can see what plain text loses. The model is one route answered live by the test's
+  driver, over a WebSocket bound to 127.0.0.1, and any other network destination fails: `Simulation denied
+  unregistered network destination`.
+- **Evidence a person can see.** For every user-visible bug and fix, save a PNG of the screen: opencode, "Do not save
+  text captures; inspect the rendered PNG."
 - **A rendering rule the app counts itself.** What a capture of the final screen cannot show, such as a frame drawn
   taller than the terminal and scrolled away, the app reports as a metric. gemini-cli's UI measures its root element
   on every render and counts `gemini_cli.ui.flicker.count` when it is taller than the terminal; `flicker.test.ts`

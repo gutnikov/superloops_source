@@ -40,6 +40,28 @@ links:
   - title: "responses.rs: pausing the stream before an event"
     url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/tests/common/responses.rs#L630-L643"
     author: "Codex (OpenAI)"
+  - title: "http-recorder: record once, replay cassettes; refresh by deleting"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/http-recorder/README.md#L154-L163"
+    author: "opencode (anomalyco)"
+    note: "\"There is intentionally no public overwrite mode.\""
+  - title: "http-recorder: the secret scan, matching and unused interactions"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/http-recorder/README.md#L192-L202"
+    author: "opencode (anomalyco)"
+  - title: "secrets.ts: what the scan looks for"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/http-recorder/src/redaction/secrets.ts#L3-L21"
+    author: "opencode (anomalyco)"
+  - title: "matching.ts: the diff of a request that matches no recording"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/http-recorder/src/http/matching.ts#L40-L75"
+    author: "opencode (anomalyco)"
+  - title: "recorded-runner.ts: a missing cassette skips the test"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/ai/test/recorded-runner.ts#L66-L76"
+    author: "opencode (anomalyco)"
+  - title: "effect.ts: a network request fails the test even when the code swallows it"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/test/lib/effect.ts#L14-L46"
+    author: "opencode (anomalyco)"
+  - title: "mock-server.ts: an unmocked API request fails the test"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/app/e2e/utils/mock-server.ts#L402-L412"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -75,6 +97,14 @@ error or an abort.
   non-strict mode takes the next response of the right kind, for calls whose order varies, such as background ones.
   A regenerated golden is a diff a person reviews before it is committed: it can hold details of the machine or the
   person who recorded it.
+- **Or recorded at the transport.** Where the code talks to a provider's HTTP or WebSocket API, record the traffic
+  once and replay it from a cassette: opencode's http-recorder replays when the cassette exists and records only when
+  it does not, outside CI. A cassette is refreshed only by deleting it ("Deletion makes the set of recordings being
+  refreshed visible and reviewable"). Before any cassette is written, the recorder scans it for credential formats
+  and for the values of credential-like environment variables, and refuses to write: `Refusing to write cassette …
+  because it contains possible secrets`. A request that matches no recording fails with a diff of method, URL,
+  headers and body paths, secrets masked; interactions left unused fail when the test ends. A missing cassette fails
+  the test: opencode's provider suite skips it instead, and a deleted cassette then removes its test unseen.
 - **The fake checks what the code sends, on every request.** A test that asserts only on the events it sees passes
   on a history the real API would reject. Codex's mock server checks each request body it receives, whatever the test
   asserts: every tool output has its call in the same input and every call has its output, or the test fails with
@@ -89,6 +119,11 @@ error or an abort.
 - **Regressions named by their issue**: `test/suite/regressions/<issue>-<what>.test.ts`, 93 of them in pi, such as a
   queued slash command that runs as a follow-up and a retry after a lost network connection. Each script reproduces
   the failure its issue reported, red before the fix ([reproduction-gate](../reproduction-gate/card.md)).
+- **A swallowed failure still fails the test.** Code under test often catches a network error and goes on, so the
+  test never sees it. opencode's core harness replaces `fetch` in every test; a request to anything but loopback is
+  recorded, and the test fails after its body, since "Callers such as ModelsDev swallow request failures". Its
+  browser mock server answers a route it does not define with 501 and throws `Unmocked API request: <method> <path>
+  (add it to e2e/utils/mock-server.ts)`, where the app's fallback would have answered 200.
 - **No real key within reach.** Pi's `test.sh` runs the tests in a temporary home with an empty environment, so a
   test that tries a real provider fails instead of spending tokens.
 - **`run`** is the project's test command over the scripted-model suite. It prints the runner's failures,

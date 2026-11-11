@@ -37,6 +37,9 @@ links:
     url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/.github/scripts/verify_tui_core_boundary.py#L14-L36"
     author: "Codex (OpenAI)"
     note: "the TUI must not import codex-core; the message names the boundary to use instead."
+  - title: "lint-changed.ts: a touched file is left clean"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/script/lint-changed.ts#L1-L17"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -66,7 +69,9 @@ belongs in, and moves the code there.
   ArchUnit it is the rule text, set with `.because(...)` or replaced with `.as(...)`.
 - **Old violations do not block new work.** On an existing codebase, record today's violations and fail only on new
   ones: dependency-cruiser's `--baseline` with `--ignore-known`, ArchUnit's `FreezingArchRule`. The agent never adds
-  to the baseline; it shrinks as code moves.
+  to the baseline; it shrinks as code moves. Without a baseline file, a ratchet on touched files does the same: the
+  rule warns everywhere and fails only in files the change edits, which must be left fully clean (opencode's
+  `lint:changed`, in [taste-invariants](../taste-invariants/card.md)).
 - **The exception list is a ratchet.** An entry that no longer matches any code fails the check, so the list cannot
   outlive the debt it records, and a migration's progress is the list getting shorter. Codex's manifest check fails
   with "remove the stale `[features]` exception from `MANIFEST_FEATURE_EXCEPTIONS`"; its `cargo-deny` config lets

@@ -9,7 +9,7 @@ stages: [local, ci]
 speed: [seconds]
 needs: []
 agent: [reviewer]
-related: [human-acceptance-criteria, behaviour-invariance]
+related: [human-acceptance-criteria, behaviour-invariance, prompt-snapshots, visual-stability-oracle]
 links:
   - title: "Harness engineering for coding agent users"
     url: "https://martinfowler.com/articles/harness-engineering.html"
@@ -20,6 +20,13 @@ links:
   - title: "What are approvals"
     url: "https://github.com/approvals/ApprovalTests.Documentation/blob/main/explanations/what_are_approvals.md"
     author: "ApprovalTests"
+  - title: "merman layout-audit.test.ts: ceilings over a corpus of diagrams"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/merman/src/layout-audit.test.ts#L5-L60"
+    author: "opencode (anomalyco)"
+    note: "at least 100 flowcharts and 100 state diagrams; structural violations []; area, bends, crossings ceilings."
+  - title: "merman layout-audit.ts: the report of the worst fixtures"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/merman/script/layout-audit.ts#L60-L90"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -56,6 +63,14 @@ unexpected, and a diff the agent cannot remove goes back to triage
   answer is logged with `loops.py hitl H5 --loop <loop id> --question … --answer …`, naming the reference files.
 - **Scrub what changes on every run** (timestamps, generated ids, unordered collections) before the comparison. A
   reference that differs on every run teaches people to approve diffs without reading them.
+- **A corpus with ceilings, where one reference per output is too many.** For output whose quality is a measure, such
+  as a layout, a rendering or a summary, keep a corpus of inputs and approve ceilings over the aggregate instead of
+  each output. opencode's diagram renderer lays out at least 100 flowcharts and 100 state diagrams at several widths;
+  structural violations must be `[]`, and the corpus has ceilings such as area max 11,011 and p95 5,313, bends max
+  30, crossings 40 in total, and 0 crossings for state diagrams. A family built to be hard gets its own ceilings, "so
+  it cannot absorb the p95 headroom of the established families". A report lists the worst fixtures per measure,
+  with their source and output, for the person who approves a new ceiling. Lower a ceiling when a change improves
+  the measure, so the next regression shows.
 - **`run`** is the test command without the update flag. It prints each failing comparison as `file:line: message`
   with the diff, and exits non-zero on any diff or missing reference. A CI step also fails when a reference file
   changed on the branch and no H5 answer in `superloops/hitl-log.jsonl` names it.
