@@ -1,0 +1,36 @@
+# One name for one thing, in the words of the plugin (plugin/parts/harness/README.md, "Terms") and of the site.
+# specs.py check flags a name in the model that uses a word from `not`.
+
+terms:
+  - term: superloops
+    meaning: "this project: the plugin for coding agents and the site on superloops.dev"
+  - term: loop
+    meaning: "one check an agent runs on its own work, with its trigger, its command, its signal and what the agent does with it"
+    not: [cycle]
+  - term: loop type
+    meaning: "a pattern from the plugin's catalog that a loop is built from: one card in plugin/parts/harness/loop-types/"
+  - term: loop group
+    meaning: "a group of loop types in the catalog, one folder of plugin/parts/harness/loop-types/, such as testing or security"
+  - term: super-loop
+    meaning: "the path a piece of work takes from its entry to a change confirmed where it is used: delivery, remediation, maintenance or discovery"
+    not: [superloop]
+  - term: phase
+    meaning: "one step of a super-loop: entry, oracle, work, gate, release or confirmation"
+  - term: place
+    meaning: "a super-loop and one of its phases, written <super-loop>/<phase>, such as delivery/gate"
+  - term: stage
+    meaning: "where a change goes after the agent writes it, such as ci, preview, staging or production"
+  - term: oracle
+    meaning: "what a super-loop checks the work against, fixed before the work and out of the reach of the agent doing it"
+  - term: gate
+    meaning: "the check of the work against the oracle as a whole, before the release, in CI"
+  - term: confirmation
+    meaning: "the check of the change where it is used, after the release, over a window counted in events"
+  - term: level
+    meaning: "product, where the agent does the project's work, or harness, where it works on the loops themselves"
+  - term: agent step
+    meaning: "an agent whose run is part of a loop, such as a reviewer, a refuter or a judge"
+  - term: preferences
+    meaning: "superloops/superloops.md: what only the project's owner decides"
+  - term: map
+    meaning: "a project's super-loops drawn from its profile: a check at each phase that has one, and a gap at each phase that has none"

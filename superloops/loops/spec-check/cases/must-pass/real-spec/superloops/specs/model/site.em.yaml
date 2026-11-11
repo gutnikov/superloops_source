@@ -1,0 +1,17 @@
+# superloops.dev: Event Model. Format: plugin/parts/event-model/format.md.
+# Check: python3 plugin/parts/event-model/scripts/em.py check --strict superloops/specs/model/
+# The slices come with the requirements of the site (superloops/specs/requirements/); until then the model is empty.
+
+system: superloops.dev
+actors: [Visitor]
+externals: {}
+clock: false
+
+domains: {}
+rules: {}
+
+screens: {}
+
+states: {}
+
+slices: []

@@ -1,5 +1,7 @@
-# The plugin's texts are instructions an agent runs on its users' machines,
-# so every change to the plugin and to this file needs the owner's review.
+# The plugin's texts are instructions an agent runs on its users' machines, and superloops/ holds this
+# repository's own oracle (the spec, the loops, the preferences): every change to them and to this file
+# needs the owner's review.
 /plugin/            @gutnikov
 /.claude-plugin/    @gutnikov
 /.github/           @gutnikov
+/superloops/        @gutnikov

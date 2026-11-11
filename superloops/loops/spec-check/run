@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""spec-check: the spec under <dir>/superloops/specs/ is whole.
+
+Contract: run <dir>. Exit 0 = passes, 1 = fires. It runs `specs.py check` (fires on any error or warning: the
+glossary's check is a warning there) and `em.py check --strict` for every event-model layer of layers.yaml (fires
+on an error or a test obligation no example pins down). Each finding is printed as `<path>: <checker>: <message>`.
+
+The checkers come from SUPERLOOPS_PARTS, else from plugin/parts of the repository this loop is in. CI points
+SUPERLOOPS_PARTS at the base branch, so a change cannot weaken the checker that judges it.
+"""
+import os
+import re
+import subprocess
+import sys
+
+import yaml
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+PARTS = os.environ.get("SUPERLOOPS_PARTS") or os.path.join(HERE, "..", "..", "..", "plugin", "parts")
+SPECS = os.path.join(PARTS, "spec", "scripts", "specs.py")
+EM = os.path.join(PARTS, "event-model", "scripts", "em.py")
+
+
+def section(out, name):
+    """The indented lines under `NAME (n)` in a checker's output."""
+    m = re.search(r"^%s \((\d+)\)\n((?:[ \t]+.*\n?)*)" % re.escape(name), out, re.M)
+    return [l.strip() for l in m.group(2).splitlines() if l.strip()] if m else []
+
+
+def main():
+    root = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else ".")
+    layers_path = os.path.join(root, "superloops", "specs", "layers.yaml")
+    if not os.path.isfile(layers_path):
+        print("superloops/specs/layers.yaml: spec-check: missing; set up specs first (plugin/parts/spec/README.md, Setup)")
+        return 1
+    findings = []
+
+    p = subprocess.run([sys.executable, SPECS, "check", "--root", root], capture_output=True, text=True)
+    for kind in ("ERRORS", "WARNINGS"):
+        for line in section(p.stdout, kind):
+            findings.append("superloops/specs/: specs.py: %s: %s" % (kind.lower()[:-1], line))
+    if p.returncode != 0 and not findings:
+        findings.append("superloops/specs/: specs.py: exit %d: %s" % (p.returncode, (p.stderr or p.stdout).strip()[-300:]))
+
+    for layer in yaml.safe_load(open(layers_path)).get("layers") or []:
+        if layer.get("type") != "event-model" or layer.get("status") == "retired":
+            continue
+        path = layer.get("path", "superloops/specs/model/")
+        p = subprocess.run([sys.executable, EM, "check", "--strict", os.path.join(root, path)],
+                           capture_output=True, text=True)
+        if p.returncode != 0:
+            lines = section(p.stdout, "ERRORS") or [(p.stdout + p.stderr).strip().splitlines()[-1]]
+            m = re.search(r"^\s+not pinned down yet:\n((?:\s{5,}\S.*\n?)*)", p.stdout, re.M)
+            unpinned = ["not pinned down: " + " ".join(l.split()) for l in (m.group(1).splitlines() if m else [])]
+            for line in lines + unpinned:
+                findings.append("%s: em.py --strict: %s" % (path, line))
+
+    for f in findings:
+        print(f)
+    if findings:
+        print("spec-check: %d finding(s). Fix each in the spec, or turn it into a question for the spec approver." % len(findings))
+        return 1
+    print("spec-check: the spec is whole (specs.py check, em.py check --strict)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
