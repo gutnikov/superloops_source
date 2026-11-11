@@ -9,7 +9,7 @@ stages: [edit, task]
 speed: [sub-second]
 needs: []
 agent: [judge]
-related: [stop-hook, escalation-on-uncertainty, observe-and-interrupt, tool-use-telemetry, agent-calibration]
+related: [stop-hook, escalation-on-uncertainty, observe-and-interrupt, tool-use-telemetry, agent-calibration, approval-reviewer-agent]
 links:
   - title: "loopDetectionService.ts: thresholds and the judge's prompt"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/services/loopDetectionService.ts#L29-L118"
@@ -35,6 +35,16 @@ links:
   - title: "Hooks reference: PostToolUse and UserPromptSubmit"
     url: "https://code.claude.com/docs/en/hooks"
     note: "exit code 2 sends stderr to the agent; \"continue\": false stops it with a stopReason."
+  - title: "Codex /goal: empty turns and broken executions counted"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/ext/goal/src/accounting.rs#L120-L174"
+    author: "Codex (OpenAI)"
+    note: "3 automatic turns with no activity, or 3 turns where exec broke and no tool succeeded, block the goal."
+  - title: "Codex /goal: a turn error blocks the goal"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/ext/goal/src/extension.rs#L423-L445"
+    author: "Codex (OpenAI)"
+  - title: "Codex /goal: the no-progress check in the continuation prompt"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/ext/goal/templates/goals/continuation.md#L18-L21"
+    author: "Codex (OpenAI)"
 ---
 
 ## Why
@@ -98,6 +108,16 @@ A hook sees only tool calls. An agent that restates the same plan in text withou
   with the repeated calls in front of the person.
 - Whether the agent made progress between two identical runs of the build is a judgement the hash cannot make. Leave
   the threshold at 5: lower, and an agent waiting on a slow command trips it.
+- **An agent that restarts itself stalls in other ways.** Where a runtime starts the next turn on its own, as
+  Codex's `/goal` does, count turns as well as calls. Codex blocks the goal after 3 automatic turns in a row with no
+  tool call and a blank answer, after 3 turns in a row in which its `exec` tool itself broke and no tool succeeded (a
+  script that runs and exits non-zero does not count: that is a result the agent can act on), and after any turn
+  that ends in an error, "to prevent automatic continuation from looping and consuming tokens". Any activity resets
+  the empty-turn count. Its prompt adds the rules the hashes cannot apply: "status restatements and unexecuted plans
+  are no progress"; a wait counts only while it polls a handle "confirmed live now"; and "Treat equivalent blockers
+  as the same condition across turns even when their wording or stated next step changes."
+- Repeated denials are a stall too: an agent that tries variants of a refused action gives different hashes each
+  time. [approval-reviewer-agent](../approval-reviewer-agent/card.md) counts denials per turn and interrupts it.
 
 ## Agent step
 

@@ -30,6 +30,17 @@ links:
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/docs/hooks/reference.md#L163-L181"
     author: "gemini-cli (Google)"
     note: "the reason as a new prompt; clearContext clears the conversation before the retry."
+  - title: "Codex /goal: the continuation prompt and its completion audit"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/ext/goal/templates/goals/continuation.md#L26-L52"
+    author: "Codex (OpenAI)"
+    note: "the same model audits its own completion; fidelity, completion audit, blocked audit."
+  - title: "Codex /goal: update_goal checks only the status value"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/ext/goal/src/tool.rs#L265-L292"
+    author: "Codex (OpenAI)"
+  - title: "Codex /goal: the budget-limit message"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/ext/goal/templates/goals/budget_limit.md#L1-L16"
+    author: "Codex (OpenAI)"
+    note: "injected once into the running turn when the goal's token budget runs out."
 ---
 
 ## Why
@@ -100,6 +111,16 @@ passes.
   another round is to start again with only the failures. gemini-cli's AfterAgent hook, its Stop hook, sends the
   block reason "to the agent as a new prompt" and can clear the conversation first (`clearContext`); each retry
   takes one turn of the session's budget of 100.
+- **The agent as its own judge.** Codex's `/goal` restarts the turn whenever the thread goes idle with the goal
+  active, and the same model decides when it is done, by a completion audit in its prompt: "treat completion as
+  unproven"; tests and green checks count "only after confirming they cover the relevant requirement"; "The audit
+  must prove completion, not merely fail to find obvious remaining work." A fidelity rule forbids "a narrower,
+  safer, smaller, merely compatible, or easier-to-test solution because it is more likely to pass current tests".
+  Put that audit in the agent's instructions, but do not let it end the loop alone: `update_goal` checks only that
+  the status is allowed, so nothing verifies a "complete". Keep a command hook at Stop for what a script can check.
+- **A token budget as a stop.** A goal with a budget ends when the budget runs out: Codex injects one message into
+  the running turn, "do not start new substantive work… Wrap up this turn soon", and starts no further turns. Set a
+  budget on every unattended goal; the Stop hook's cap counts only blocks, not the tokens spent between them.
 
 ## Agent step
 

@@ -141,6 +141,7 @@ _The product does what it was specified to do: functional suitability, completen
 - [Reproduction gate](reproduction-gate/card.md): A fix counts only against a reproduction that failed first. The agent fixes until it passes; the gate reports whether it was red before and green after, and whether any other test changed.
 - [Sample audit](sample-audit/card.md): On a schedule, the person reviews a random sample of what the agent did or merged without them, and marks where it differs from what they expected.
 - [Snapshot / golden / approved fixtures](approved-fixtures/card.md): A test compares the output with a stored reference; the agent fixes an unexpected diff and proposes an expected one to a person as the new reference.
+- [Snapshots of what the model sees](prompt-snapshots/card.md): A scripted scenario captures every request the code sends to the model and compares it, as readable text grouped by prompt-cache prefix, with a reviewed snapshot.
 - [Spec check](spec-check/card.md): The agent runs `specs.py check` and each layer's check on the changed spec; every gap comes back as a message naming the element and what is missing, before the test writer gets the spec.
 - [Stop hook / `/goal`](stop-hook/card.md): When the agent tries to end its turn, a hook runs the check and sends the agent back to work while it fails; `/goal` does the same with a model that judges the transcript.
 - [Terminal UI through tmux](terminal-ui-tmux/card.md): The agent runs a terminal app in a tmux session of fixed size, sends keys and reads the screen with capture-pane; a smoke test passes only after a real interaction, not at startup.
@@ -203,6 +204,7 @@ _The code is easy to read, change and extend: modularity, analysability, modifia
 
 _Confidentiality, integrity, privacy, compliance, audit and licences._
 
+- [A reviewer agent answers approval prompts](approval-reviewer-agent/card.md): A read-only reviewer model answers the agent's permission prompts in place of a person: it scores the action's risk and where its authorization came from, and a denial forbids a workaround.
 - [Audit trail of agent actions](agent-audit-trail/card.md): The agent leaves evidence: commands with their output, screenshots, videos, commits. The reviewer checks the evidence instead of re-running everything.
 - [Compliance hardening with mutants](compliance-mutants/card.md): An LLM takes one concern, such as data leaks, and writes mutants for it and tests that catch them; a mutation run shows the tests fail on the mutants and pass on the real code.
 - [DAST](dast/card.md): OWASP ZAP scans the running preview from the outside: passively on every deploy, with attacks before a release. The agent fixes each alert the scan fails on.

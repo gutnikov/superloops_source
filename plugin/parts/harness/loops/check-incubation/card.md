@@ -47,6 +47,16 @@ links:
   - title: "test-helper.ts: the quarantine flag"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/integration-tests/test-helper.ts#L10"
     author: "gemini-cli (Google)"
+  - title: "nextest.toml: one retry, and an override list closed to new tests"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/.config/nextest.toml#L1-L6"
+    author: "Codex (OpenAI)"
+  - title: "nextest.toml: \"Do not add new tests here\""
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/.config/nextest.toml#L54-L57"
+    author: "Codex (OpenAI)"
+  - title: "Sandbox integrity: scope and review contract"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/exec-server/src/sandbox_integrity/AGENTS.md#L1-L31"
+    author: "Codex (OpenAI)"
+    note: "a runtime check that only reports through telemetry until it is trusted to enforce."
 ---
 
 ## Why
@@ -100,6 +110,11 @@ signal to promote it.
   7 nights of history kept for 7 days leave no margin for one missed night.
 - **A report of what the filter left out.** Every pull-request run lists the checks it skipped as unstable. A check
   dropped without a line in the report stops protecting, and no one decided it.
+- **A pass on retry is reported.** Where the blocking suite keeps a retry, it records every test that failed and
+  then passed, and the nightly report lists them: a test that needs its retry often is a quarantine candidate. Codex's
+  runner retries every test once "so one transient failure does not fail full-CI outright", and keeps a list of tests
+  with longer timeouts headed "Do not add new tests here"; a list closed to new entries only shrinks, but only a
+  report of retries shows which tests should leave the blocking tier.
 - **`run`** reads the pull request's diff, the deflake results and the history, and prints one line per check it
   touches: `<check>: new, blocking tier`, `<check>: deflake <passed>/<runs>`, `<check>: promote (<n>/<n> runs over 7
   nights)` or `<check>: quarantine (failed on main at <commit>)`. It exits non-zero when the pull request adds a check
@@ -117,6 +132,11 @@ signal to promote it.
   block only once its agreement on its eval cases reaches a threshold.
 - Retries in the runner hide a flaky check from the deflake run and from the history. Turn them off for both, and
   keep them, if at all, only in the blocking suite.
+- A guard in the product incubates the same way. A new runtime check, such as one that compares what a sandbox
+  allows with what it should, first only reports: Codex's sandbox-integrity checks "currently emit telemetry only.
+  Findings and preparation errors must not change sandbox construction, permissions, approvals, or command
+  execution." Promote it to enforcing on the record of its findings, as for a test; its telemetry carries bounded
+  tags only, never paths or error text.
 - A failure from the provider, such as a 503, is not a failure of the check. Retry it, and record it apart from the
   check's results so that it moves no check between tiers ([llm-evals](../llm-evals/card.md)).
 

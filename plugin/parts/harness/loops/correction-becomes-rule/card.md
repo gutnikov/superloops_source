@@ -28,6 +28,20 @@ links:
   - title: "Harness engineering for coding agent users"
     url: "https://martinfowler.com/articles/harness-engineering.html"
     author: "Böckeler"
+  - title: "Codex memories: the defaults"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/config/src/types.rs#L57-L62"
+    author: "Codex (OpenAI)"
+    note: "sessions idle 6 hours, at most 10 days old, 2 per startup; 256 memories kept; dropped after 30 days unused."
+  - title: "Codex memories: outcome labels"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/memories/write/templates/memories/stage_one_system.md#L155-L200"
+    author: "Codex (OpenAI)"
+  - title: "Codex memories: verify before relying, cite what was used"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/ext/memories/templates/memories/read_path.md#L51-L90"
+    author: "Codex (OpenAI)"
+  - title: "Codex memories: which memories consolidation keeps"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/state/src/runtime/memories.rs#L441-L500"
+    author: "Codex (OpenAI)"
+    note: "used within max_unused_days, ranked by usage_count."
 ---
 
 ## Why
@@ -68,6 +82,14 @@ one. The measure is that each kind of correction stops coming back.
   a file outside the memory directory or does not apply cleanly, and "the user must approve each patch". The shared
   instructions are out of its reach: they are "managed by humans only". Use the same shape: a mined correction
   arrives as a proposed patch for the steering loop, never as a direct edit of CLAUDE.md.
+- **A rule that is never used goes.** Codex's memories, off by default, keep a lesson only while agents use it. The
+  agent ends a reply that relied on a memory with a citation block naming the memory files and lines; each citation
+  raises the memory's use count, and consolidation keeps those used in the last 30 days, or created in them, up to
+  256 ranked by use. Its extractor labels each session's outcome, and "only the assistant claims success without
+  validation" counts as uncertain, so a lesson does not come from a success nobody checked. A memory read later is
+  verified first when it "is likely to drift and is cheap to verify", and called possibly stale when it is not. For
+  rules from this loop, have the agent name the rule it applied in its final message; a rule no session named in 30
+  days goes back to the person who approved it, to keep or remove.
 - **Short, stable kinds**, such as `unstructured log line` or `test edited instead of code`, so that two corrections
   of one kind are seen as one kind. Reuse a kind already in `superloops/trace.jsonl` before writing a new one.
 - **Code before text.** CLAUDE.md is advice, not a guarantee. Prefer a [custom lint](../taste-invariants/card.md) or

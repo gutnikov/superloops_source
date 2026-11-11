@@ -21,6 +21,17 @@ links:
     url: "https://docs.pact.io/implementation_guides/javascript/docs/provider"
     author: "Pact docs"
     note: "`pactUrls` with local files, `publishVerificationResult` only in CI."
+  - title: "MCP conformance: what the baseline means"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/scripts/mcp_conformance/README.md#L35-L66"
+    author: "Codex (OpenAI)"
+    note: "the official MCP suite, pinned; a reviewed baseline of passing and failing checks."
+  - title: "MCP conformance: the reviewer regression gate"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/scripts/mcp_conformance/README.md#L70-L100"
+    author: "Codex (OpenAI)"
+    note: "review findings kept as a suite of their own: 186 checks, 21 required cases."
+  - title: "run_codex_compliance.py: the regression gate"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/scripts/mcp_conformance/run_codex_compliance.py#L1744-L1809"
+    author: "Codex (OpenAI)"
 ---
 
 ## Why
@@ -66,5 +77,15 @@ The agent reads the failed interactions and fixes the provider, never the consum
 
 ## Notes
 
+- **A contract with a standard, not with a consumer.** When the other side is a published specification with its own
+  test suite, run that suite against the real build, pinned to one revision, and gate on a reviewed baseline of
+  which checks pass and which fail. Codex does this for MCP on every pull request. The gate passes only when every
+  check that passed still passes, no other check fails, and the required protocol versions, transports and auth
+  scenarios "are actually run": a check missing from the run counts as a failure, so a suite that silently did not
+  run cannot pass. The version that ships may have no known failures. A fixed check is listed as fixed, and the gate
+  "does not relabel an existing failure as a pass". A baseline change is reviewed like code: "Review every baseline
+  change; do not regenerate it to conceal a regression."
+- Findings from review become checks of their own. Codex keeps "reviewer-derived MCP regressions" as a second suite
+  with its own baseline, run in the same required job.
 - [api-breaking-changes](../api-breaking-changes/card.md) catches a break in the schema before any consumer runs;
   contract tests catch the breaks that matter to the consumers who exist, including ones a schema diff cannot see.

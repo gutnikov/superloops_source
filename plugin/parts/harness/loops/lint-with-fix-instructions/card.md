@@ -32,6 +32,16 @@ links:
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/utils/tool-utils.ts#L65-L92"
     author: "gemini-cli (Google)"
     note: "an unknown tool's name answered with the 3 closest names."
+  - title: "clippy.toml: banned methods, each with its fix as the reason"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/clippy.toml#L8-L28"
+    author: "Codex (OpenAI)"
+    note: "\"Audited against workspace sqlx 0.9.0. Revisit this SQLite escape-hatch list when bumping sqlx.\""
+  - title: "apply_patch.rs: the patch is checked against the files before approval"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/src/tools/handlers/apply_patch.rs#L450-L521"
+    author: "Codex (OpenAI)"
+  - title: "file_update.rs: the lines that failed to match"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/apply-patch/src/file_update.rs#L152-L160"
+    author: "Codex (OpenAI)"
 ---
 
 ## Why
@@ -63,6 +73,12 @@ violation with a comment that gives the reason.
   why. Böckeler's message for thresholds allows a slight raise in exactly that case.
 - **Turn on the size rules**: `max-params`, `max-lines`, `max-lines-per-function`, `complexity`, with limits the
   project picks and writes in the ESLint config.
+- **A banned API is a line of config, and its reason is the fix.** A rule that only forbids a call needs no custom
+  code: Rust's clippy takes `disallowed-methods` with a `reason` it prints at each use, and ESLint has
+  `no-restricted-imports` and `no-restricted-syntax` with a `message`. Write the reason as the instruction, as Codex
+  does: "Create SQLite pools through codex-state's sqlite shim.", "Avoid yellow; prefer other colors in
+  `tui/styles.md`." A list tied to a dependency says when to look at it again: "Revisit this SQLite escape-hatch list
+  when bumping sqlx."
 - **Every suppression carries its reason**: `// eslint-disable-next-line <rule> -- <reason>`. `run` fails on a
   disable comment without `--` and a reason. Böckeler: this "keeps the suppressions manageable, visible and
   reviewable."
@@ -91,3 +107,8 @@ violation with a comment that gives the reason.
   successful edit answers with the changed lines and 5 lines around them, "so that the agent can avoid the need to
   spend a turn doing a verification read". Give a project's own tools and hooks both halves: on failure what to do
   next, on success the evidence that it worked.
+- Codex checks a patch before anyone is asked about it. Every `apply_patch` is applied in memory to the current files
+  first, so a person is never asked to approve a patch that cannot apply, and the model gets `apply_patch
+  verification failed: Failed to find expected lines in <path>:` followed by the lines it expected. The match is
+  tried exact, then without trailing whitespace, then trimmed, then with typographic punctuation folded to ASCII.
+  Order a project's own gates the same way: the cheap mechanical check before the person.

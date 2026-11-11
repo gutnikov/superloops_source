@@ -25,6 +25,23 @@ links:
   - title: "ci.mjs: the failure report and the local command"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.gemini/skills/ci/scripts/ci.mjs#L238-L275"
     author: "gemini-cli (Google)"
+  - title: "blocking-ci.yml: the required fan-in job"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/.github/workflows/blocking-ci.yml#L46-L73"
+    author: "Codex (OpenAI)"
+    note: "if: always(), so a failed dependency cannot leave the required check looking green."
+  - title: "check_ci_results.py"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/.github/scripts/check_ci_results.py#L3-L28"
+    author: "Codex (OpenAI)"
+    note: "skipped and cancelled count as failures; one script for the PR gate and the post-merge gate."
+  - title: "verify_bazel_clippy_lints.py: the local lint and the CI lint agree"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/.github/scripts/verify_bazel_clippy_lints.py#L55-L78"
+    author: "Codex (OpenAI)"
+  - title: "check-clean-worktree (a composite action)"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/.github/actions/check-clean-worktree/action.yml#L1-L19"
+    author: "Codex (OpenAI)"
+  - title: "repo-checks.yml: step names that carry the fix, and the clean-worktree step"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/.github/workflows/repo-checks.yml#L70-L78"
+    author: "Codex (OpenAI)"
 ---
 
 ## Why
@@ -62,6 +79,19 @@ checks run locally first and the number of rounds is limited.
   branch", runs the full CI suite once, gives the agent "one more chance to fix the failing test locally", and "After
   the second push and CI run, we send the branch back to its human operator for manual scrutiny", because of
   "diminishing marginal returns if an LLM is running against indefinitely many rounds of a full CI loop".
+- **A required job that only an explicit success passes.** A required check that depends on other jobs is skipped
+  when one of them fails, and a skipped required check can look green. Codex's merge gate is one `required` job with
+  `if: always()` over every check; its script prints `<job>: <result>` and fails on anything but `success`: "for a
+  required fan-in job, only an explicit success is safe to accept". Its `needs:` list is "the version-controlled list
+  that the main-branch ruleset should require", so dropping a check from the gate is a diff a person reviews.
+- **The local lint and the CI lint read the same rules.** When the agent lints with one tool and CI with another, a
+  rule present in only one costs a CI round. A check that diffs the two configurations and prints the line to add
+  keeps them equal; Codex's compares Cargo's clippy levels with Bazel's flags, since "Bazel clippy does not ingest
+  Cargo lint levels automatically".
+- **A clean worktree after every job.** A last step, run even after a failure, fails the job when anything is modified
+  or untracked (`git status --porcelain`): a generator, a lockfile resolution or a test that writes into the tree.
+  Each check that can fail this way names its fix, in the step's name and in its message: Codex's "Check formatting
+  (run `just fmt` to fix)", and "Run `just write-config-schema` to overwrite with your changes".
 - **`run`** judges the CI run of the branch's head commit and prints one line per job, `<job>: <status>`: `passed`,
   `failed` with the first error line as `file:line: message`, or `no run for <sha>` while CI has not run the head
   commit. It exits non-zero on anything but `passed`.

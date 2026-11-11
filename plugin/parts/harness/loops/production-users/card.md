@@ -17,6 +17,13 @@ links:
   - title: "Human-in-the-loop cycles (in Russian)"
     author: "Alexander Gutnikov"
     note: "unpublished note, 2026-11-08"
+  - title: "feedback_view.rs: /feedback, its categories, consent and the issue link"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/tui/src/bottom_pane/feedback_view.rs#L40-L100"
+    author: "Codex (OpenAI)"
+  - title: "feedback/src/lib.rs: a 4 MiB log ring kept for feedback"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/feedback/src/lib.rs#L238-L262"
+    author: "Codex (OpenAI)"
+    note: "\"Capture diagnostics independently of `RUST_LOG`\"."
 ---
 
 ## Why
@@ -42,6 +49,13 @@ work.
 
 - **The channels** are listed in the loop's `LOOP.md`, each with where it is read: the feedback form, the support
   tool, the experiment platform, the dogfooding channel. Every signal keeps a link to where it came from.
+- **A channel in the product carries its evidence.** Feedback typed into the product can bring the session it is
+  about, so the item reaches [user-feedback](../user-feedback/card.md) with a scenario to reproduce, not a
+  description. Codex's `/feedback` asks for a category (`bad_result`, `good_result`, `bug`, `safety_check`, `other`),
+  then asks consent to attach the logs and the session file, saying "Files may contain prompts, commands, and tool
+  output". The logs come from a 4 MiB ring kept at the finest level whatever the user's log setting. The user gets the
+  session's id and a link to open an issue that cites it, so the person reading the issue can open the exact session.
+  Without consent, the signal is the category and the user's own words.
 - **The problem, not the solution.** Record what the user tried to do and what got in the way, in their words. A
   requested feature is a hypothesis about that problem.
 - **Counted, not anecdotal.** Triage merges signals on the same thing, and the count travels with the item: one loud

@@ -19,6 +19,10 @@ links:
     url: "https://playwright.dev/docs/test-snapshots"
     author: "Playwright"
     note: "toHaveScreenshot: a stored baseline, pixel comparison, rendering that differs between hosts."
+  - title: "models.json: gpt-5.5's instructions for visual work"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/models-manager/models.json#L1584"
+    author: "Codex (OpenAI)"
+    note: "screenshots and canvas-pixel checks across desktop and mobile viewports before finishing."
 ---
 
 ## Why
@@ -53,6 +57,12 @@ The loop needs a mockup of the screen to compare with.
   settings, hardware", so baselines are made in the CI environment, not on a laptop.
 - **A changed baseline is a changed reference.** `--update-snapshots` in the same change as the UI shows the new image
   in the pull request, and a person approves it there ([approved-fixtures](../approved-fixtures/card.md)).
+- **Without a mockup, check the pixels.** A canvas, such as a WebGL scene or a chart, has no DOM a test can assert on,
+  and a new scene often has no mockup. Codex's instructions for gpt-5.5: "Before finishing, you verify with Playwright
+  screenshots and canvas-pixel checks across desktop/mobile viewports that it is nonblank, correctly framed,
+  interactive/moving". As a script, at a desktop and a phone viewport: the canvas is not one colour; the drawn pixels
+  are not cut off at its edges; two screenshots taken a second apart, or before and after an input, differ. Each
+  failure prints `<viewport>: blank`, `cut off at <edge>` or `static`, with no judge needed.
 - **`run`** gives the judge the mockup and the screenshot of each screen and prints one line per screen,
   `<screen>: matches` or `<screen>: <n> differences`, then the judge's reasons. It exits 1 on a `fail` only once the
   judge is `gate` in `superloops/agents.yaml`; until then it prints the Verdict and exits 0. The pixel comparison in
