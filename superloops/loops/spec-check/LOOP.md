@@ -1,7 +1,7 @@
 ---
 id: spec-check                   # the folder name under superloops/loops/
 title: "Spec check"
-type: spec-check            # from the plugin's loop-types/index.yaml, or custom
+type: spec-check            # from the plugin's loops/index.yaml, or custom
 status: active                  # proposed | built | validated | active | retired
 trigger: [edit, ci]                     # edit | local | commit | ci | preview | staging | production | scheduled | task | sprint | continuous
 places: [delivery/oracle]       # where it stands in the super-loops, as <super-loop>/<phase>: delivery/confirmation

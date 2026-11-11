@@ -177,13 +177,13 @@ def parse_profile(text):
 
 
 def catalog():
-    """({type id: fields}, {place: [type ids]}) from the plugin's loop-types/index.yaml."""
+    """({type id: fields}, {place: [type ids]}) from the plugin's loops/index.yaml."""
     types, by_place, cur, section = {}, {}, None, None
-    for line in (PLUGIN / "loop-types" / "index.yaml").read_text(encoding="utf-8").splitlines():
+    for line in (PLUGIN / "loops" / "index.yaml").read_text(encoding="utf-8").splitlines():
         if re.match(r"^\S", line):
             section = line.split(":")[0]
             continue
-        if section == "loop_types":
+        if section == "loops":
             m = re.match(r"^  - id: (.+)$", line)
             if m:
                 cur = types.setdefault(m.group(1).strip(), {"id": m.group(1).strip()})
@@ -354,7 +354,7 @@ def cmd_init(a, root):
 
 
 def catalog_entry(type_id):
-    index = PLUGIN / "loop-types" / "index.yaml"
+    index = PLUGIN / "loops" / "index.yaml"
     if not index.exists():
         return None
     m = re.search(r"^  - id: %s\n((?:    .*\n)+)" % re.escape(type_id), index.read_text(encoding="utf-8"), re.M)
@@ -378,7 +378,7 @@ def cmd_new(a, root):
         sys.exit("superloops/loops/%s already exists" % a.id)
     entry = None if a.type == "custom" else catalog_entry(a.type)
     if a.type != "custom" and entry is None:
-        sys.exit("unknown loop type %r: see loop-types/index.yaml, or use --type custom" % a.type)
+        sys.exit("unknown loop type %r: see loops/index.yaml, or use --type custom" % a.type)
     text = (PLUGIN / "templates" / "LOOP.md").read_text(encoding="utf-8")
     title = a.title or (entry or {}).get("title") or a.id
     text = text.replace("id: <loop-id>", "id: %s" % a.id).replace("<loop-type-id>", a.type)

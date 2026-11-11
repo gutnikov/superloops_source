@@ -1,42 +1,77 @@
-# Red run of tests/site, 2026-11-11 10:38 CET, commit a6a057c on branch site-1, before site/ exists
-# Contract: event-model/1, revision of SITE-1 with delta-2 (Page.stylesheets on all three screens, Page.language; 4 super-loop cards)
-# Command: npx playwright test --reporter=list
-#   project acceptance: the 6 examples of the contract; project fixture-contracts: the contract specs of the fixtures
+# Red run of tests/site, 2026-11-11 14:32 CET, commit 0fbd0bd on branch site-2 with the SITE-2 tests uncommitted,
+# before the SITE-2 work on site/ (site/ as SITE-1 left it)
+# Contract: event-model/1, revision of SITE-1 and SITE-2 (delta since 698a46b: T01 "every card …" changed; T01 "a loop
+#   where a person gives the signal shows its four axes" and "a card's image illustrates its page" added; outcome
+#   Catalog -> withImage, screen LoopImageFile; state catalogOnMain now loops/<id>/card.md)
+# Command: npx playwright test --reporter=list   (npm test is its project acceptance; npm run typecheck: exit 0)
+#   project acceptance: the 8 examples of the contract; project fixture-contracts: the contract specs of the fixtures
+#
+# Why each test fails: site/ still reads the catalog's old layout (loop-types/<group>/<id>.md), which is gone, so
+# `npm run build` stops with CatalogUnreadable before it builds any page. Every test that needs a built site fails
+# at its setup with the build's output:
+#   T01 every card …; T01 a loop where a person gives the signal …; T01 a card the site cannot show …   siteBuilt
+#   T01 a card's image illustrates its page                                       siteWithImage (catalogWithImage)
+#   T02 both, T03 "a deploy puts …"   siteBuilt: not SITE-2 tests, red because the same build fails
+#   contracts of siteBuilt, siteLive, siteWithImage, cloudflareDeploys   the same build
+# Skipped (fixme): T03 "a failed deploy …" and the contract of cloudflareFails, as in the run before SITE-1.
+# Passed: the contracts of catalogOnMain, catalogValid, catalogWithInvalidCard (both), catalogWithImage.
+#
+# The run itself:
+
+Running 18 tests using 1 worker
+
+  ✘   1 [acceptance] › specs/t01-publish-the-loop-types.spec.ts:62:1 › every card of the catalog has a page with what the card holds @T01 @SITE-1#1 @SITE-1#2 @SITE-2#1 @SITE-2#2 @SITE-2#3 @SITE-2#4 (823ms)
+  ✘   2 [acceptance] › specs/t01-publish-the-loop-types.spec.ts:88:1 › a loop where a person gives the signal shows its four axes @T01 @SITE-1#1 @SITE-1#2 @SITE-2#1 @SITE-2#2 @SITE-2#3 @SITE-2#4 (807ms)
+  ✘   3 [acceptance] › specs/t01-publish-the-loop-types.spec.ts:105:3 › a card's image illustrates its page @T01 @SITE-1#1 @SITE-1#2 @SITE-2#1 @SITE-2#2 @SITE-2#3 @SITE-2#4 (184ms)
+  ✘   4 [acceptance] › specs/t01-publish-the-loop-types.spec.ts:118:1 › a card the site cannot show stops the build @T01 @SITE-1#1 @SITE-1#2 @SITE-2#1 @SITE-2#2 @SITE-2#3 @SITE-2#4 (1ms)
+  ✘   5 [acceptance] › specs/t02-publish-the-super-loops.spec.ts:33:1 › every super-loop card has a page with what the card holds @T02 @SITE-1#3 (116ms)
+  ✘   6 [acceptance] › specs/t02-publish-the-super-loops.spec.ts:55:1 › a super-loop card the site cannot show stops the build @T02 @SITE-1#3 (1ms)
+  ✘   7 [acceptance] › specs/t03-deploy-the-site.spec.ts:17:1 › a deploy puts the commit's site on superloops.dev @T03 @SITE-1#4 @SITE-1#5 @SITE-1#6 @SITE-1#7 @SITE-1#8 (1ms)
+  -   8 [acceptance] › specs/t03-deploy-the-site.spec.ts:59:6 › a failed deploy leaves the previous site on superloops.dev @T03 @SITE-1#4 @SITE-1#5 @SITE-1#6 @SITE-1#7 @SITE-1#8
+  ✓   9 [fixture-contracts] › _fixtures/states.contract.spec.ts:42:1 › contract: catalogOnMain is the catalog of plugin/parts/harness @fixture-contract (4ms)
+  ✓  10 [fixture-contracts] › _fixtures/states.contract.spec.ts:57:1 › contract: catalogValid passes the catalog check @fixture-contract (808ms)
+  ✓  11 [fixture-contracts] › _fixtures/states.contract.spec.ts:62:1 › contract: catalogWithInvalidCard breaks one loop card @fixture-contract (883ms)
+  ✓  12 [fixture-contracts] › _fixtures/states.contract.spec.ts:71:3 › with a super-loop card broken › contract: catalogWithInvalidCard breaks one super-loop card @fixture-contract (837ms)
+  ✓  13 [fixture-contracts] › _fixtures/states.contract.spec.ts:85:1 › contract: catalogWithImage gives one card an image @fixture-contract (1.0s)
+  ✘  14 [fixture-contracts] › _fixtures/states.contract.spec.ts:101:1 › contract: siteBuilt has a built site @fixture-contract (0ms)
+  ✘  15 [fixture-contracts] › _fixtures/states.contract.spec.ts:106:1 › contract: siteLive serves a version @fixture-contract (1ms)
+  ✘  16 [fixture-contracts] › _fixtures/states.contract.spec.ts:111:1 › contract: siteWithImage serves the site built from catalogWithImage @fixture-contract (64ms)
+  ✘  17 [fixture-contracts] › _fixtures/states.contract.spec.ts:116:1 › contract: cloudflareDeploys serves the site @fixture-contract (1ms)
+  -  18 [fixture-contracts] › _fixtures/states.contract.spec.ts:124:6 › contract: cloudflareFails refuses the deploy @fixture-contract
 
 
-Running 14 tests using 1 worker
+  1) [acceptance] › specs/t01-publish-the-loop-types.spec.ts:62:1 › every card of the catalog has a page with what the card holds @T01 @SITE-1#1 @SITE-1#2 @SITE-2#1 @SITE-2#2 @SITE-2#3 @SITE-2#4 
 
-  ✘   1 [acceptance] › specs/t01-publish-the-loop-types.spec.ts:24:1 › every card of the catalog has a page with what the card holds @T01 @SITE-1#1 @SITE-1#2 (829ms)
-  ✘   2 [acceptance] › specs/t01-publish-the-loop-types.spec.ts:46:1 › a card the site cannot show stops the build @T01 @SITE-1#1 @SITE-1#2 (2ms)
-  ✘   3 [acceptance] › specs/t02-publish-the-super-loops.spec.ts:33:1 › every super-loop card has a page with what the card holds @T02 @SITE-1#3 (820ms)
-  ✘   4 [acceptance] › specs/t02-publish-the-super-loops.spec.ts:55:1 › a super-loop card the site cannot show stops the build @T02 @SITE-1#3 (1ms)
-  ✘   5 [acceptance] › specs/t03-deploy-the-site.spec.ts:17:1 › a deploy puts the commit's site on superloops.dev @T03 @SITE-1#4 @SITE-1#5 @SITE-1#6 @SITE-1#7 @SITE-1#8 (1ms)
-  -   6 [acceptance] › specs/t03-deploy-the-site.spec.ts:59:6 › a failed deploy leaves the previous site on superloops.dev @T03 @SITE-1#4 @SITE-1#5 @SITE-1#6 @SITE-1#7 @SITE-1#8
-  ✓   7 [fixture-contracts] › _fixtures/states.contract.spec.ts:23:1 › contract: catalogOnMain is the catalog of plugin/parts/harness @fixture-contract (4ms)
-  ✓   8 [fixture-contracts] › _fixtures/states.contract.spec.ts:38:1 › contract: catalogValid passes the catalog check @fixture-contract (256ms)
-  ✓   9 [fixture-contracts] › _fixtures/states.contract.spec.ts:43:1 › contract: catalogWithInvalidCard breaks one loop-type card @fixture-contract (285ms)
-  ✓  10 [fixture-contracts] › _fixtures/states.contract.spec.ts:58:3 › with a super-loop card broken › contract: catalogWithInvalidCard breaks one super-loop card @fixture-contract (290ms)
-  ✘  11 [fixture-contracts] › _fixtures/states.contract.spec.ts:71:1 › contract: siteBuilt has a built site @fixture-contract (0ms)
-  ✘  12 [fixture-contracts] › _fixtures/states.contract.spec.ts:76:1 › contract: siteLive serves a version @fixture-contract (1ms)
-  ✘  13 [fixture-contracts] › _fixtures/states.contract.spec.ts:81:1 › contract: cloudflareDeploys serves the site @fixture-contract (1ms)
-  -  14 [fixture-contracts] › _fixtures/states.contract.spec.ts:89:6 › contract: cloudflareFails refuses the deploy @fixture-contract
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited 1):
 
+    > build
+    > ASTRO_TELEMETRY_DISABLED=1 astro build
 
-  1) [acceptance] › specs/t01-publish-the-loop-types.spec.ts:24:1 › every card of the catalog has a page with what the card holds @T01 @SITE-1#1 @SITE-1#2 
+    14:32:09 [ERROR] [superloops] An unhandled error occurred while running the "astro:config:setup" hook
+    CatalogUnreadable: /Users/agutnikov/work/projects/superloops/plugin/parts/harness has no loop-types/ folder. SUPERLOOPS_CATALOG must be a folder laid out like plugin/parts/harness.
+      Location:
+        /Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13
+      Stack trace:
+        at loadCatalog (file:///Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
 
-    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
-    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+       at ../../site/src/lib/catalog.mjs:51
 
-       at support/fixtures.ts:93
-
-      91 |       const build = await buildSite({ outDir });
-      92 |       if (build.code !== 0) {
-    > 93 |         throw new Error(
-         |               ^
-      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
-      95 |         );
-      96 |       }
-        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+      49 |   for (const folder of [loopTypesDir, superLoopsDir]) {
+      50 |     if (!isFolder(folder)) {
+    > 51 |       throw new Error(
+         |             ^
+      52 |         `CatalogUnreadable: ${dir} has no ${path.basename(folder)}/ folder. SUPERLOOPS_CATALOG must be a folder ` +
+      53 |           'laid out like plugin/parts/harness.',
+      54 |       );
+        at hookFn (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at async build (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:45:3)
+        at     at loadCatalog (/Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+        at hookFn (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:142:15)
 
     Error Context: test-results/specs-t01-publish-the-loop-731b5-ge-with-what-the-card-holds-acceptance/error-context.md
 
@@ -48,21 +83,124 @@ Running 14 tests using 1 worker
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-  2) [acceptance] › specs/t01-publish-the-loop-types.spec.ts:46:1 › a card the site cannot show stops the build @T01 @SITE-1#1 @SITE-1#2 
+  2) [acceptance] › specs/t01-publish-the-loop-types.spec.ts:88:1 › a loop where a person gives the signal shows its four axes @T01 @SITE-1#1 @SITE-1#2 @SITE-2#1 @SITE-2#2 @SITE-2#3 @SITE-2#4 
 
-    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
-    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited 1):
 
-       at support/fixtures.ts:93
+    > build
+    > ASTRO_TELEMETRY_DISABLED=1 astro build
 
-      91 |       const build = await buildSite({ outDir });
-      92 |       if (build.code !== 0) {
-    > 93 |         throw new Error(
-         |               ^
-      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
-      95 |         );
-      96 |       }
-        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+    14:32:12 [ERROR] [superloops] An unhandled error occurred while running the "astro:config:setup" hook
+    CatalogUnreadable: /Users/agutnikov/work/projects/superloops/plugin/parts/harness has no loop-types/ folder. SUPERLOOPS_CATALOG must be a folder laid out like plugin/parts/harness.
+      Location:
+        /Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13
+      Stack trace:
+        at loadCatalog (file:///Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+
+       at ../../site/src/lib/catalog.mjs:51
+
+      49 |   for (const folder of [loopTypesDir, superLoopsDir]) {
+      50 |     if (!isFolder(folder)) {
+    > 51 |       throw new Error(
+         |             ^
+      52 |         `CatalogUnreadable: ${dir} has no ${path.basename(folder)}/ folder. SUPERLOOPS_CATALOG must be a folder ` +
+      53 |           'laid out like plugin/parts/harness.',
+      54 |       );
+        at hookFn (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at async build (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:45:3)
+        at     at loadCatalog (/Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+        at hookFn (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:142:15)
+
+    Error Context: test-results/specs-t01-publish-the-loop-775c3--signal-shows-its-four-axes-acceptance/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/specs-t01-publish-the-loop-775c3--signal-shows-its-four-axes-acceptance/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/specs-t01-publish-the-loop-775c3--signal-shows-its-four-axes-acceptance/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [acceptance] › specs/t01-publish-the-loop-types.spec.ts:105:3 › a card's image illustrates its page @T01 @SITE-1#1 @SITE-1#2 @SITE-2#1 @SITE-2#2 @SITE-2#3 @SITE-2#4 
+
+    Error: siteWithImage: the site did not build from catalogWithImage (`npm run build` in site/ exited 1):
+
+    > build
+    > ASTRO_TELEMETRY_DISABLED=1 astro build
+
+    14:32:13 [ERROR] [superloops] An unhandled error occurred while running the "astro:config:setup" hook
+    CatalogUnreadable: /Users/agutnikov/work/projects/superloops/tests/site/test-results/specs-t01-publish-the-loop-5d245--image-illustrates-its-page-acceptance/parts/harness has no loop-types/ folder. SUPERLOOPS_CATALOG must be a folder laid out like plugin/parts/harness.
+      Location:
+        /Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13
+      Stack trace:
+        at loadCatalog (file:///Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+
+       at ../../site/src/lib/catalog.mjs:51
+
+      49 |   for (const folder of [loopTypesDir, superLoopsDir]) {
+      50 |     if (!isFolder(folder)) {
+    > 51 |       throw new Error(
+         |             ^
+      52 |         `CatalogUnreadable: ${dir} has no ${path.basename(folder)}/ folder. SUPERLOOPS_CATALOG must be a folder ` +
+      53 |           'laid out like plugin/parts/harness.',
+      54 |       );
+        at hookFn (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at async build (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:45:3)
+        at     at loadCatalog (/Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+        at hookFn (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at Object.base.extend.siteWithImage.timeout (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:252:15)
+
+    Error Context: test-results/specs-t01-publish-the-loop-5d245--image-illustrates-its-page-acceptance/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/specs-t01-publish-the-loop-5d245--image-illustrates-its-page-acceptance/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/specs-t01-publish-the-loop-5d245--image-illustrates-its-page-acceptance/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [acceptance] › specs/t01-publish-the-loop-types.spec.ts:118:1 › a card the site cannot show stops the build @T01 @SITE-1#1 @SITE-1#2 @SITE-2#1 @SITE-2#2 @SITE-2#3 @SITE-2#4 
+
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited 1):
+
+    > build
+    > ASTRO_TELEMETRY_DISABLED=1 astro build
+
+    14:32:15 [ERROR] [superloops] An unhandled error occurred while running the "astro:config:setup" hook
+    CatalogUnreadable: /Users/agutnikov/work/projects/superloops/plugin/parts/harness has no loop-types/ folder. SUPERLOOPS_CATALOG must be a folder laid out like plugin/parts/harness.
+      Location:
+        /Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13
+      Stack trace:
+        at loadCatalog (file:///Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+
+       at ../../site/src/lib/catalog.mjs:51
+
+      49 |   for (const folder of [loopTypesDir, superLoopsDir]) {
+      50 |     if (!isFolder(folder)) {
+    > 51 |       throw new Error(
+         |             ^
+      52 |         `CatalogUnreadable: ${dir} has no ${path.basename(folder)}/ folder. SUPERLOOPS_CATALOG must be a folder ` +
+      53 |           'laid out like plugin/parts/harness.',
+      54 |       );
+        at hookFn (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at async build (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:45:3)
+        at     at loadCatalog (/Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+        at hookFn (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:142:15)
 
     Error Context: test-results/specs-t01-publish-the-loop-6a875-cannot-show-stops-the-build-acceptance/error-context.md
 
@@ -74,21 +212,38 @@ Running 14 tests using 1 worker
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-  3) [acceptance] › specs/t02-publish-the-super-loops.spec.ts:33:1 › every super-loop card has a page with what the card holds @T02 @SITE-1#3 
+  5) [acceptance] › specs/t02-publish-the-super-loops.spec.ts:33:1 › every super-loop card has a page with what the card holds @T02 @SITE-1#3 
 
-    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
-    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited 1):
 
-       at support/fixtures.ts:93
+    > build
+    > ASTRO_TELEMETRY_DISABLED=1 astro build
 
-      91 |       const build = await buildSite({ outDir });
-      92 |       if (build.code !== 0) {
-    > 93 |         throw new Error(
-         |               ^
-      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
-      95 |         );
-      96 |       }
-        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+    14:32:16 [ERROR] [superloops] An unhandled error occurred while running the "astro:config:setup" hook
+    CatalogUnreadable: /Users/agutnikov/work/projects/superloops/plugin/parts/harness has no loop-types/ folder. SUPERLOOPS_CATALOG must be a folder laid out like plugin/parts/harness.
+      Location:
+        /Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13
+      Stack trace:
+        at loadCatalog (file:///Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+
+       at ../../site/src/lib/catalog.mjs:51
+
+      49 |   for (const folder of [loopTypesDir, superLoopsDir]) {
+      50 |     if (!isFolder(folder)) {
+    > 51 |       throw new Error(
+         |             ^
+      52 |         `CatalogUnreadable: ${dir} has no ${path.basename(folder)}/ folder. SUPERLOOPS_CATALOG must be a folder ` +
+      53 |           'laid out like plugin/parts/harness.',
+      54 |       );
+        at hookFn (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at async build (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:45:3)
+        at     at loadCatalog (/Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+        at hookFn (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:142:15)
 
     Error Context: test-results/specs-t02-publish-the-supe-7eae9-ge-with-what-the-card-holds-acceptance/error-context.md
 
@@ -100,21 +255,38 @@ Running 14 tests using 1 worker
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-  4) [acceptance] › specs/t02-publish-the-super-loops.spec.ts:55:1 › a super-loop card the site cannot show stops the build @T02 @SITE-1#3 
+  6) [acceptance] › specs/t02-publish-the-super-loops.spec.ts:55:1 › a super-loop card the site cannot show stops the build @T02 @SITE-1#3 
 
-    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
-    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited 1):
 
-       at support/fixtures.ts:93
+    > build
+    > ASTRO_TELEMETRY_DISABLED=1 astro build
 
-      91 |       const build = await buildSite({ outDir });
-      92 |       if (build.code !== 0) {
-    > 93 |         throw new Error(
-         |               ^
-      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
-      95 |         );
-      96 |       }
-        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+    14:32:18 [ERROR] [superloops] An unhandled error occurred while running the "astro:config:setup" hook
+    CatalogUnreadable: /Users/agutnikov/work/projects/superloops/plugin/parts/harness has no loop-types/ folder. SUPERLOOPS_CATALOG must be a folder laid out like plugin/parts/harness.
+      Location:
+        /Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13
+      Stack trace:
+        at loadCatalog (file:///Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+
+       at ../../site/src/lib/catalog.mjs:51
+
+      49 |   for (const folder of [loopTypesDir, superLoopsDir]) {
+      50 |     if (!isFolder(folder)) {
+    > 51 |       throw new Error(
+         |             ^
+      52 |         `CatalogUnreadable: ${dir} has no ${path.basename(folder)}/ folder. SUPERLOOPS_CATALOG must be a folder ` +
+      53 |           'laid out like plugin/parts/harness.',
+      54 |       );
+        at hookFn (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at async build (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:45:3)
+        at     at loadCatalog (/Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+        at hookFn (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:142:15)
 
     Error Context: test-results/specs-t02-publish-the-supe-7ad65-cannot-show-stops-the-build-acceptance/error-context.md
 
@@ -126,21 +298,38 @@ Running 14 tests using 1 worker
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-  5) [acceptance] › specs/t03-deploy-the-site.spec.ts:17:1 › a deploy puts the commit's site on superloops.dev @T03 @SITE-1#4 @SITE-1#5 @SITE-1#6 @SITE-1#7 @SITE-1#8 
+  7) [acceptance] › specs/t03-deploy-the-site.spec.ts:17:1 › a deploy puts the commit's site on superloops.dev @T03 @SITE-1#4 @SITE-1#5 @SITE-1#6 @SITE-1#7 @SITE-1#8 
 
-    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
-    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited 1):
 
-       at support/fixtures.ts:93
+    > build
+    > ASTRO_TELEMETRY_DISABLED=1 astro build
 
-      91 |       const build = await buildSite({ outDir });
-      92 |       if (build.code !== 0) {
-    > 93 |         throw new Error(
-         |               ^
-      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
-      95 |         );
-      96 |       }
-        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+    14:32:19 [ERROR] [superloops] An unhandled error occurred while running the "astro:config:setup" hook
+    CatalogUnreadable: /Users/agutnikov/work/projects/superloops/plugin/parts/harness has no loop-types/ folder. SUPERLOOPS_CATALOG must be a folder laid out like plugin/parts/harness.
+      Location:
+        /Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13
+      Stack trace:
+        at loadCatalog (file:///Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+
+       at ../../site/src/lib/catalog.mjs:51
+
+      49 |   for (const folder of [loopTypesDir, superLoopsDir]) {
+      50 |     if (!isFolder(folder)) {
+    > 51 |       throw new Error(
+         |             ^
+      52 |         `CatalogUnreadable: ${dir} has no ${path.basename(folder)}/ folder. SUPERLOOPS_CATALOG must be a folder ` +
+      53 |           'laid out like plugin/parts/harness.',
+      54 |       );
+        at hookFn (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at async build (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:45:3)
+        at     at loadCatalog (/Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+        at hookFn (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:142:15)
 
     Error Context: test-results/specs-t03-deploy-the-site--28b7d-it-s-site-on-superloops-dev-acceptance/error-context.md
 
@@ -152,21 +341,38 @@ Running 14 tests using 1 worker
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-  6) [fixture-contracts] › _fixtures/states.contract.spec.ts:71:1 › contract: siteBuilt has a built site @fixture-contract 
+  8) [fixture-contracts] › _fixtures/states.contract.spec.ts:101:1 › contract: siteBuilt has a built site @fixture-contract 
 
-    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
-    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited 1):
 
-       at support/fixtures.ts:93
+    > build
+    > ASTRO_TELEMETRY_DISABLED=1 astro build
 
-      91 |       const build = await buildSite({ outDir });
-      92 |       if (build.code !== 0) {
-    > 93 |         throw new Error(
-         |               ^
-      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
-      95 |         );
-      96 |       }
-        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+    14:32:24 [ERROR] [superloops] An unhandled error occurred while running the "astro:config:setup" hook
+    CatalogUnreadable: /Users/agutnikov/work/projects/superloops/plugin/parts/harness has no loop-types/ folder. SUPERLOOPS_CATALOG must be a folder laid out like plugin/parts/harness.
+      Location:
+        /Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13
+      Stack trace:
+        at loadCatalog (file:///Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+
+       at ../../site/src/lib/catalog.mjs:51
+
+      49 |   for (const folder of [loopTypesDir, superLoopsDir]) {
+      50 |     if (!isFolder(folder)) {
+    > 51 |       throw new Error(
+         |             ^
+      52 |         `CatalogUnreadable: ${dir} has no ${path.basename(folder)}/ folder. SUPERLOOPS_CATALOG must be a folder ` +
+      53 |           'laid out like plugin/parts/harness.',
+      54 |       );
+        at hookFn (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at async build (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:45:3)
+        at     at loadCatalog (/Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+        at hookFn (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:142:15)
 
     Error Context: test-results/_fixtures-states.contract--aeb45--siteBuilt-has-a-built-site-fixture-contracts/error-context.md
 
@@ -178,21 +384,38 @@ Running 14 tests using 1 worker
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-  7) [fixture-contracts] › _fixtures/states.contract.spec.ts:76:1 › contract: siteLive serves a version @fixture-contract 
+  9) [fixture-contracts] › _fixtures/states.contract.spec.ts:106:1 › contract: siteLive serves a version @fixture-contract 
 
-    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
-    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited 1):
 
-       at support/fixtures.ts:93
+    > build
+    > ASTRO_TELEMETRY_DISABLED=1 astro build
 
-      91 |       const build = await buildSite({ outDir });
-      92 |       if (build.code !== 0) {
-    > 93 |         throw new Error(
-         |               ^
-      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
-      95 |         );
-      96 |       }
-        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+    14:32:26 [ERROR] [superloops] An unhandled error occurred while running the "astro:config:setup" hook
+    CatalogUnreadable: /Users/agutnikov/work/projects/superloops/plugin/parts/harness has no loop-types/ folder. SUPERLOOPS_CATALOG must be a folder laid out like plugin/parts/harness.
+      Location:
+        /Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13
+      Stack trace:
+        at loadCatalog (file:///Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+
+       at ../../site/src/lib/catalog.mjs:51
+
+      49 |   for (const folder of [loopTypesDir, superLoopsDir]) {
+      50 |     if (!isFolder(folder)) {
+    > 51 |       throw new Error(
+         |             ^
+      52 |         `CatalogUnreadable: ${dir} has no ${path.basename(folder)}/ folder. SUPERLOOPS_CATALOG must be a folder ` +
+      53 |           'laid out like plugin/parts/harness.',
+      54 |       );
+        at hookFn (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at async build (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:45:3)
+        at     at loadCatalog (/Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+        at hookFn (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:142:15)
 
     Error Context: test-results/_fixtures-states.contract-contract-siteLive-serves-a-version-fixture-contracts/error-context.md
 
@@ -204,21 +427,81 @@ Running 14 tests using 1 worker
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-  8) [fixture-contracts] › _fixtures/states.contract.spec.ts:81:1 › contract: cloudflareDeploys serves the site @fixture-contract 
+  10) [fixture-contracts] › _fixtures/states.contract.spec.ts:111:1 › contract: siteWithImage serves the site built from catalogWithImage @fixture-contract 
 
-    Error: siteBuilt: the site did not build (`npm run build` in site/ exited null):
-    /Users/agutnikov/work/projects/superloops/site does not exist: there is no site to build (spawn npm ENOENT)
+    Error: siteWithImage: the site did not build from catalogWithImage (`npm run build` in site/ exited 1):
 
-       at support/fixtures.ts:93
+    > build
+    > ASTRO_TELEMETRY_DISABLED=1 astro build
 
-      91 |       const build = await buildSite({ outDir });
-      92 |       if (build.code !== 0) {
-    > 93 |         throw new Error(
-         |               ^
-      94 |           `siteBuilt: the site did not build (\`npm run build\` in site/ exited ${build.code}):\n${tail(build.output)}`,
-      95 |         );
-      96 |       }
-        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:93:15)
+    14:32:27 [ERROR] [superloops] An unhandled error occurred while running the "astro:config:setup" hook
+    CatalogUnreadable: /Users/agutnikov/work/projects/superloops/tests/site/test-results/_fixtures-states.contract--acbd6-built-from-catalogWithImage-fixture-contracts/parts/harness has no loop-types/ folder. SUPERLOOPS_CATALOG must be a folder laid out like plugin/parts/harness.
+      Location:
+        /Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13
+      Stack trace:
+        at loadCatalog (file:///Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+
+       at ../../site/src/lib/catalog.mjs:51
+
+      49 |   for (const folder of [loopTypesDir, superLoopsDir]) {
+      50 |     if (!isFolder(folder)) {
+    > 51 |       throw new Error(
+         |             ^
+      52 |         `CatalogUnreadable: ${dir} has no ${path.basename(folder)}/ folder. SUPERLOOPS_CATALOG must be a folder ` +
+      53 |           'laid out like plugin/parts/harness.',
+      54 |       );
+        at hookFn (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at async build (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:45:3)
+        at     at loadCatalog (/Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+        at hookFn (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at Object.base.extend.siteWithImage.timeout (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:252:15)
+
+    Error Context: test-results/_fixtures-states.contract--acbd6-built-from-catalogWithImage-fixture-contracts/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/_fixtures-states.contract--acbd6-built-from-catalogWithImage-fixture-contracts/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/_fixtures-states.contract--acbd6-built-from-catalogWithImage-fixture-contracts/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  11) [fixture-contracts] › _fixtures/states.contract.spec.ts:116:1 › contract: cloudflareDeploys serves the site @fixture-contract 
+
+    Error: siteBuilt: the site did not build (`npm run build` in site/ exited 1):
+
+    > build
+    > ASTRO_TELEMETRY_DISABLED=1 astro build
+
+    14:32:29 [ERROR] [superloops] An unhandled error occurred while running the "astro:config:setup" hook
+    CatalogUnreadable: /Users/agutnikov/work/projects/superloops/plugin/parts/harness has no loop-types/ folder. SUPERLOOPS_CATALOG must be a folder laid out like plugin/parts/harness.
+      Location:
+        /Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13
+      Stack trace:
+        at loadCatalog (file:///Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+
+       at ../../site/src/lib/catalog.mjs:51
+
+      49 |   for (const folder of [loopTypesDir, superLoopsDir]) {
+      50 |     if (!isFolder(folder)) {
+    > 51 |       throw new Error(
+         |             ^
+      52 |         `CatalogUnreadable: ${dir} has no ${path.basename(folder)}/ folder. SUPERLOOPS_CATALOG must be a folder ` +
+      53 |           'laid out like plugin/parts/harness.',
+      54 |       );
+        at hookFn (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at async build (file:///Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:45:3)
+        at     at loadCatalog (/Users/agutnikov/work/projects/superloops/site/src/lib/catalog.mjs:51:13)
+        at hookFn (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:54:21)
+        at runHookInternal (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/integrations/hooks.js:51:11)
+        at async AstroBuilder.setup (/Users/agutnikov/work/projects/superloops/site/node_modules/astro/dist/core/build/index.js:71:21)
+        at Object.base.extend.siteBuilt.scope (/Users/agutnikov/work/projects/superloops/tests/site/support/fixtures.ts:142:15)
 
     Error Context: test-results/_fixtures-states.contract--837cf-lareDeploys-serves-the-site-fixture-contracts/error-context.md
 
@@ -230,16 +513,33 @@ Running 14 tests using 1 worker
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-  8 failed
-    [acceptance] › specs/t01-publish-the-loop-types.spec.ts:24:1 › every card of the catalog has a page with what the card holds @T01 @SITE-1#1 @SITE-1#2 
-    [acceptance] › specs/t01-publish-the-loop-types.spec.ts:46:1 › a card the site cannot show stops the build @T01 @SITE-1#1 @SITE-1#2 
+  11 failed
+    [acceptance] › specs/t01-publish-the-loop-types.spec.ts:62:1 › every card of the catalog has a page with what the card holds @T01 @SITE-1#1 @SITE-1#2 @SITE-2#1 @SITE-2#2 @SITE-2#3 @SITE-2#4 
+    [acceptance] › specs/t01-publish-the-loop-types.spec.ts:88:1 › a loop where a person gives the signal shows its four axes @T01 @SITE-1#1 @SITE-1#2 @SITE-2#1 @SITE-2#2 @SITE-2#3 @SITE-2#4 
+    [acceptance] › specs/t01-publish-the-loop-types.spec.ts:105:3 › a card's image illustrates its page @T01 @SITE-1#1 @SITE-1#2 @SITE-2#1 @SITE-2#2 @SITE-2#3 @SITE-2#4 
+    [acceptance] › specs/t01-publish-the-loop-types.spec.ts:118:1 › a card the site cannot show stops the build @T01 @SITE-1#1 @SITE-1#2 @SITE-2#1 @SITE-2#2 @SITE-2#3 @SITE-2#4 
     [acceptance] › specs/t02-publish-the-super-loops.spec.ts:33:1 › every super-loop card has a page with what the card holds @T02 @SITE-1#3 
     [acceptance] › specs/t02-publish-the-super-loops.spec.ts:55:1 › a super-loop card the site cannot show stops the build @T02 @SITE-1#3 
     [acceptance] › specs/t03-deploy-the-site.spec.ts:17:1 › a deploy puts the commit's site on superloops.dev @T03 @SITE-1#4 @SITE-1#5 @SITE-1#6 @SITE-1#7 @SITE-1#8 
-    [fixture-contracts] › _fixtures/states.contract.spec.ts:71:1 › contract: siteBuilt has a built site @fixture-contract 
-    [fixture-contracts] › _fixtures/states.contract.spec.ts:76:1 › contract: siteLive serves a version @fixture-contract 
-    [fixture-contracts] › _fixtures/states.contract.spec.ts:81:1 › contract: cloudflareDeploys serves the site @fixture-contract 
+    [fixture-contracts] › _fixtures/states.contract.spec.ts:101:1 › contract: siteBuilt has a built site @fixture-contract 
+    [fixture-contracts] › _fixtures/states.contract.spec.ts:106:1 › contract: siteLive serves a version @fixture-contract 
+    [fixture-contracts] › _fixtures/states.contract.spec.ts:111:1 › contract: siteWithImage serves the site built from catalogWithImage @fixture-contract 
+    [fixture-contracts] › _fixtures/states.contract.spec.ts:116:1 › contract: cloudflareDeploys serves the site @fixture-contract 
   2 skipped
-  4 passed (10.7s)
+  5 passed (22.8s)
 
 # exit code of npx playwright test: 1
+
+# Supplement, outside the suite: the T01 checks of SITE-2 (the same Page Object and example values) against the
+# last SITE-1 build, site/dist (version e11d538, built from loop-types/), served by support/serve.ts. It shows the
+# checks fail on the fields themselves, not only on the build. Both tests red:
+#   every card … , the example's card red-green-tdd: LoopType.summary (the SITE-1 summary), sensor, ilities, speed,
+#     needs, agent, related (its text and its links), links (the number of entries, the first), sections (Loop, Set
+#     up, Notes, Agent step, Related, Sources, not Why, How it works, Set up, Notes, Agent step). Green there: title,
+#     places, stages, no image.
+#   every card …, all 96 cards (failed checks, counted over the cards): sensor 96, speed 96, needs 96, ilities 96,
+#     the page's data-field elements 96 (group and qualities on the page, the new fields missing), section names 96,
+#     the text under a section 315, links 96, summary 47, agent 39, stages 19, related 18, the four axes 14/14/13/11,
+#     title 6 (titles changed since that build).
+#   a loop where a person gives the signal …, plan-approval: LoopType.sensor, when, initiator, sync, assesses (none
+#     on the page). Green there: title.

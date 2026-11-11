@@ -27,7 +27,7 @@ stages: [production]
 super_loops:
   delivery: "the owner's ideas, given to the agent in a session; GitHub issues of gutnikov/superloops from now on (none yet)"
   remediation: "what the owner finds running the plugin on a real project (b63f7d7: what the first init on saas-test found); GitHub issues from now on"
-  discovery: "the research and notes behind the loop catalog (plugin/parts/harness/loop-types/README.md, human/README.md)"
+  discovery: "the research and notes behind the loop catalog (plugin/parts/harness/loops/README.md, loops/human-in-the-loop.md)"
 not_here:
   maintenance: "nothing to update yet: the scripts need only Python 3 and PyYAML, and no model is pinned; the site's npm packages will bring it"
 
@@ -57,7 +57,7 @@ pains:
 spec:
   docs:             # where PRDs, designs and policies live
     - "the owner's words in the session (no tracker issues yet)"
-    - "the plugin's catalog: plugin/parts/harness/loop-types/ and plugin/parts/harness/super-loops/"
+    - "the plugin's catalog: plugin/parts/harness/loops/ and plugin/parts/harness/super-loops/"
   running_app: ""   # the URL of a running app the spec can be checked against, if any
   readers: []       # who else reads the spec: developers, qa, product, business, auditors
   e2e: none         # playwright | cypress | none

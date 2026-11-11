@@ -195,7 +195,7 @@ product task builds no loop on the way: a missing loop is a harness task, propos
 |---|---|
 | oracle | Delivery without `superloops/specs/`: ask (H4) whether to set up specs first, as a harness task (recommended when the change has rules, money, permissions or more than one screen), or to take acceptance criteria the user approves (H5), written by the rules of `$P/spec/README.md`, "Written for the tests". Remediation: a reproduction written for this task. Maintenance: the tests as they are, and the measure taken now |
 | work | The build, test and lint commands of `stack` in `superloops/map.yaml`, run before the work counts as done |
-| gate | A verification subagent with a fresh context checks the work against the oracle (`$H/loop-types/meta/verification-subagent.md`), then the pull request's own CI. A person reviews where the autonomy level leaves the merge to them |
+| gate | A verification subagent with a fresh context checks the work against the oracle (`$H/loops/verification-subagent/card.md`), then the pull request's own CI. A person reviews where the autonomy level leaves the merge to them |
 | release | As far as the autonomy level allows: `merge` merges, `deploy` also deploys. Below `deploy`, anything that touches production is H2 |
 | confirmation | Read what the agent can reach after the release (logs, errors, metrics) over the window `$H/super-loops/delivery.md` describes in "Confirmation". Where the agent cannot read the stage, the exit is "released; the confirmation is the person's": say what to look at, and do not ask |
 
@@ -205,7 +205,7 @@ product task builds no loop on the way: a missing loop is a harness task, propos
    `$P/event-model/README.md`), the checks, the questions in one batch, the approval. Then a test writer, a subagent
    with a fresh context, gets the contract (`em.py export`) and the delta (`specs.py delta`) and writes acceptance
    tests that must fail; record them red as the project's acceptance loop does
-   (`$H/loop-types/meta/acceptance-loop.md`). In a web app the tests take their states from fixtures and touch the
+   (`$H/loops/acceptance-loop/card.md`). In a web app the tests take their states from fixtures and touch the
    UI through Page Objects (`$P/fixture-modify/README.md`, `$P/pom-modify/README.md`).
 2. *Work.* A worker, a subagent unless the change is a few lines, gets the requirement file, the contract, the red
    tests and the loops of the map's `work` to run. It writes nothing under `superloops/` and does not change the
@@ -236,7 +236,7 @@ question).
 **Harness.** Follow `$H/README.md`, as the harness engineer it describes: discovery is "Choosing loops"; delivery is
 "Building a loop, or a set of loops", with "Agent steps" for an agent in a loop, and setting up specs
 (`$P/spec/README.md`, "Setup"); remediation and maintenance are "Maintaining loops: the harness level", where an
-escape is traced to the phase that should have caught it (`$H/loop-types/meta/steering-loop.md`) and logged with
+escape is traced to the phase that should have caught it (`$H/loops/steering-loop/card.md`) and logged with
 `loops.py trace escape <place> --item <id> --note "…"`. Run `loops.py check` before every commit that touches
 `superloops/`.
 

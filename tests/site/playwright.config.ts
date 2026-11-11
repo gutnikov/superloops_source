@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Acceptance tests of superloops.dev (spec SITE-1). The seams with site/ are in README.md.
+ * Acceptance tests of superloops.dev (specs SITE-1, SITE-2). The seams with site/ are in README.md.
  *
  *   npm test                                         the acceptance tests, against a local build of site/
  *   SITE_BASE_URL=https://superloops.dev npm test    the same tests, the pages opened on the deployed site
@@ -14,7 +14,7 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   forbidOnly: true,
-  // The page tests open every page of the site: 96 loop types, the super-loops, the home page.
+  // The page tests open every page of the site: 96 loops, the super-loops, the home page.
   timeout: 5 * 60_000,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {

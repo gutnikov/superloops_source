@@ -1,7 +1,7 @@
 ---
 id: <loop-id>                   # the folder name under superloops/loops/
 title: "<what the loop guards, in a few words>"
-type: <loop-type-id>            # from the plugin's loop-types/index.yaml, or custom
+type: <loop-type-id>            # from the plugin's loops/index.yaml, or custom
 status: proposed                # proposed | built | validated | active | retired
 trigger: []                     # edit | local | commit | ci | preview | staging | production | scheduled | task | sprint | continuous
 places: []                      # where it stands in the super-loops, as <super-loop>/<phase>: delivery/confirmation

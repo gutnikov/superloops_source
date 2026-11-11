@@ -153,7 +153,7 @@ Keep it current. When the project changes (a new CI job or stand, a tool connect
    whether the project can run it: its `stages` against the profile's, its `needs` against the profile's `tools`. A
    loop type that answers no pain is not a candidate.
 3. **Drop what the project cannot run**:
-   - a loop type whose `stages` in `loop-types/index.yaml` are all missing from the profile's `stages` (`edit`,
+   - a loop type whose `stages` in `loops/index.yaml` are all missing from the profile's `stages` (`edit`,
      `local`, `commit`, `task` and `continuous` are always there);
    - a loop type that needs a tool missing from `tools`;
    - a loop type that does not fit the `kind`.
@@ -161,7 +161,7 @@ Keep it current. When the project changes (a new CI job or stand, a tool connect
    run that check or read its output, the loop wires in the existing command; it does not replace it.
 5. **One loop per pain, at the earliest phase that can catch it**: the cheapest loop that catches the failure. That
    is the one closest to where the failure happens, the fastest, and deterministic. When two fit, take the one
-   earlier in "Where to start" (`loop-types/README.md`). One loop often stands at the same phase of several
+   earlier in "Where to start" (`loops/README.md`). One loop often stands at the same phase of several
    super-loops: a `verify` loop is the work of delivery, remediation and maintenance alike.
 6. **Propose**: usually 1–3 loops, never more than 5.
 

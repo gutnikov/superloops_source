@@ -4,7 +4,7 @@ import { collapse, withoutWhitespace, type Section, type CardText } from '../sup
 /**
  * Reading the fields of a card page (seam 7 of tests/site/README.md): each field is an element with
  * data-field="<field>", whose text is the value; the card's sections are inside data-field="sections", each one
- * an <h2> with its name followed by its text. Shared by the loop-type and the super-loop pages.
+ * an <h2> with its name followed by its text. Shared by the loop and the super-loop pages.
  */
 
 /** The texts of the elements a field locator finds, whitespace collapsed. Does not wait: the pages are static. */
@@ -42,7 +42,28 @@ export async function expectText(field: Locator, value: CardText, label: string)
   expect.soft(accepted, `${label}: shown once, as the card holds it`).toContainEqual(await readField(field));
 }
 
-/** A list value: shown once, the values in the card's order joined with ", "; not shown when the card has none. */
+/**
+ * A value as a loop page shows it (seam 7): shown once with exactly this text, or, when `shown` is undefined (a field
+ * the card does not have), not on the page at all.
+ */
+export async function expectShown(field: Locator, shown: string | undefined, label: string) {
+  if (shown === undefined) expect.soft(await field.count(), `${label}: the card does not have it, so it is not shown`).toBe(0);
+  else expect.soft(await readField(field), label).toEqual([shown]);
+}
+
+/**
+ * The text of a loop card's list on its page (seam 7): the values in the card's order joined with ", "; `none` for a
+ * list the card has but empty (`needs: []`); undefined for a list the card does not have.
+ */
+export function listText(values: string[] | undefined): string | undefined {
+  if (values === undefined) return undefined;
+  return values.length ? values.join(', ') : 'none';
+}
+
+/**
+ * A super-loop's list value: shown once, the values in the card's order joined with ", "; not shown when the card has
+ * none.
+ */
 export async function expectList(field: Locator, values: string[], label: string) {
   const shown = await readField(field);
   if (values.length) expect.soft(shown, label).toEqual([values.join(', ')]);
