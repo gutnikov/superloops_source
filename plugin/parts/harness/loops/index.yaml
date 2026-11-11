@@ -76,6 +76,17 @@ loops:
     speed: [minutes]
     needs: []
     related: [llm-judge-calibration, sample-audit, steering-loop, llm-evals, docs-audit]
+  - id: agent-ci-hardening
+    title: "Agents in CI run with their guards on"
+    path: agent-ci-hardening/card.md
+    summary: "A CI check finds every workflow job that runs an agent and fails when one lacks the egress firewall, the reviewed permission mode or a model that supports it; exemptions carry a reason."
+    sensor: computational
+    ilities: [security]
+    places: [harness:delivery/gate, harness:maintenance/gate]
+    stages: [ci]
+    speed: [seconds]
+    needs: [ci]
+    related: [risky-action-gates, approval-reviewer-agent, isolated-environment, garbage-collection, repo-health-agent, triage]
   - id: agent-code-review
     title: "Code review by another agent"
     path: agent-code-review/card.md
@@ -205,7 +216,7 @@ loops:
     speed: [minutes]
     needs: []
     agent: [reviewer]
-    related: [triage, approved-fixtures, dependency-updates, garbage-collection]
+    related: [triage, approved-fixtures, dependency-updates, garbage-collection, migration-proof-pack]
   - id: benchmarks-vs-baseline
     title: "Benchmarks against a baseline"
     path: benchmarks-vs-baseline/card.md
@@ -606,7 +617,7 @@ loops:
     stages: [local, scheduled]
     speed: [minutes, hours]
     needs: []
-    related: [llm-evals, correction-becomes-rule, docs-audit, agent-calibration]
+    related: [llm-evals, correction-becomes-rule, docs-audit, agent-calibration, skill-trigger-eval]
   - id: health-checks-smoke
     title: "Health checks and smoke tests after deploy"
     path: health-checks-smoke/card.md
@@ -803,6 +814,17 @@ loops:
     needs: [metrics]
     agent: [investigator]
     related: [slo-degradation, perf-budgets-telemetry, load-testing, release-confirmation]
+  - id: migration-proof-pack
+    title: "A proof pack for a rewrite"
+    path: migration-proof-pack/card.md
+    summary: "After a rewrite or an upgrade, a script re-runs the evidence and computes one verdict per module from six checks: tests ran, same outputs, fresh inputs, a canary, rules traced, legacy untouched."
+    sensor: computational
+    ilities: [correctness, compatibility]
+    places: [maintenance/oracle, maintenance/gate]
+    stages: [local, ci]
+    speed: [minutes, hours]
+    needs: []
+    related: [behaviour-invariance, approved-fixtures, reproduction-gate, agent-audit-trail, human-diff-review]
   - id: mutation-testing
     title: "Mutation testing"
     path: mutation-testing/card.md
@@ -1020,7 +1042,7 @@ loops:
     stages: [task, ci]
     speed: [seconds, minutes]
     needs: []
-    related: [isolated-environment, escalation-on-uncertainty, db-migration-lint, approval-reviewer-agent]
+    related: [isolated-environment, escalation-on-uncertainty, db-migration-lint, approval-reviewer-agent, agent-ci-hardening]
     when: [during]
     initiator: rule
     sync: blocking
@@ -1091,11 +1113,11 @@ loops:
     sensor: inferential
     ilities: [security]
     places: [remediation/entry]
-    stages: [scheduled]
+    stages: [scheduled, commit, task]
     speed: [minutes]
     needs: []
     agent: [reviewer]
-    related: [sast, agent-code-review, compliance-mutants, agent-calibration]
+    related: [sast, agent-code-review, compliance-mutants, agent-calibration, verification-subagent]
   - id: simplification-pass
     title: "Simplification pass after the work"
     path: simplification-pass/card.md
@@ -1107,6 +1129,18 @@ loops:
     speed: [minutes]
     needs: []
     related: [agent-code-review, behaviour-invariance, garbage-collection]
+  - id: skill-trigger-eval
+    title: "Does the skill trigger"
+    path: skill-trigger-eval/card.md
+    summary: "Realistic queries that should and should not use a skill run several times against its description; a loop rewrites it on a training split and keeps the best on held-out queries."
+    sensor: computational
+    ilities: [alignment, correctness]
+    places: [harness:delivery/gate, harness:maintenance/gate]
+    stages: [local]
+    speed: [minutes]
+    needs: []
+    agent: [worker]
+    related: [guide-lift-eval, llm-evals, agent-calibration, document-review]
   - id: slo-degradation
     title: "SLO degradation"
     path: slo-degradation/card.md
@@ -1165,7 +1199,7 @@ loops:
     speed: [seconds, minutes]
     needs: []
     agent: [judge]
-    related: [acceptance-loop, verification-subagent, pre-commit-pre-push, autoformat-hook, stall-detector]
+    related: [acceptance-loop, verification-subagent, pre-commit-pre-push, autoformat-hook, stall-detector, security-review-agent]
   - id: structured-logs
     title: "Structured logs and log queries"
     path: structured-logs/card.md
@@ -1364,9 +1398,9 @@ by_place:
   remediation/release: [canary-feature-flags, changelog-audit, health-checks-smoke, risky-action-gates]
   remediation/confirmation: [canary-feature-flags, error-tracking, metrics-promql, release-confirmation, slo-degradation, structured-logs]
   maintenance/entry: [compliance-mutants, coupling-analysis, dependency-scanning-sbom, dependency-updates, garbage-collection, knowledge-base-doc-lint, triage]
-  maintenance/oracle: [approved-fixtures, behaviour-invariance, benchmarks-vs-baseline, code-coverage, coupling-analysis, mutation-testing, run-tests-first]
+  maintenance/oracle: [approved-fixtures, behaviour-invariance, benchmarks-vs-baseline, code-coverage, coupling-analysis, migration-proof-pack, mutation-testing, run-tests-first]
   maintenance/work: [accessibility-checks, agent-code-review, agentic-manual-testing, approval-reviewer-agent, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, build, bundle-size-budget, ci-clean-infra, compliance-mutants, config-validation, dependency-scanning-sbom, dependency-updates, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, garbage-collection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, profiling, prompt-snapshots, property-based-tests, risky-action-gates, sast, scripted-model-tests, secret-scanning, simplification-pass, stall-detector, stop-hook, taste-invariants, terminal-ui-tmux, test-admission, translation-sync, type-check, visual-screenshot-check]
-  maintenance/gate: [agent-audit-trail, api-breaking-changes, behaviour-invariance, contract-tests, db-migration-lint, human-diff-review, prompt-snapshots, verification-subagent, visual-stability-oracle]
+  maintenance/gate: [agent-audit-trail, api-breaking-changes, behaviour-invariance, contract-tests, db-migration-lint, human-diff-review, migration-proof-pack, prompt-snapshots, verification-subagent, visual-stability-oracle]
   maintenance/release: [canary-feature-flags, changelog-audit, health-checks-smoke, load-testing, risky-action-gates]
   maintenance/confirmation: [canary-feature-flags, error-tracking, metrics-promql, perf-budgets-telemetry, release-confirmation, slo-degradation, structured-logs]
   discovery/entry: [production-users, triage]
@@ -1376,11 +1410,11 @@ by_place:
   discovery/confirmation: [choose-from-options, discovery-decision, result-demo]
   harness:delivery/oracle: [llm-judge-calibration]
   harness:delivery/work: [document-review]
-  harness:delivery/gate: [agent-calibration, check-incubation, guide-lift-eval]
+  harness:delivery/gate: [agent-calibration, agent-ci-hardening, check-incubation, guide-lift-eval, skill-trigger-eval]
   harness:delivery/confirmation: [agent-calibration, sample-audit]
   harness:remediation/entry: [check-incubation, correction-becomes-rule, repo-health-agent, sample-audit, tool-use-telemetry]
   harness:remediation/oracle: [agent-calibration, steering-loop]
   harness:remediation/work: [steering-loop]
   harness:maintenance/entry: [repo-health-agent, tool-use-telemetry]
   harness:maintenance/work: [repo-health-agent]
-  harness:maintenance/gate: [agent-calibration, guide-lift-eval]
+  harness:maintenance/gate: [agent-calibration, agent-ci-hardening, guide-lift-eval, skill-trigger-eval]

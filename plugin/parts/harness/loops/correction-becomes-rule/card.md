@@ -49,6 +49,22 @@ links:
   - title: "opencode glossary: a rule keeps its source"
     url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.opencode/glossary/README.md#L58-L63"
     author: "opencode (anomalyco)"
+  - title: "hookify: from the conversation to a hook rule"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/hookify/commands/hookify.md#L17-L80"
+    author: "Anthropic"
+    note: "an analyzer finds corrections; the person picks up to 4 and chooses warn or block."
+  - title: "hookify: rules are active immediately"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/hookify/commands/hookify.md#L154"
+    author: "Anthropic"
+  - title: "hookify rule_engine.py: the operators"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/hookify/core/rule_engine.py#L166-L180"
+    author: "Anthropic"
+  - title: "hookify: a hook error lets the call through"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/hookify/hooks/pretooluse.py#L53-L62"
+    author: "Anthropic"
+  - title: "hookify example: require-tests-stop"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/hookify/examples/require-tests-stop.local.md#L1-L10"
+    author: "Anthropic"
 ---
 
 ## Why
@@ -108,6 +124,13 @@ one. The measure is that each kind of correction stops coming back.
   of one kind are seen as one kind. Reuse a kind already in `superloops/trace.jsonl` before writing a new one.
 - **Code before text.** CLAUDE.md is advice, not a guarantee. Prefer a [custom lint](../taste-invariants/card.md) or
   a test whose message says how to fix the violation; write a line in CLAUDE.md only for what no check can see.
+- **A correction about an action can become a hook.** Anthropic's hookify plugin has an agent read the recent
+  messages for "don't do X", reversions and repeated problems, and proposes a pattern for each; the person picks up to
+  4 and chooses for each whether it warns or blocks. Each becomes a rule file with an event, conditions and the
+  message, "active immediately". Give every such rule a must-fire and a must-pass case before it counts: hookify's
+  hooks let the call through on any error of their own, and its shipped example that blocks stopping without a test
+  run matches `npm test|pytest|cargo test` with `not_contains`, a literal substring test, so once enabled it blocks
+  every stop unless that exact string appears.
 - **Logging calls no one.** A person is asked only when two rules would both fix the correction and differ in a
   trade-off only they can weigh (H4), logged with `loops.py hitl H4 …`.
 - **Validation** is `manual`: the person's correction is the signal. What a script checks: the loop the steering

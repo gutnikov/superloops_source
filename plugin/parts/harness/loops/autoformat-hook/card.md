@@ -27,6 +27,12 @@ links:
   - title: "opencode edit.ts: the diff returned to the agent is taken after formatting"
     url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/tool/plugin/edit.ts#L347-L353"
     author: "opencode (anomalyco)"
+  - title: "Claude Code changelog: continueOnBlock for PostToolUse (2.1.139)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L6608"
+    author: "Anthropic"
+  - title: "Claude Code changelog: a format-on-save hook made the next edit fail (fixed in 2.1.90)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L7554"
+    author: "Anthropic"
 ---
 
 ## Why
@@ -66,6 +72,13 @@ fail on it. When the formatter cannot parse the file, the hook reports the error
 - **A failure reaches the agent.** Put the command in a script that exits 2 with the formatter's error on stderr
   when the formatter fails: for a PostToolUse hook, Claude Code shows that stderr to Claude (the tool has already
   run). Any other non-zero exit is only a non-blocking error notice.
+- **Keep the turn going on a block.** With `continueOnBlock: true` on a PostToolUse hook (Claude Code 2.1.139),
+  the hook's rejection reason goes back to Claude and the turn continues, instead of ending on the hook's error.
+  Set it on a formatter hook, so a file the formatter refuses is fixed in the same turn.
+- **Format in the hook, not in the editor.** A format-on-save in the person's editor, or a hook that rewrites the file
+  between two edits, changes the file under the agent: before Claude Code 2.1.90 the next `Edit` failed with "File
+  content has changed". While an agent edits, the hook is the only formatter; turn off format-on-save for the files
+  it touches.
 - **Files that Bash rewrites.** The `Edit|Write` matcher does not see a file changed by a shell command. Where that
   matters (a code generator, `sed`), add a `FileChanged` hook, which Claude Code fires however the file changes.
 - **The `run`** is the formatter's check mode over the directory, such as `npx prettier --check <dir>`: it lists the

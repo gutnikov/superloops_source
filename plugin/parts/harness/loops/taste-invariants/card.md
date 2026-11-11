@@ -50,6 +50,10 @@ links:
   - title: "check-test.yml: the rules' tests run before the rules"
     url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.github/workflows/check-test.yml#L108-L114"
     author: "opencode (anomalyco)"
+  - title: "Claude Code: bash_command_validator_example.py (a PreToolUse hook)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/examples/hooks/bash_command_validator_example.py#L35-L79"
+    author: "Anthropic"
+    note: "regex rules with messages; exit 2 blocks the call and shows the message to Claude, exit 1 only to the user."
 ---
 
 ## Why
@@ -104,6 +108,11 @@ each convention into a check, and its error tells the agent how to fix the viola
   near-misses that must not fire and `invalid:` code that must, and a snapshot of its autofix; CI runs the rules'
   tests first, then the rules over the packages. A rule that fires on a near-miss fails its own test, not every
   pull request.
+- **A convention about the agent's own commands sits at PreToolUse.** A rule on how the agent works, not on the
+  code it leaves, is checked before the call runs. Anthropic's example hook keeps a list of regex rules, each with
+  its message: `grep` without a pipe gets "Use 'rg' (ripgrep) instead of 'grep' for better performance and
+  features", and `find <dir> -name` gets the `rg --files` form. On a match it prints the messages to stderr and exits
+  2, which blocks the call and shows them to Claude; exit 1 would show them to the person only.
 - **The `run`** runs all custom lints over the directory, prints `file:line: message` per violation, and exits
   non-zero on any.
 - **Cases.** One must-fire case per convention: a file that logs `"charge failed for " + orderId`; a schema named

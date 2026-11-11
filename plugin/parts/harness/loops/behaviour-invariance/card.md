@@ -9,7 +9,7 @@ stages: [local, ci]
 speed: [minutes]
 needs: []
 agent: [reviewer]
-related: [triage, approved-fixtures, dependency-updates, garbage-collection]
+related: [triage, approved-fixtures, dependency-updates, garbage-collection, migration-proof-pack]
 links:
   - title: "Refactoring"
     author: "Martin Fowler"
@@ -62,6 +62,10 @@ changed, whether the tests pass, and whether the measure improved. A changed exp
 - At OpenAI, the pull requests of [garbage collection](../garbage-collection/card.md) were merged automatically. Where
   maintenance merges this way, no person checks its behaviour before users get it.
 - An updated snapshot or golden file is a changed expected value, even when the tool updated it by itself.
+- A rewrite into another language or a major version upgrade changes the code too much for "the tests pass with
+  their expected values unchanged" to be the whole proof. There the gate runs the old and the new code on the same
+  inputs and a script computes the verdict from result files, not from the agent's report:
+  [migration-proof-pack](../migration-proof-pack/card.md).
 
 ## Agent step
 

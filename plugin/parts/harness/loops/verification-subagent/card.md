@@ -23,6 +23,23 @@ links:
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.gemini/commands/review-and-fix.toml#L74-L90"
     author: "gemini-cli (Google)"
     note: "the manager verifies each worker's ticket by running the checks, then reverts or commits."
+  - title: "math-olympiad: clean the solution, then verify adversarially"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-olympiad/skills/math-olympiad/SKILL.md#L142-L208"
+    author: "Anthropic"
+    note: "fresh verifiers with no tools; 4 HOLDS confirm, 2 HOLE FOUND refute; stop once the outcome is decided."
+  - title: "math-olympiad: the interpretation check"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-olympiad/skills/math-olympiad/SKILL.md#L71-L81"
+    author: "Anthropic"
+  - title: "math-olympiad: revise, then vote again"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-olympiad/skills/math-olympiad/SKILL.md#L238-L253"
+    author: "Anthropic"
+  - title: "claude-security: the patch verifier"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/claude-security/agents/patch-verifier.md#L12-L50"
+    author: "Anthropic"
+    note: "TARGETED, NO_NEW_VULNERABILITY, BEHAVIOUR_UNCHANGED, each CONFIDENT, NOT_CONFIDENT or UNSURE."
+  - title: "claude-security: judging a patch, and one revision round"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/claude-security/skills/claude-security/jobs/suggest-patches.md#L82-L88"
+    author: "Anthropic"
 ---
 
 ## Why
@@ -73,6 +90,21 @@ One round takes minutes. The verification subagent can be the fourth role of the
   manager's rule is "IGNORE worker logs. DIRECTLY verify" with `git status`, `git diff`, build, tests, lint and type
   check. A ticket that fails is reverted with `git reset --hard`, and one that passes is committed, so every commit
   on the branch passed the checks on its own.
+
+- **A vote, when one refuter is not enough.** Anthropic's math-olympiad skill strips the solver's reasoning and false
+  starts before anyone checks the result: "The thinking trace biases the verifier toward agreement". Then up to 5
+  fresh verifiers, with no tools and blind to each other's verdicts, attack the result with named checks. 4 that find
+  it holds confirm it; 2 that find a hole refute it, "one flaky verifier shouldn't kill a correct proof; but two
+  independent dissents is a real signal"; no more verifiers start once the outcome is decided. A reviser gets only the
+  result and the hole, marks what it cannot close as `[GAP: …]`, and after 3 failed revisions the answer is "no
+  confident solution". Before any of it, list 2 or 3 readings of the task and say which one is being solved.
+- **Named claims for a fix.** The plugin's patch verifier starts at REJECT, derives the diff itself, runs the
+  project's tests without installing anything, and states three claims, each `CONFIDENT`, `NOT_CONFIDENT` or `UNSURE`
+  with one line of evidence: every hunk traces to the finding (`TARGETED`), the change opens no new attack path
+  (`NO_NEW_VULNERABILITY`), and the code does what it did for every legitimate caller (`BEHAVIOUR_UNCHANGED`; "Any
+  change to which inputs the code accepts is a behaviour change"). A separate adversary looks for an attack path the
+  change opens or leaves. An objection gets one revision round from a clean workspace and fresh agents; a second
+  objection or any `UNSURE` declines the fix. A fix that passes becomes a patch file a person applies.
 
 ## Agent step
 

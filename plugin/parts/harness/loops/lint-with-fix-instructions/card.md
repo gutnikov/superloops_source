@@ -55,6 +55,16 @@ links:
   - title: "anti-slop: require-safety-comment-for-type-assertion"
     url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/script/oxlint/anti-slop/rules/require-safety-comment-for-type-assertion.ts#L81-L92"
     author: "opencode (anomalyco)"
+  - title: "security-guidance patterns.py: a rule and its reminder"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/security-guidance/hooks/patterns.py#L104-L110"
+    author: "Anthropic"
+  - title: "security-guidance: each reminder shown once"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/security-guidance/hooks/security_reminder_hook.py#L564-L575"
+    author: "Anthropic"
+  - title: "security-guidance: the sweep at Stop, fixed and unresolved per rule"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/security-guidance/hooks/security_reminder_hook.py#L638-L711"
+    author: "Anthropic"
+    note: "every flagged file is read again at Stop; a deleted file counts as fixed."
 ---
 
 ## Why
@@ -99,6 +109,12 @@ violation with a comment that gives the reason.
   type assertion except `as const` that has no `SAFETY:` comment before it: "State the checked invariant immediately
   before the assertion or its containing statement." The comment must say what was checked, so the reviewer can
   check it too; a disable comment only says the rule was in the way.
+- **Measure whether a warning that does not block works.** A reminder that never blocks is cheap, and may change
+  nothing. Anthropic's security-guidance plugin checks new text after each edit against its patterns and adds a
+  reminder with the fix ("Use JSON.parse() for data, ast.literal_eval() for Python literals… If this is safe or is
+  explicitly needed, briefly document that in a comment"), shown once per file and rule in a session. Each one is
+  recorded as pending; at Stop every flagged file is read again and checked, and each rule gets a count of warnings
+  fixed and warnings left. A rule whose warnings stay unresolved is the one to make blocking, or to rewrite.
 - **The `run`**: the linter with the formatter, `file:line: <rule>: <message>. How to fix: <instruction>`, and a
   non-zero exit on any error.
 - **Cases.** Must fire: a function with six parameters against `max-params: 4`; a function over the complexity

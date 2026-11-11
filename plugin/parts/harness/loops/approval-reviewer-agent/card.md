@@ -45,6 +45,30 @@ links:
     url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/ext/guardian-reviewer/src/feedback.rs#L56-L83"
     author: "Codex (OpenAI)"
     note: "denials, invalid and missing decisions, failures and timeouts; not allows."
+  - title: "Claude Code changelog: auto mode denials name the rule and ask for a safer method (2.1.268)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L3731"
+    author: "Anthropic"
+  - title: "Claude Code changelog: a denial covering the outcome, added (2.1.281)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L2910"
+    author: "Anthropic"
+  - title: "Claude Code changelog: the outcome-wide denial reverted (2.1.293)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L1737"
+    author: "Anthropic"
+  - title: "Claude Code changelog: Claude may retry and auto mode checks again (2.1.314)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L586"
+    author: "Anthropic"
+  - title: "Claude Code changelog: no answer ten times in a row stops the turn (2.1.280)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L2987-L2988"
+    author: "Anthropic"
+    note: "a check that declines to review is denied once, \"noting that retrying won't help\"."
+  - title: "Claude Code changelog: the safety_event OpenTelemetry event (2.1.307)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L889"
+    author: "Anthropic"
+    note: "also #L1133 (2.1.301): classifier_verdict and permission_mode on tool_decision events."
+  - title: "Claude Code: HIPAA settings example, auto mode"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/examples/settings/README-hipaa.md#L100-L111"
+    author: "Anthropic"
+    note: "an allow entry overrides soft_deny; an injected instruction the classifier allows runs unapproved."
   - title: "Hooks reference: PermissionRequest"
     url: "https://code.claude.com/docs/en/hooks"
     note: "runs when a permission dialog would be shown, and can allow or deny in the person's place."
@@ -83,7 +107,9 @@ and the permissions the agent has.
 A review that did not finish is not a denial. On a timeout, the agent may retry once or ask the person. On a
 malformed answer or a crash, the action does not run, and the agent is told "This is a review failure, not a
 determination that the action is unsafe. Do not bypass the approval check". When the evidence does not fit the
-reviewer's budget, the request goes to the person.
+reviewer's budget, the request goes to the person. A reviewer that keeps giving no answer is an outage, not a run
+of denials: Claude Code's auto mode backs off its retries and stops the turn "after ten in a row" (2.1.280), and an
+action the check declines to review is denied once, "noting that retrying won't help".
 
 ## Set up
 
@@ -100,6 +126,12 @@ reviewer's budget, the request goes to the person.
 - **A person's override covers one action.** When the person approves an action the reviewer denied, the agent is told
   that exact action is approved, with its arguments. Codex: "Do not assume this also authorizes similar operations
   with different payloads."
+- **After a denial, a safer method, not the same effect.** The denial names the rule that blocked the action. The
+  agent may try a materially safer method, which goes to the reviewer again, and finishes the work the denial does
+  not touch before it asks the person; that is Claude Code's auto mode message since 2.1.268, and since 2.1.314 it
+  says that Claude may retry and the check runs again. It may not reach the same effect another way: keep Codex's
+  rule. Claude Code tried a message that made a denial cover the outcome, not only the exact command (2.1.281), and
+  reverted it (2.1.293); the counter below, not the wording, is what stops an agent that probes.
 - **Too many denials stop the turn.** 3 denials in a row, or 10 of the last 50 reviews, interrupt the turn: an agent
   that keeps asking for variants of a refused action is probing the gate, and a person should see it. Codex counts
   this per turn and fires once.
@@ -121,7 +153,13 @@ reviewer's budget, the request goes to the person.
 - Codex calls the reviewer Guardian. The person answers by default; the reviewer answers only when it is chosen
   (`approvals_reviewer = auto_review`). Its budget is 90 seconds and 3 attempts per review.
 - Codex keeps denials, invalid answers, timeouts and failures for feedback, but not allows. Sample the allows as
-  well: they are where a miss hides.
+  well: they are where a miss hides. Claude Code emits each decision as OpenTelemetry: a `claude_code.safety_event`
+  for every call a rule, auto mode, a check, a hook or the sandbox stopped, prompted or sent back (2.1.307), and
+  `classifier_verdict` on `tool_decision` events (2.1.301), which is the sample to draw from.
+- The reviewer is not the boundary. Anthropic's HIPAA settings example: "an injected instruction that the classifier
+  allows runs without anyone approving it", so keep the sandbox under a reviewer. And a developer's `allow` entry can
+  override a `soft_deny` entry, so what must always be blocked goes in `permissions.deny`, where no reviewer and no
+  allow rule reaches.
 - The reviewer's answer depends on the transcript, so the same command can be allowed in one task and denied in
   another. That is the point of the loop: a rule list cannot do it, and a person is too slow to do it for every
   call.

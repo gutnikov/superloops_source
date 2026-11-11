@@ -42,6 +42,10 @@ The catalog's loops of this level:
   passes on a schedule, and a blocking check that flakes is its remediation's entry.
 - [repo-health-agent](../loops/repo-health-agent/card.md) is a detector over how the project runs: the flow metrics
   of the repository, one change per run, confirmed by the same metric weeks later.
+- [skill-trigger-eval](../loops/skill-trigger-eval/card.md) is the gate of a guide's description: realistic queries
+  that should and should not load it, run several times, with a held-out set to keep a rewrite from overfitting.
+- [agent-ci-hardening](../loops/agent-ci-hardening/card.md) is the gate of the agents a project runs unattended in
+  CI: every such job keeps its egress firewall and its reviewed permission mode.
 
 ## Its signal
 

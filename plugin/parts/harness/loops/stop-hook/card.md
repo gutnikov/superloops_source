@@ -9,7 +9,7 @@ stages: [local]
 speed: [seconds, minutes]
 needs: []
 agent: [judge]
-related: [acceptance-loop, verification-subagent, pre-commit-pre-push, autoformat-hook, stall-detector]
+related: [acceptance-loop, verification-subagent, pre-commit-pre-push, autoformat-hook, stall-detector, security-review-agent]
 links:
   - title: "Hooks reference: Stop"
     url: "https://code.claude.com/docs/en/hooks"
@@ -55,6 +55,31 @@ links:
   - title: "opencode /goal: the objective added back after compaction"
     url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/plugin/goal.ts#L218-L231"
     author: "opencode (anomalyco)"
+  - title: "Ralph loop (a plugin): the stop hook"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/ralph-loop/hooks/stop-hook.sh#L128-L188"
+    author: "Anthropic"
+    note: "the same prompt fed back at every Stop; a completion promise matched as a literal string; an iteration cap."
+  - title: "Ralph loop: escape hatches"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/ralph-loop/README.md#L119-L134"
+    author: "Anthropic"
+    note: "\"Always rely on `--max-iterations` as your primary safety mechanism\"."
+  - title: "Claude Code changelog: prompt-based stop hooks (2.0.30)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L9384"
+    author: "Anthropic"
+  - title: "Claude Code changelog: the /goal command (2.1.139)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L6603"
+    author: "Anthropic"
+  - title: "Claude Code changelog: the cap of 8 consecutive blocks (2.1.143)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L6467-L6469"
+    author: "Anthropic"
+    note: "added for stop hooks that block repeatedly \"looping forever\"; /goal no longer fires while background work runs."
+  - title: "Claude Code changelog: background_tasks and session_crons in the Stop input (2.1.145)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L6389"
+    author: "Anthropic"
+  - title: "Claude Code changelog: /goal check-ins on background work (2.1.234, 2.1.239, 2.1.246)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L4710"
+    author: "Anthropic"
+    note: "after 30 minutes of waiting, then backing off to 1 h and 2 h; at most three per goal until the next message (#L4548, #L4419)."
 ---
 
 ## Why
@@ -102,6 +127,11 @@ passes.
 - **Write a `/goal` condition as evidence.** The evaluator sees only the conversation, so name what the agent must
   run and show: "`./verify` ran in this session and printed `OK`", not "the feature works". Where the check can be
   scripted, use a command hook instead: the agent's summary of a run can mislead a model, an exit code cannot.
+- **Tell waiting from not done.** Since Claude Code 2.1.145 the Stop input carries `background_tasks` and
+  `session_crons`. A command hook that sees a background build or a scheduled check still running lets the turn end
+  as waiting, and does not count the round toward "stuck"; the `/goal` evaluator likewise does not fire while
+  background shells or subagents run (2.1.143). On a long wait, `/goal` checks in after 30 minutes, backs off to an
+  hour and then every two, and starts at most three check-ins per goal until the person writes again.
 - **Out of the agent's reach.** The agent can edit `.claude/settings.json` and the check's script. A PreToolUse
   hook denies its writes to both, and CI runs the same check: a turn that ended green counts only when CI agrees.
 - **Cases.** The check the hook runs has its own cases. Give the hook script three more, each a workspace with a
@@ -115,6 +145,17 @@ passes.
 
 - A passing check shows only what the script tests: a hook over the unit tests lets the agent stop on a feature no
   test covers. The acceptance gate is the stronger check to put here.
+- Prompt-based Stop hooks arrived in Claude Code 2.0.30, `/goal` in 2.1.139, and the cap of 8 consecutive blocks in
+  2.1.143, as a fix for stop hooks that block repeatedly "looping forever".
+- **The same prompt, again and again.** Anthropic's Ralph loop plugin blocks every Stop and feeds the agent the same
+  prompt from a state file; the work carries over only in the files and git. It ends when the agent writes
+  `<promise>…</promise>` with text that matches the configured promise exactly, after whitespace is normalised, or at
+  `--max-iterations`. Each round reminds the agent: "ONLY when statement is TRUE - do not lie to exit!". The promise
+  is the agent's own claim, so the plugin's README says "Always rely on `--max-iterations` as your primary safety
+  mechanism", and suggests the prompt name what to do when stuck: after 15 iterations, document what blocks
+  progress. Use it for open-ended work, with a command hook beside it for what a script can check.
+- A review of each turn's diff can stand at Stop as well, as a security reviewer that wakes the agent with its
+  findings: [security-review-agent](../security-review-agent/card.md).
 - **A narrower question than "done?".** An agent can stop right after announcing its next step. gemini-cli's
   next-speaker check asks a small model only who speaks next, by rules in order: the model continues when its last
   response "explicitly states an immediate next action *you* intend to take (e.g., "Next, I will...")" or was cut

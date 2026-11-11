@@ -12,7 +12,7 @@ when: [during]
 initiator: rule
 sync: blocking
 assesses: [action-risk]
-related: [isolated-environment, escalation-on-uncertainty, db-migration-lint, approval-reviewer-agent]
+related: [isolated-environment, escalation-on-uncertainty, db-migration-lint, approval-reviewer-agent, agent-ci-hardening]
 links:
   - title: "Configure permissions"
     url: "https://code.claude.com/docs/en/permissions"
@@ -84,6 +84,34 @@ links:
     url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/src/exec_policy.rs#L729-L744"
     author: "Codex (OpenAI)"
     note: "the user's rules are dropped for the managed policy or an empty one, with a warning."
+  - title: "Claude Code changelog: PreToolUse \"defer\" (2.1.89)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L7571"
+    author: "Anthropic"
+    note: "a headless session pauses at the call and resumes with -p --resume, and the hook decides again."
+  - title: "Claude Code changelog: --permission-prompts none (2.1.259)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L4038"
+    author: "Anthropic"
+  - title: "Claude Code changelog: a hook that fails blocks the call (2.1.288, 2.1.299)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L2138"
+    author: "Anthropic"
+    note: "also #L1407: \"a guard that fails now blocks the call\"; #L1247 (2.1.300): input the tool rejects denies the call."
+  - title: "Claude Code changelog: updatedInput re-checked against deny rules (2.1.110)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L7233"
+    author: "Anthropic"
+  - title: "Claude Code mods: privacy"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/mods/privacy/README.md#L1-L27"
+    author: "Anthropic"
+    note: "a fixed refusal, no prompt; \"a courtesy, not a boundary\"."
+  - title: "Claude Code mods: the refusal text"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/mods/privacy/hooks/outbound/refusal.ts#L5-L9"
+    author: "Anthropic"
+  - title: "Claude Code mods: testing a mod as it ships"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/mods/README.md#L23-L33"
+    author: "Anthropic"
+  - title: "Telegram channel plugin: permission requests answered from a phone"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/external_plugins/telegram/server.ts#L423-L452"
+    author: "Anthropic"
+    note: "sent to allowlisted DMs only; a reply must name the request's 5-letter id (#L89-L93); answered once (#L735-L791)."
 ---
 
 ## Why
@@ -157,7 +185,28 @@ comment to Claude as the reason, and Claude continues working; "No" with no comm
   environment's reviewers for a release. At every autonomy level, anything that cannot be undone is a call to a person.
 - **Nobody there.** In a run nobody watches, the gate refuses: with `--permission-mode dontAsk`, Claude Code denies a
   call that matches an ask rule instead of prompting. The agent reports the action as waiting for a person. Auto mode
-  alone is no gate (see Notes).
+  alone is no gate (see Notes). Two more ways keep a headless run safe: `--permission-prompts none` (Claude Code
+  2.1.259) denies anything that would prompt while the permission mode keeps deciding the rest, and a PreToolUse
+  hook that returns `defer` (2.1.89) pauses the session at the call, so a person decides later and the run resumes
+  with `-p --resume`, the hook deciding again. Prefer `defer` for a gated action in a job a person checks daily: the
+  work waits instead of being refused.
+- **A guard that fails, blocks.** A hook that crashes, cannot match, or rewrites the input into something invalid
+  must deny the call, not let it through. Claude Code blocks the call when matching a hook fails (2.1.288) and when a
+  guard fails to start ("a guard that fails now blocks the call", 2.1.299), denies the call when the tool rejects a
+  hook's `updatedInput` (2.1.300), and re-checks a PermissionRequest hook's `updatedInput` against the deny rules
+  (2.1.110). Write project hooks the same way: on any error, exit 2.
+- **A fixed refusal for what must never leave.** Some sends are refused with no prompt at all, with a message that
+  says how to retry. Claude Code's built-in privacy mod refuses a shell call that holds the signed-in account's email
+  address and names a User-Agent: "If nobody asked to send the address, run it again without it, with a generic
+  client name. Otherwise run it again without that setting, or run the two in separate calls." A saved allow rule
+  and auto mode do not clear it. It matches two words with no parser, so it refuses some harmless calls and misses
+  others; Anthropic calls it "a courtesy, not a boundary". Use such a refusal for a known leak, and keep the
+  egress limits of the [isolated environment](../isolated-environment/card.md) as the boundary.
+- **An approval from a phone is bound to its request.** Anthropic's Telegram, Discord and iMessage channel plugins
+  send a permission prompt, with Allow and Deny buttons, only to the allowlisted direct chats, never to a group. A
+  typed answer must name the request: `yes` or `no` and its 5-letter id ("no bare yes/no (conversational)"), and
+  the buttons are replaced by the outcome, so one request cannot be answered twice. A channel that cannot
+  authenticate who replies does not relay prompts at all.
 - **The reason is H2**, and the call is logged with what was checked:
   `loops.py hitl H2 --loop risky-action-gates --checked "dry run, lint" --question "Migrate prod?" --answer "yes"`.
   An action the person approves every time is not risky enough for a gate: take it off the list, with their approval.
@@ -165,7 +214,9 @@ comment to Claude as the reason, and Claude continues working; "No" with no comm
   prints one line per command, `<command>: gated`, `not gated` or `allowed` (an allow rule matches it and no ask rule
   does). The exit is non-zero for anything but `gated`.
 - **Cases.** Must fire: the settings with the ask rule for migrations removed; the settings with `Bash(kubectl *)`
-  under `allow` and no ask rule for `kubectl apply`. Must pass: the project's own settings.
+  under `allow` and no ask rule for `kubectl apply`. Must pass: the project's own settings. A guard hook has cases
+  of its own, run against the hook as it ships: Claude Code's `claude plugin test` loads a mod with nothing beneath
+  its hooks, so "a call they leave unanswered throws, naming its event".
 - **Out of the agent's reach.** `run` runs in CI. The agent's own writes to `.claude/` are protected-path writes:
   Claude Code prompts for them in Manual mode and denies them in `dontAsk`.
 

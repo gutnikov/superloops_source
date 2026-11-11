@@ -37,6 +37,18 @@ links:
   - title: "opencode compaction.ts: the check that the template was filled"
     url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/session/compaction.ts#L486-L521"
     author: "opencode (anomalyco)"
+  - title: "math-proof worker: write as you go, and the end line last"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-proof/agents/math-proof-worker.md#L9-L15"
+    author: "Anthropic"
+  - title: "math-proof ledger.py: a script classifies each answer by its last line"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-proof/skills/siege/scripts/ledger.py#L416-L430"
+    author: "Anthropic"
+  - title: "math-proof siege: resume from state.md, never redo a step whose outputs exist"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-proof/skills/siege/SKILL.md#L87-L101"
+    author: "Anthropic"
+  - title: "math-proof siege: state.md rewritten after every step"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-proof/skills/siege/SKILL.md#L304-L308"
+    author: "Anthropic"
 ---
 
 ## Why
@@ -77,6 +89,13 @@ feature passes when its acceptance tests are green.
   id, and the agent never writes it.
 - **A failed check or an unfinished session** leaves the feature at `false`. The progress entry says where the work
   stopped, and the session commits on its branch or reverts with git, so the next one starts from a working state.
+- **Write as you go, and mark the end.** A worker that may be cut off writes its plan and the step it is attempting
+  "early in EVERY message", appends each result as soon as it has it, and writes an agreed end line last, only when
+  it is finished. Anthropic's math-proof plugin ends each answer file with `=== END OF ANSWER <id> ===`, and a script,
+  not the orchestrator, reads the last line and sorts the file as answered, partial or missing. A partial file is
+  handed to one rerun, whose worker is told to "treat none of it as established". The orchestrator rewrites its own
+  state file after every step, "your only memory if this conversation is ever compacted", and the same command
+  resumes from the recorded phase, "never redoing a step whose output files exist".
 - **`run`** compares `feature_list.json` with the main branch and the latest e2e report. It prints one line per
   changed feature, `<id>: <status>`, where the status is `passing`, `passing without evidence`, `steps changed` or
   `removed`. It exits non-zero on anything but `passing`.

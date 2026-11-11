@@ -53,6 +53,22 @@ links:
     url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/exec-server/src/sandbox_integrity/AGENTS.md#L24-L36"
     author: "Codex (OpenAI)"
     note: "accepted limitations listed next to the code; \"not a blanket exemption\"."
+  - title: "code-review plugin: the review command"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/code-review/commands/code-review.md#L15-L58"
+    author: "Anthropic"
+    note: "a pre-gate, CLAUDE.md rules scoped to their directory, HIGH SIGNAL only, one validator per issue."
+  - title: "code-review plugin: what is not a finding, and how comments are posted"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/code-review/commands/code-review.md#L72-L87"
+    author: "Anthropic"
+  - title: "pr-review-toolkit: reviewers routed by what the diff touches"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/pr-review-toolkit/commands/review-pr.md#L35-L88"
+    author: "Anthropic"
+  - title: "pr-review-toolkit: the silent-failure hunter"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/pr-review-toolkit/agents/silent-failure-hunter.md#L78-L109"
+    author: "Anthropic"
+  - title: "pr-review-toolkit: the comment analyzer"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/pr-review-toolkit/agents/comment-analyzer.md#L23-L29"
+    author: "Anthropic"
 ---
 
 ## Why
@@ -103,6 +119,13 @@ At OpenAI almost all review happens between agents.
   finding has a priority from P0 to P3, a confidence from 0 to 1, and a location that overlaps the diff and spans at
   most 10 lines; the review ends with "patch is correct" or "patch is incorrect" and its own confidence. Map them
   onto Findings: P0 and P1 are `high`, P2 `medium`, P3 `low`.
+- **A gate before the review, and a validator after it.** Anthropic's code-review plugin first has a cheap agent stop
+  the review when the PR is closed, a draft, trivial or automated, or already reviewed, so a second trigger costs
+  nothing. A CLAUDE.md rule applies only to files under its directory. Reviewers flag only "HIGH SIGNAL" issues: code
+  that will not compile or parse, a result wrong "regardless of inputs", a CLAUDE.md violation "where you can quote
+  the exact rule being broken"; nothing pre-existing, nothing a linter catches ("do not run the linter to verify"),
+  nothing silenced by an ignore comment. Each issue then goes to its own validating subagent, and an issue it does
+  not validate is dropped. This is the finding verifier of this card, run per issue.
 - **The `run`** runs the reviewers on the diff and prints their Findings, one JSON line each. It exits non-zero for a
   high finding the verifier confirmed, but only for a reviewer that is calibrated; until then it prints the findings
   and exits 0.
@@ -131,6 +154,12 @@ At OpenAI almost all review happens between agents.
   limitations of this phase, not requests to duplicate backend implementations. Review against this scope." It
   closes with what stays a finding: "Regressions in explicit policy handling, executor context, or reporting remain
   actionable; this is not a blanket exemption". Reviewers read the scoped AGENTS.md of every file in the diff.
+- Anthropic's pr-review-toolkit picks reviewers by what the diff touches: a general reviewer always; changed tests
+  bring a test analyzer, new comments a comment analyzer that checks every claim in a comment against the code,
+  changed error handling a silent-failure hunter (empty catches, catch-and-continue, `?.` skipping an operation that
+  can fail, retries that give up without telling anyone; each finding lists the errors it could hide), new types a
+  type analyzer. Findings come back as Critical, Important and Suggestions with `file:line`, and the plan ends with
+  "Re-run review after fixes".
 - The security lens has its own loop, [security-review-agent](../security-review-agent/card.md). A subagent that
   tries to prove a claim of done wrong, by running things, is [verification-subagent](../verification-subagent/card.md).
 

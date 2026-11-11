@@ -29,6 +29,14 @@ links:
   - title: "EditStrategyEvent and EditCorrectionEvent"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/telemetry/types.ts#L1968-L2018"
     author: "gemini-cli (Google)"
+  - title: "session-report: the anomalies to look for"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/session-report/skills/session-report/SKILL.md#L27-L32"
+    author: "Anthropic"
+    note: "cache-hit under 85%, one prompt over 2% of the total, subagent types over 1M tokens per call."
+  - title: "analyze-sessions.mjs: a cache break"
+    url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/session-report/skills/session-report/analyze-sessions.mjs#L386-L404"
+    author: "Anthropic"
+    note: "more than 100,000 uncached input tokens in one call (--cache-break)."
 ---
 
 ## Why
@@ -85,5 +93,10 @@ or the guide.
 
 - Transcripts hold prompts, code and tool output. Keep the reports local, or strip them before they leave the
   machine.
+- **Tokens and the cache are a dimension too.** Anthropic's session-report plugin reads the same transcripts,
+  subagents included, and counts a "cache break", a call with more than 100,000 uncached input tokens. It looks for a
+  cache-hit rate under 85%, a single prompt over 2% of all tokens, subagent types that average over 1M tokens a call,
+  and cache breaks that cluster, and ties each suggested fix to a row of the report. A tool or a guide that breaks the
+  cache costs on every call, though no call fails.
 - The same transcripts feed [correction-becomes-rule](../correction-becomes-rule/card.md): this loop counts the
   failures of the tools, and that one counts the person's repeated instructions.
