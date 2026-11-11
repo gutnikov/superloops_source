@@ -121,8 +121,8 @@ def build_list():
         if not by.get(ility):
             continue
         out += ["### %s" % ility.capitalize(), "", "_%s_" % description, ""]
-        out += ["- [%s](%s/card.md): %s" % (fm["title"], fm["id"], fm.get("summary", "")) for fm in
-                sorted(by[ility], key=lambda f: f["title"].lower())]
+        out += ["- [%s](%s/card.md): %s" % (fm.get("title") or fm.get("id"), fm.get("id"), fm.get("summary", ""))
+                for fm in sorted(by[ility], key=lambda f: str(f.get("title") or f.get("id")).lower())]
         out.append("")
     out.append(LIST_END)
     return "\n".join(out)
