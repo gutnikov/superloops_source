@@ -78,7 +78,8 @@ For each loop, find what decides whether it blocks: a required status check in t
    them), and `pains` from the history, each with the place that should have caught it and its evidence. Fill the
    fields of `superloops/superloops.md` that you settled: `kind`, and `tools` you checked.
 3. **Ask what is left, in one form**: one call of the question tool, up to 4 questions, only those that the code,
-   the history and the input did not settle. This form is the one exception to one question at a time. Each
+   the history and the input did not settle. If `superloops/wizard.json` exists (the `wizard` skill ran), its answers settle
+   the questions they cover: ask only what they leave open. This form is the one exception to one question at a time. Each
    question starts with what you found, because the user may see only the form, and offers it first.
    - **Project** (H1): "What is <project>? Found: <kind, stack, what the README says>." Options: "As found";
      "I'll describe it", whose free answer goes into the body of `superloops.md` in the user's words. Text in the input

@@ -1,15 +1,16 @@
 # superloops
 
 A Claude Code plugin that makes an agent's work on a project checkable, from the task to the change confirmed where
-it is used. It has one command, `/superloops`:
+it is used. Its command is `/superloops`, and `/wizard` sets a project up from the site's form:
 
 | You run | What happens |
 |---|---|
 | `/superloops` in a project without `superloops/superloops.md` | The setup. It studies the project, recognizes the loops it already runs (CI jobs, hooks, linters, deploy checks, specs, agent loops) and places each in the project's super-loops. It asks only what the code does not tell: what the project is, how far superloops may go on its own, what it can reach, and where a change counts as done. It writes `superloops/superloops.md` and shows the map. It builds nothing |
 | `/superloops <a task, or a ticket URL>` | The task, through its super-loop. Triage picks the level (product or harness) and the super-loop; each phase runs the loops the map has; the task ends at an exit, such as a change confirmed in production, or at the `done_at` the user chose |
 | `/superloops` | The status: the map, the measures, the work in flight |
+| `/wizard <answers>` | The setup from the wizard's answers (a JSON file from the site, or the questions asked here): it checks them against the repository, writes `superloops/superloops.md`, plans the loops the answers bring in (a core every project gets, plus what its kind, surfaces, stages, team, autonomy and pains add) and builds the first five with your go-ahead |
 
-The command is `superloops:superloops` in the command list; typing `/superloops` runs it.
+The commands are `superloops:superloops` and `superloops:wizard` in the command list; typing `/superloops` or `/wizard` runs them.
 
 ## The model
 
@@ -55,7 +56,8 @@ The details: [`plugin/parts/harness/super-loops/`](plugin/parts/harness/super-lo
 |---|---|
 | `.claude-plugin/marketplace.json` | The marketplace: one plugin, from `plugin/` |
 | `plugin/skills/superloops/` | The command |
-| `plugin/parts/` | What it reads: the harness, spec, event-model, text-quality, app-probing, fixture-modify, pom-modify and ui-prototypes parts ([`plugin/parts/README.md`](plugin/parts/README.md)) |
+| `plugin/skills/wizard/` | The wizard's setup |
+| `plugin/parts/` | What it reads: the harness, wizard, spec, event-model, text-quality, app-probing, fixture-modify, pom-modify and ui-prototypes parts ([`plugin/parts/README.md`](plugin/parts/README.md)) |
 
 ## What it keeps in a project
 
@@ -65,6 +67,7 @@ not write, and what a CODEOWNERS entry or a branch rule protects:
 ```
 superloops/superloops.md          setup: the user's preferences, and the sign that the project is set up
 superloops/map.yaml               setup: what superloops found, the facts the map of the super-loops is drawn from
+superloops/wizard.json            wizard: the answers the project was set up from
 superloops/hitl-log.jsonl         setup: every call to a person, with its answer
 superloops/agents.yaml            setup: the registry of the agents that are steps of loops
 superloops/.gitignore             setup: keeps .runs/ out of git
