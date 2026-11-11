@@ -1,0 +1,22 @@
+---
+// Every page (SITE-1#5, #7, #8): in English, with Cloudflare Web Analytics and no banner, and no styles at all.
+import { analyticsSnippet } from '../config.mjs';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <Fragment set:html={analyticsSnippet()} />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

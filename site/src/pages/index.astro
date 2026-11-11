@@ -1,0 +1,9 @@
+---
+// For now the home page is just a link to GitHub; the structure and the content come later (SITE-1#6).
+import Page from '../layouts/Page.astro';
+import { config } from '../config.mjs';
+---
+
+<Page title="superloops">
+  <a href={config.repository}>superloops on GitHub</a>
+</Page>

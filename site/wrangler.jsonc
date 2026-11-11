@@ -1,0 +1,19 @@
+// superloops.dev on Cloudflare (SITE-1#4): a Worker with no script of its own that serves the built site as
+// static assets (Workers static assets). The release builds the site (npm run build, into dist/), then deploys
+// it from this folder; the build itself never deploys.
+{
+  "name": "superloops-site",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    // The build's output: astro.config.mjs writes it here when SITE_OUT_DIR is unset.
+    "directory": "./dist",
+    // As tests/site/support/serve.ts serves the build: /loops/<id> redirects to /loops/<id>/, which is
+    // loops/<id>/index.html, and a path with no file is a 404.
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  },
+  // The site is on superloops.dev, and only there: no workers.dev address, no preview addresses.
+  "routes": [{ "pattern": "superloops.dev", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false
+}

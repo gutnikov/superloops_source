@@ -1,0 +1,32 @@
+---
+// A super-loop's page: what its card holds (SITE-1#3), each field of the SuperLoop read model a data-field.
+import Page from '../../layouts/Page.astro';
+import { getCatalog } from '../../lib/site.mjs';
+
+export function getStaticPaths() {
+  return getCatalog().superLoops.map((card) => ({ params: { id: card.id }, props: { card } }));
+}
+
+const { card } = Astro.props;
+const lists = [
+  ['Phases', 'phases', card.phases],
+  ['Exits', 'exits', card.exits],
+].filter(([, , values]) => values.length > 0);
+---
+
+<Page title={`${card.title.text} · superloops`}>
+  <h1 data-field="title" set:html={card.title.html} />
+  {
+    lists.length > 0 && (
+      <dl>
+        {lists.map(([label, field, values]) => (
+          <>
+            <dt>{label}</dt>
+            <dd data-field={field}>{values.join(', ')}</dd>
+          </>
+        ))}
+      </dl>
+    )
+  }
+  <div data-field="sections" set:html={card.sections} />
+</Page>
