@@ -27,6 +27,9 @@ links:
     url: "https://code.claude.com/docs/en/commands"
     author: "Anthropic"
     note: "/simplify and /code-review."
+  - title: "/pr: review PRs (a prompt template)"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/.pi/prompts/pr.md"
+    author: "pi (earendil-works)"
 ---
 
 ## Why
@@ -74,6 +77,10 @@ At OpenAI almost all review happens between agents.
 
 - Böckeler: "LLMs can partially address problems that require semantic judgment", such as "semantically duplicate
   code, redundant tests, brute-force fixes, over-engineered solutions", "but expensively and probabilistically."
+- Pi's PR review (`/pr`) widens what a reviewer reads beyond the diff: the linked issues in full, the code paths the
+  diff does not touch but the behaviour depends on, and the user docs that may need to change with the code. It never
+  checks out the PR's branch; it reads the diff with `gh pr diff` and files with `git show <ref>:<path>`, so a review
+  leaves the working tree as it was.
 - The security lens has its own loop, [security-review-agent](../security-review-agent/card.md). A subagent that
   tries to prove a claim of done wrong, by running things, is [verification-subagent](../verification-subagent/card.md).
 

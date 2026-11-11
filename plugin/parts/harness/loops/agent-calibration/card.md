@@ -8,7 +8,7 @@ places: [harness:delivery/gate, harness:delivery/confirmation, harness:remediati
 stages: [local, scheduled]
 speed: [minutes]
 needs: []
-related: [llm-judge-calibration, sample-audit, steering-loop, llm-evals]
+related: [llm-judge-calibration, sample-audit, steering-loop, llm-evals, docs-audit]
 links:
   - title: "Using LLM-as-a-Judge For Evaluation: A Complete Guide"
     url: "https://hamel.dev/blog/posts/llm-judge/"
@@ -21,6 +21,10 @@ links:
   - title: "Best practices for Claude Code"
     url: "https://code.claude.com/docs/en/best-practices"
     note: "a fresh reviewer that never saw the conversation"
+  - title: "Audit documentation against implementation (an eval suite)"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/packages/evals/evals/documentation-audit.eval.ts"
+    author: "pi (earendil-works)"
+    note: "an eval that checks the agent's reads as well as its verdict."
 ---
 
 ## Why
@@ -95,3 +99,7 @@ in use: each verdict's outcome is logged (confirmed, false positive, missed, ove
   it into an eval case, not into a line in the prompt alone.
 - Without this calibration loop, an agent's verdict is a guess presented as a check: the working agent learns to
   satisfy the reviewer, not to meet the requirement.
+- An eval case can check the agent's process as well as its verdict. Pi's documentation audit counts a run only if
+  the agent read the page and at least one file of the implementation, and called its submit tool exactly once
+  ([docs-audit](../docs-audit/card.md)); a right verdict without that evidence is not agreement. The verdict comes
+  through a tool with a schema that ends the run, so no prose has to be parsed.

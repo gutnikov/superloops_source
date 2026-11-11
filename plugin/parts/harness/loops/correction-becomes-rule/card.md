@@ -9,8 +9,12 @@ stages: [continuous]
 speed: [minutes]
 needs: []
 initiator: human
-related: [steering-loop, human-diff-review, taste-invariants, sample-audit]
+related: [steering-loop, human-diff-review, taste-invariants, sample-audit, guide-lift-eval]
 links:
+  - title: "session-transcripts.ts"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/scripts/session-transcripts.ts"
+    author: "pi (earendil-works)"
+    note: "subagents find instructions the user repeated in the transcripts, with quotes, against AGENTS.md."
   - title: "Designing Human-in-the-Loop for Agentic Workflows"
     author: "AlignX"
     note: "logging escalations and corrections by type"
@@ -43,6 +47,11 @@ one. The measure is that each kind of correction stops coming back.
 
 - **The agent logs a correction the moment a person makes it**: CLAUDE.md tells it to. The harness engineer logs
   the corrections made outside the session: review comments, reverts.
+- **Corrections nobody logged are found in the transcripts.** Pi's `session-transcripts.ts --analyze` splits a
+  project's session transcripts into files that fit a context and runs one subagent per file. Each reads the existing
+  AGENTS.md, then the whole transcript in chunks, and writes down every instruction the user gave two or more times: a
+  name, `NEW` or `EXISTING` against AGENTS.md, how often it came, exact quotes as evidence, and a draft rule. Each
+  `NEW` pattern is logged as a correction of its kind; the harness engineer runs it weekly.
 - **Short, stable kinds**, such as `unstructured log line` or `test edited instead of code`, so that two corrections
   of one kind are seen as one kind. Reuse a kind already in `superloops/trace.jsonl` before writing a new one.
 - **Code before text.** CLAUDE.md is advice, not a guarantee. Prefer a [custom lint](../taste-invariants/card.md) or
@@ -58,4 +67,4 @@ one. The measure is that each kind of correction stops coming back.
 - Keep a log of escalations and corrections by type: recurring types show where the agent lacks constraints, tools
   or context (AlignX).
 - With sensors only, the agent repeats the same mistakes; with guides only, it never learns whether the rules worked
-  (Böckeler).
+  (Böckeler). A rule that stays a line in CLAUDE.md is measured by [guide-lift-eval](../guide-lift-eval/card.md).

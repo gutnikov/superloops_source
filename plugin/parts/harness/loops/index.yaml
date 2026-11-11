@@ -75,7 +75,7 @@ loops:
     stages: [local, scheduled]
     speed: [minutes]
     needs: []
-    related: [llm-judge-calibration, sample-audit, steering-loop, llm-evals]
+    related: [llm-judge-calibration, sample-audit, steering-loop, llm-evals, docs-audit]
   - id: agent-code-review
     title: "Code review by another agent"
     path: agent-code-review/card.md
@@ -262,6 +262,18 @@ loops:
     speed: [minutes, hours]
     needs: [metrics, deploy]
     related: [release-confirmation, health-checks-smoke, slo-degradation, triage]
+  - id: changelog-audit
+    title: "Changelog audit before a release"
+    path: changelog-audit/card.md
+    summary: "Before a release, every commit since the last tag is matched to an entry in the changelog of the package it changed, and a check fails when a released section differs from its tag."
+    sensor: computational
+    ilities: [deployability, compatibility]
+    places: [delivery/release, remediation/release, maintenance/release]
+    stages: [ci, task]
+    speed: [seconds, minutes]
+    needs: []
+    agent: [reviewer]
+    related: [api-breaking-changes]
   - id: chaos-engineering
     title: "Chaos engineering"
     path: chaos-engineering/card.md
@@ -355,7 +367,7 @@ loops:
     stages: [continuous]
     speed: [minutes]
     needs: []
-    related: [steering-loop, human-diff-review, taste-invariants, sample-audit]
+    related: [steering-loop, human-diff-review, taste-invariants, sample-audit, guide-lift-eval]
     initiator: human
   - id: coupling-analysis
     title: "Coupling analysis"
@@ -436,6 +448,18 @@ loops:
     needs: []
     agent: [refuter]
     related: [triage, verification-subagent, acceptance-loop]
+  - id: docs-audit
+    title: "Docs audit against the implementation"
+    path: docs-audit/card.md
+    summary: "An agent with read-only tools checks one documentation page against the code and returns match, mismatch or inconclusive; a mismatch quotes the claim and cites the code."
+    sensor: inferential
+    ilities: [maintainability, correctness]
+    places: [delivery/work, remediation/entry]
+    stages: [local, scheduled]
+    speed: [minutes, hours]
+    needs: []
+    agent: [reviewer]
+    related: [knowledge-base-doc-lint, executable-docs, guide-lift-eval]
   - id: document-review
     title: "Review of document texts"
     path: document-review/card.md
@@ -548,6 +572,17 @@ loops:
     needs: []
     agent: [worker, reviewer]
     related: [taste-invariants, sample-audit, agent-code-review, behaviour-invariance]
+  - id: guide-lift-eval
+    title: "Guide lift eval"
+    path: guide-lift-eval/card.md
+    summary: "The agent does the same tasks with and without a guide, each run in a fresh isolated environment; the guide stays only if the paired pass rates show that it helps."
+    sensor: computational
+    ilities: [correctness, usability]
+    places: [harness:delivery/gate, harness:maintenance/gate]
+    stages: [local, scheduled]
+    speed: [minutes, hours]
+    needs: []
+    related: [llm-evals, correction-becomes-rule, docs-audit, agent-calibration]
   - id: health-checks-smoke
     title: "Health checks and smoke tests after deploy"
     path: health-checks-smoke/card.md
@@ -681,7 +716,7 @@ loops:
     stages: [commit, ci]
     speed: [seconds]
     needs: []
-    related: [taste-invariants, architecture-fitness-functions, pre-commit-pre-push]
+    related: [taste-invariants, architecture-fitness-functions, pre-commit-pre-push, tool-use-telemetry]
   - id: llm-evals
     title: "Eval suites for LLM features"
     path: llm-evals/card.md
@@ -693,7 +728,7 @@ loops:
     speed: [minutes]
     needs: []
     agent: [judge]
-    related: [llm-judge-calibration, agent-calibration, ai-judges-telemetry]
+    related: [llm-judge-calibration, agent-calibration, ai-judges-telemetry, guide-lift-eval, scripted-model-tests]
   - id: llm-judge-calibration
     title: "Calibrating an LLM judge on an expert (critique shadowing)"
     path: llm-judge-calibration/card.md
@@ -913,7 +948,7 @@ loops:
     speed: [minutes]
     needs: []
     agent: [reviewer]
-    related: [bug-failing-test-fix, acceptance-loop, release-confirmation, exploratory-testing]
+    related: [bug-failing-test-fix, acceptance-loop, release-confirmation, exploratory-testing, scripted-model-tests]
   - id: result-demo
     title: "Result demo"
     path: result-demo/card.md
@@ -980,6 +1015,17 @@ loops:
     speed: [seconds, minutes]
     needs: []
     related: [security-review-agent, secret-scanning, dast, lint-with-fix-instructions]
+  - id: scripted-model-tests
+    title: "Tests against a scripted model"
+    path: scripted-model-tests/card.md
+    summary: "Code around an LLM is tested against a fake provider that replays scripted replies and tool calls: deterministic, in CI, with no network and no tokens."
+    sensor: computational
+    ilities: [correctness, testability]
+    places: [delivery/work, remediation/oracle, maintenance/work]
+    stages: [local, ci]
+    speed: [seconds]
+    needs: []
+    related: [llm-evals, reproduction-gate, red-green-tdd]
   - id: secret-scanning
     title: "Secret scanning"
     path: secret-scanning/card.md
@@ -1003,6 +1049,17 @@ loops:
     needs: []
     agent: [reviewer]
     related: [sast, agent-code-review, compliance-mutants, agent-calibration]
+  - id: simplification-pass
+    title: "Simplification pass after the work"
+    path: simplification-pass/card.md
+    summary: "When a piece of work is done, the agent simplifies it without changing behaviour; the checks stay green, tests are not weakened, and each significant removal waits for a person's approval."
+    sensor: inferential
+    ilities: [maintainability]
+    places: [delivery/work, maintenance/work]
+    stages: [task]
+    speed: [minutes]
+    needs: []
+    related: [agent-code-review, behaviour-invariance, garbage-collection]
   - id: slo-degradation
     title: "SLO degradation"
     path: slo-degradation/card.md
@@ -1088,6 +1145,28 @@ loops:
     speed: [seconds]
     needs: []
     related: [lint-with-fix-instructions, correction-becomes-rule, steering-loop, garbage-collection]
+  - id: terminal-ui-tmux
+    title: "Terminal UI through tmux"
+    path: terminal-ui-tmux/card.md
+    summary: "The agent runs a terminal app in a tmux session of fixed size, sends keys and reads the screen with capture-pane; a smoke test passes only after a real interaction, not at startup."
+    sensor: computational
+    ilities: [correctness, usability]
+    places: [delivery/work, remediation/work, maintenance/work, delivery/release]
+    stages: [local, ci]
+    speed: [seconds, minutes]
+    needs: []
+    related: [e2e-browser, agentic-manual-testing, health-checks-smoke]
+  - id: tool-use-telemetry
+    title: "Tool-use telemetry from agent sessions"
+    path: tool-use-telemetry/card.md
+    summary: "A script reads the agent's session transcripts and reports, per tool, model and file type, how often calls fail and why; the worst cases show what to fix in the tool or the guide."
+    sensor: computational
+    ilities: [observability]
+    places: [harness:remediation/entry, harness:maintenance/entry]
+    stages: [scheduled]
+    speed: [seconds, minutes]
+    needs: []
+    related: [correction-becomes-rule, steering-loop, lint-with-fix-instructions]
   - id: traces-opentelemetry
     title: "Traces (OpenTelemetry)"
     path: traces-opentelemetry/card.md
@@ -1180,21 +1259,21 @@ loops:
 by_place:
   delivery/entry: [production-users, triage]
   delivery/oracle: [acceptance-loop, choose-from-options, human-acceptance-criteria, interview, plan-approval, spec-check, task-restatement, user-feedback]
-  delivery/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, benchmarks-vs-baseline, browser-console-devtools, build, bundle-size-budget, choose-from-options, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, document-review, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, metrics-promql, mutation-testing, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, progress-file-feature-list, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, secret-scanning, stop-hook, structured-logs, taste-invariants, traces-opentelemetry, type-check, visual-screenshot-check]
+  delivery/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, benchmarks-vs-baseline, browser-console-devtools, build, bundle-size-budget, choose-from-options, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, docs-audit, document-review, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, metrics-promql, mutation-testing, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, progress-file-feature-list, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, scripted-model-tests, secret-scanning, simplification-pass, stop-hook, structured-logs, taste-invariants, terminal-ui-tmux, traces-opentelemetry, type-check, visual-screenshot-check]
   delivery/gate: [acceptance-loop, agent-audit-trail, contract-tests, human-diff-review, result-demo, ux-evaluator, verification-subagent]
-  delivery/release: [canary-feature-flags, dast, exploratory-testing, health-checks-smoke, lighthouse-ci, load-testing, preview-environments, risky-action-gates]
+  delivery/release: [canary-feature-flags, changelog-audit, dast, exploratory-testing, health-checks-smoke, lighthouse-ci, load-testing, preview-environments, risky-action-gates, terminal-ui-tmux]
   delivery/confirmation: [canary-feature-flags, error-tracking, metrics-promql, production-users, release-confirmation, slo-degradation, structured-logs]
-  remediation/entry: [ai-judges-telemetry, backup-restore-rollback, chaos-engineering, dast, error-tracking, exploratory-testing, fuzzing, production-users, sample-audit, security-review-agent, slo-degradation, triage]
-  remediation/oracle: [agentic-manual-testing, browser-console-devtools, debugger-repl, fuzzing, reproduction-gate, structured-logs, traces-opentelemetry, user-feedback]
-  remediation/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, browser-console-devtools, bug-failing-test-fix, build, bundle-size-budget, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, mutation-testing, observe-and-interrupt, platform-matrix, pre-commit-pre-push, profiling, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, secret-scanning, stop-hook, taste-invariants, type-check, visual-screenshot-check]
+  remediation/entry: [ai-judges-telemetry, backup-restore-rollback, chaos-engineering, dast, docs-audit, error-tracking, exploratory-testing, fuzzing, production-users, sample-audit, security-review-agent, slo-degradation, triage]
+  remediation/oracle: [agentic-manual-testing, browser-console-devtools, debugger-repl, fuzzing, reproduction-gate, scripted-model-tests, structured-logs, traces-opentelemetry, user-feedback]
+  remediation/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, browser-console-devtools, bug-failing-test-fix, build, bundle-size-budget, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, mutation-testing, observe-and-interrupt, platform-matrix, pre-commit-pre-push, profiling, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, secret-scanning, stop-hook, taste-invariants, terminal-ui-tmux, type-check, visual-screenshot-check]
   remediation/gate: [agent-audit-trail, human-diff-review, reproduction-gate, verification-subagent]
-  remediation/release: [canary-feature-flags, health-checks-smoke, risky-action-gates]
+  remediation/release: [canary-feature-flags, changelog-audit, health-checks-smoke, risky-action-gates]
   remediation/confirmation: [canary-feature-flags, error-tracking, metrics-promql, release-confirmation, slo-degradation, structured-logs]
   maintenance/entry: [compliance-mutants, coupling-analysis, dependency-scanning-sbom, dependency-updates, garbage-collection, knowledge-base-doc-lint, triage]
   maintenance/oracle: [approved-fixtures, behaviour-invariance, benchmarks-vs-baseline, code-coverage, coupling-analysis, mutation-testing, run-tests-first]
-  maintenance/work: [accessibility-checks, agent-code-review, agentic-manual-testing, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, build, bundle-size-budget, ci-clean-infra, compliance-mutants, config-validation, dependency-scanning-sbom, dependency-updates, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, garbage-collection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, profiling, property-based-tests, risky-action-gates, sast, secret-scanning, stop-hook, taste-invariants, type-check, visual-screenshot-check]
+  maintenance/work: [accessibility-checks, agent-code-review, agentic-manual-testing, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, build, bundle-size-budget, ci-clean-infra, compliance-mutants, config-validation, dependency-scanning-sbom, dependency-updates, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, garbage-collection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, profiling, property-based-tests, risky-action-gates, sast, scripted-model-tests, secret-scanning, simplification-pass, stop-hook, taste-invariants, terminal-ui-tmux, type-check, visual-screenshot-check]
   maintenance/gate: [agent-audit-trail, api-breaking-changes, behaviour-invariance, contract-tests, db-migration-lint, human-diff-review, verification-subagent]
-  maintenance/release: [canary-feature-flags, health-checks-smoke, load-testing, risky-action-gates]
+  maintenance/release: [canary-feature-flags, changelog-audit, health-checks-smoke, load-testing, risky-action-gates]
   maintenance/confirmation: [canary-feature-flags, error-tracking, metrics-promql, perf-budgets-telemetry, release-confirmation, slo-degradation, structured-logs]
   discovery/entry: [production-users, triage]
   discovery/oracle: [discovery-decision, interview, plan-approval, task-restatement]
@@ -1203,9 +1282,10 @@ by_place:
   discovery/confirmation: [choose-from-options, discovery-decision, result-demo]
   harness:delivery/oracle: [llm-judge-calibration]
   harness:delivery/work: [document-review]
-  harness:delivery/gate: [agent-calibration]
+  harness:delivery/gate: [agent-calibration, guide-lift-eval]
   harness:delivery/confirmation: [agent-calibration, sample-audit]
-  harness:remediation/entry: [correction-becomes-rule, sample-audit]
+  harness:remediation/entry: [correction-becomes-rule, sample-audit, tool-use-telemetry]
   harness:remediation/oracle: [agent-calibration, steering-loop]
   harness:remediation/work: [steering-loop]
-  harness:maintenance/gate: [agent-calibration]
+  harness:maintenance/entry: [tool-use-telemetry]
+  harness:maintenance/gate: [agent-calibration, guide-lift-eval]

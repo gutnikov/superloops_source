@@ -9,8 +9,12 @@ stages: [local, ci]
 speed: [minutes]
 needs: []
 agent: [judge]
-related: [llm-judge-calibration, agent-calibration, ai-judges-telemetry]
+related: [llm-judge-calibration, agent-calibration, ai-judges-telemetry, guide-lift-eval, scripted-model-tests]
 links:
+  - title: "Pi evals"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/packages/evals/README.md"
+    author: "pi (earendil-works)"
+    note: "a fresh container per run, a planned cohort, missing results kept apart from failures."
   - title: "Define success criteria and build evaluations"
     url: "https://platform.claude.com/docs/en/test-and-evaluate/develop-tests"
     author: "Anthropic"
@@ -56,6 +60,10 @@ what needs judgement, such as whether a summary is faithful (see Agent step).
   pass rate falls below the threshold, or below the baseline by more than the spread between runs on the base
   branch. The threshold is a reference a person approves (H5), written in the loop's `LOOP.md`; with promptfoo,
   `PROMPTFOO_PASS_RATE_THRESHOLD` sets it, and it is 100% when not set.
+- **Each run starts clean, and missing is not zero.** For a feature that acts, such as an agent with tools, each run
+  gets a new workspace and session, so one run's files cannot help the next. Every `(case, run)` is planned before
+  anything runs; a run that errored or produced no grade is reported as missing, never as a failure or a zero, and a
+  comparison with a missing run is withheld. Pi's evals work this way, with a fresh container per run.
 - **`run`** runs the suite (`npx promptfoo eval --repeat 3 -o results.json`) and prints one line per failed case,
   `<case>: <assertion>: <reason>`, then `pass rate <now>% (baseline <b>%, threshold <t>%)`. It exits non-zero on a
   drop. A drop that only the judge's grades show fails the change only once the judge is `gate` in
@@ -73,7 +81,9 @@ what needs judgement, such as whether a summary is faithful (see Agent step).
   grading is "slow and expensive. Avoid if possible."; LLM-based grading: "Test to ensure reliability first, then
   scale." It also advises grading "with a different model from the one used to generate the evaluated output".
 - `promptfoo eval` exits with code 100 when at least one test case fails and 1 on any other error.
-- [agent-calibration](../agent-calibration/card.md) is the same loop for the agents of the harness itself.
+- [agent-calibration](../agent-calibration/card.md) is the same loop for the agents of the harness itself. To measure a
+  guide with and without a change, see [guide-lift-eval](../guide-lift-eval/card.md); to test the code around the
+  model without a real model, see [scripted-model-tests](../scripted-model-tests/card.md).
 
 ## Agent step
 

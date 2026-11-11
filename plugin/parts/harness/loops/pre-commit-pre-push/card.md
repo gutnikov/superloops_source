@@ -20,6 +20,12 @@ links:
     author: "Git"
   - title: "pre-commit"
     url: "https://pre-commit.com/"
+  - title: "pi's pre-commit hook"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/.husky/pre-commit"
+    author: "pi (earendil-works)"
+  - title: "check-lockfile-commit.mjs"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/scripts/check-lockfile-commit.mjs"
+    author: "pi (earendil-works)"
 ---
 
 ## Why
@@ -40,6 +46,12 @@ files and commits again.
   [secret scanning](../secret-scanning/card.md) of the staged files. At pre-push: the linter with its autofixes on
   the files the push changes, as at Stripe. The type check and the tests run at the end of a turn or in CI. A slow
   hook invites skipping it.
+- **A slower check only when the staged paths need it.** Pi's pre-commit runs its browser smoke check only when
+  `packages/ai/`, `packages/web-ui/` or the package files are staged, and a separate app's check only when its files
+  or the shared packages are. With the pre-commit framework, a hook's `files` pattern does the same.
+- **A lockfile change is a decision.** Pi's pre-commit blocks a staged `package-lock.json` unless the change only
+  updates workspace metadata or `PI_ALLOW_LOCKFILE_CHANGE=1` is set, and its AGENTS.md tells the agent not to set it
+  unless the user wants the lockfile committed.
 - **The hooks**, with the pre-commit framework: `.pre-commit-config.yaml` lists them, each with its `stages`, and
   `default_install_hook_types: [pre-commit, pre-push]`, so that `pre-commit install` installs both. A hook fails when
   it exits non-zero or modifies files ("Files were modified by this hook").

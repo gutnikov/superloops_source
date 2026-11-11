@@ -6,7 +6,7 @@ answer to a log query. Almost every quality attribute (the "-ilities") can be tu
 testability and observability. This approach is now called harness engineering.
 
 This catalog has one folder per loop, `<id>/card.md`: a pattern the harness engineer turns into a concrete loop in a
-project. It has 96 loops. 71 come from the research "Feedback loops for an autonomous coding agent: a catalog by
+project. It has 103 loops. 71 come from the research "Feedback loops for an autonomous coding agent: a catalog by
 quality attributes" (unpublished, in Russian; it says 70 cycles but lists 71). Nine were added here:
 [review of document texts](document-review/card.md), built on the `text-quality` part;
 [the spec check](spec-check/card.md), built on the `spec` part;
@@ -16,7 +16,11 @@ quality attributes" (unpublished, in Russian; it says 70 cycles but lists 71). N
 [behaviour invariance](behaviour-invariance/card.md), [release confirmation](release-confirmation/card.md)
 and [the discovery decision](discovery-decision/card.md). The other 16 come from a note on human-in-the-loop loops.
 With two loops of the research, [the audit trail](agent-audit-trail/card.md) and [user feedback](user-feedback/card.md),
-18 loops have a person as the sensor: the [human-in-the-loop loops](human-in-the-loop.md).
+18 loops have a person as the sensor: the [human-in-the-loop loops](human-in-the-loop.md). Seven come from the code
+of the open-source coding agent [pi](https://github.com/earendil-works/pi): [guide lift eval](guide-lift-eval/card.md),
+[docs audit](docs-audit/card.md), [tool-use telemetry](tool-use-telemetry/card.md),
+[tests against a scripted model](scripted-model-tests/card.md), [terminal UI through tmux](terminal-ui-tmux/card.md),
+[simplification pass](simplification-pass/card.md) and [changelog audit](changelog-audit/card.md).
 
 What a card holds, and how to add one: [FORMAT.md](FORMAT.md). [index.yaml](index.yaml) lists every loop with its
 summary and its fields, so a tool or an agent can choose loops without opening each card; it and the list below are
@@ -129,6 +133,7 @@ _The product does what it was specified to do: functional suitability, completen
 - [E2E through browser automation](e2e-browser/card.md): The agent starts the dev server and walks a scenario with Playwright or Puppeteer. That is how it finds out that a feature does not work end to end even though the unit tests and `curl` pass.
 - [Eval suites for LLM features](llm-evals/card.md): The agent changes a prompt and runs the evals; a drop in the metric counts as a failure.
 - [Exploratory testing](exploratory-testing/card.md): The person tries the product by hand and writes a bug report; the agent reproduces the bug with a failing test and fixes it.
+- [Guide lift eval](guide-lift-eval/card.md): The agent does the same tasks with and without a guide, each run in a fresh isolated environment; the guide stays only if the paired pass rates show that it helps.
 - [LSP diagnostics after every edit](lsp-diagnostics/card.md): Right after every edit the agent gets the language server's diagnostics, before any build.
 - [Progress file and feature list](progress-file-feature-list/card.md): Long work over many sessions: a JSON feature list and a progress file carry the state; each session takes one failing feature and marks it passing only after an e2e check.
 - [Property-based tests](property-based-tests/card.md): The agent states invariants and writes property tests for them. The framework finds a minimal counterexample, and the agent fixes the code.
@@ -138,6 +143,8 @@ _The product does what it was specified to do: functional suitability, completen
 - [Snapshot / golden / approved fixtures](approved-fixtures/card.md): A test compares the output with a stored reference; the agent fixes an unexpected diff and proposes an expected one to a person as the new reference.
 - [Spec check](spec-check/card.md): The agent runs `specs.py check` and each layer's check on the changed spec; every gap comes back as a message naming the element and what is missing, before the test writer gets the spec.
 - [Stop hook / `/goal`](stop-hook/card.md): When the agent tries to end its turn, a hook runs the check and sends the agent back to work while it fails; `/goal` does the same with a model that judges the transcript.
+- [Terminal UI through tmux](terminal-ui-tmux/card.md): The agent runs a terminal app in a tmux session of fixed size, sends keys and reads the screen with capture-pane; a smoke test passes only after a real interaction, not at startup.
+- [Tests against a scripted model](scripted-model-tests/card.md): Code around an LLM is tested against a fake provider that replays scripted replies and tool calls: deterministic, in CI, with no network and no tokens.
 - [Type checking](type-check/card.md): The agent runs `tsc --noEmit`, `mypy` or `pyright` and fixes the type mismatches it finds.
 - [Verification subagent](verification-subagent/card.md): When the working agent says a task is done, a separate subagent with a fresh context tries to prove the claim wrong.
 
@@ -181,11 +188,13 @@ _The code is easy to read, change and extend: modularity, analysability, modifia
 - [Code review by another agent](agent-code-review/card.md): The coding agent asks one or more reviewer agents, each with a fresh context, for a review, and fixes their comments until the reviewers are satisfied.
 - [Coupling analysis](coupling-analysis/card.md): On a schedule a CLI reports fan-in, fan-out and cycles; what got worse than the baseline, minus intended hubs, becomes a maintenance item, and the refactoring must improve the numbers.
 - [Doc linters for the knowledge base](knowledge-base-doc-lint/card.md): CI checks that the `docs/` folder is current, cross-linked and correctly structured. The agent reads the errors CI reports and fixes the docs.
+- [Docs audit against the implementation](docs-audit/card.md): An agent with read-only tools checks one documentation page against the code and returns match, mismatch or inconclusive; a mismatch quotes the claim and cites the code.
 - [Executable documentation](executable-docs/card.md): Doctests and a check of API responses against the OpenAPI schema turn a mismatch between the docs and the code into a failing test.
 - [Garbage collection](garbage-collection/card.md): On a schedule, background agents find code that breaks the repository's "golden principles" and open small PRs to fix it. At OpenAI most took under a minute to review and merged automatically.
 - [Linter with fix instructions](lint-with-fix-instructions/card.md): The agent runs the linter and reads each violation together with a "how to fix" text. Then it either fixes the violation or suppresses it with a justification.
 - [Pre-commit / pre-push](pre-commit-pre-push/card.md): Fast checks, such as linting, run when the agent commits or pushes; a failing check blocks the commit or the push before the change reaches CI.
 - [Review of document texts](document-review/card.md): The agent writes a brief, not the document. A separate writer writes the text from the brief. A fact check returns invented and missing facts; a reviewer returns error-pattern findings.
+- [Simplification pass after the work](simplification-pass/card.md): When a piece of work is done, the agent simplifies it without changing behaviour; the checks stay green, tests are not weakened, and each significant removal waits for a person's approval.
 - [Taste invariants: custom lints](taste-invariants/card.md): The agent breaks a team convention, such as an unstructured log line, a misnamed schema or a file over the size limit; a custom lint flags the violation in seconds and tells the agent how to fix it.
 
 ### Security
@@ -245,6 +254,7 @@ _What the system does can be seen and explained: logs, metrics, traces, debuggab
 - [Debugger and REPL](debugger-repl/card.md): The agent sets a breakpoint or opens a REPL and checks its hypothesis against real values instead of guessing.
 - [Metrics (PromQL)](metrics-promql/card.md): The agent runs a scenario and compares error counters, latency and resource use with what it expects.
 - [Structured logs and log queries](structured-logs/card.md): The agent starts the application, queries the logs, finds the error and fixes it (at OpenAI: LogQL against an ephemeral VictoriaLogs per worktree).
+- [Tool-use telemetry from agent sessions](tool-use-telemetry/card.md): A script reads the agent's session transcripts and reports, per tool, model and file type, how often calls fail and why; the worst cases show what to fix in the tool or the guide.
 - [Traces (OpenTelemetry)](traces-opentelemetry/card.md): The agent queries traces (TraceQL) and finds a slow or failed span.
 
 ### Deployability
@@ -252,6 +262,7 @@ _What the system does can be seen and explained: logs, metrics, traces, debuggab
 _A change reaches where it runs, reproducibly and safely: builds, environments, rollouts, installability._
 
 - [Canaries and feature flags](canary-feature-flags/card.md): When a canary release performs worse than the baseline, the release rolls back automatically and the agent gets the metrics of that release.
+- [Changelog audit before a release](changelog-audit/card.md): Before a release, every commit since the last tag is matched to an entry in the changelog of the package it changed, and a check fails when a released section differs from its tag.
 - [CI on clean infrastructure](ci-clean-infra/card.md): The agent pushes; autofixes apply themselves; the agent fixes the remaining failures locally.
 - [Configuration check](config-validation/card.md): Two checks catch configuration errors: a validator checks the configuration against its schema; a smoke start runs with each configuration profile.
 - [Isolated reproducible environment](isolated-environment/card.md): At the start of every task, the agent gets a clean environment: a devbox, a devcontainer, or a worktree with its own instance of the app, so the sensors give the same result for the same code.

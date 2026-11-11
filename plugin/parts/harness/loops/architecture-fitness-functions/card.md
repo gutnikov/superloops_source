@@ -22,6 +22,10 @@ links:
   - title: "ArchUnit User Guide"
     url: "https://www.archunit.org/userguide/html/000_Index.html"
     note: "layeredArchitecture(), beFreeOfCycles(), because(), FreezingArchRule."
+  - title: "check-entry-graphs.mjs"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/scripts/check-entry-graphs.mjs"
+    author: "pi (earendil-works)"
+    note: "a budget per entry point of a package: the modules it must not reach."
 ---
 
 ## Why
@@ -68,6 +72,11 @@ belongs in, and moves the code there.
   handful of times after I introduced them, and then self-corrected."
 - OpenAI's example of layers: every domain has the layers Types → Config → Repo → Service → Runtime → UI, and
   cross-cutting concerns come in only through Providers. Linters and structural tests check all of it.
+- A package's entry points are a contract on what they load. In pi, one stray `export *` made a narrow entry pull in a
+  whole barrel: about 37 MB of evaluated modules to import one small function, and nothing failed until someone
+  measured a process. `check-entry-graphs.mjs` walks the value imports of every entry in each package's `exports`,
+  following imports across the workspace, and fails with `<package> export "<name>" must not reach <pattern>` and the
+  files that reached it. Type-only imports do not count. It runs in `npm run check`, so the regression fails at commit.
 - A rule often starts as a person's correction about where code belongs
   ([correction-becomes-rule](../correction-becomes-rule/card.md)). The same message-as-instruction idea for lint
   rules is [lint-with-fix-instructions](../lint-with-fix-instructions/card.md).

@@ -34,6 +34,10 @@ The catalog's loops of this level:
   agent more autonomy on its results is a release like any other: one step at a time, each with a window.
 - [document-review](../loops/document-review/card.md) checks the texts its delivery writes: every `LOOP.md` and
   every prompt of an agent.
+- [guide-lift-eval](../loops/guide-lift-eval/card.md) is the gate of a guide: a new or changed guide, or a new
+  model, is measured on the same tasks with and without the guide.
+- [tool-use-telemetry](../loops/tool-use-telemetry/card.md) is a detector over the agent's own tools: failure rates
+  and kinds per tool, model and file type, read from the session transcripts.
 
 ## Its signal
 

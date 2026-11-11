@@ -13,6 +13,16 @@ related: [behaviour-invariance, reproduction-gate, acceptance-loop, discovery-de
 links:
   - title: "ITIL"
     note: "incident, problem and change management, where the route of a ticket decides the process it goes through."
+  - title: "/dup: find potential duplicates of a GitHub issue (a prompt template)"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/.pi/prompts/dup.md"
+    author: "pi (earendil-works)"
+  - title: "/is: analyze GitHub issues (a prompt template)"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/.pi/prompts/is.md"
+    author: "pi (earendil-works)"
+  - title: "Issue Analysis (a workflow)"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/.github/workflows/issue-analysis.yml"
+    author: "pi (earendil-works)"
+    note: "an issue analysed on a chosen runner, with the session exported for a maintainer to continue."
 ---
 
 ## Why
@@ -42,7 +52,12 @@ ticket. Triage handles it before any work starts on it:
 - **One record per signal**: where it came from, what it says, the super-loop chosen, the reason, and the open item it
   was merged into, if any.
 - **Duplicates first.** The same error fingerprint, the same dependency, the same requirement: the signal joins the
-  open item instead of opening a new one.
+  open item instead of opening a new one. A duplicate reports the same problem or asks for the same change: the same
+  symptom with the same likely cause, or a pull request that fixes this exact item. A shared component, error message
+  or related cause is not enough (pi's `/dup`). The search tries several phrasings, such as the error message, the
+  feature's name, the component and the symptom, over open and closed items.
+- **The analysis in a signal is not evidence.** A root cause or a fix proposed in an issue is a claim to check against
+  the code. Pi's `/is` ignores the issue's own root-cause analysis and traces the code path itself.
 - **An ambiguous signal goes to a person** under H1, with the options and a recommended route, and the call is logged
   with `loops.py hitl H1 --loop triage …`. A complaint about a slow page can be remediation (a regression) or
   maintenance (it was always slow): the history decides, and where it does not, a person does.
@@ -68,10 +83,14 @@ ticket. Triage handles it before any work starts on it:
 - The costly mistake is a change of behaviour routed to maintenance. The gate of maintenance,
   [behaviour-invariance](../behaviour-invariance/card.md), is the second line of defence.
 - The super-loops and their oracles: [super-loops](../../super-loops/README.md).
+- Pi runs its issue analysis in CI on demand. A staff member's label or comment starts `/is` on a Linux, macOS or
+  Windows runner, chosen in the comment to match the report. The session runs in a directory with a random name and is
+  exported as a gist; a maintainer imports it with `/ir` and continues the same session locally. The analysis
+  proposes, and changes nothing.
 
 ## Agent step
 
 A judge routes the signals that rules cannot. It gets the signal and the open items, and returns a Verdict with the
-super-loop, the reason, and the duplicate if there is one. It is calibrated on signals a person routed (H5), and it
+super-loop, the reason, and the duplicate if there is one. It posts, labels and closes nothing. It is calibrated on signals a person routed (H5), and it
 routes on its own only once it is `gate` ([agent-calibration](../agent-calibration/card.md)); until then it proposes,
 and a person decides.

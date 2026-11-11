@@ -9,8 +9,11 @@ stages: [local, ci]
 speed: [minutes]
 needs: []
 agent: [reviewer]
-related: [bug-failing-test-fix, acceptance-loop, release-confirmation, exploratory-testing]
+related: [bug-failing-test-fix, acceptance-loop, release-confirmation, exploratory-testing, scripted-model-tests]
 links:
+  - title: "Regression tests named by issue"
+    url: "https://github.com/earendil-works/pi/tree/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/packages/coding-agent/test/suite/regressions"
+    author: "pi (earendil-works)"
   - title: "Harness engineering: leveraging Codex in an agent-first world"
     url: "https://openai.com/index/harness-engineering/"
     author: "OpenAI"
@@ -38,7 +41,8 @@ them.
 ## Set up
 
 - **Problems have ids**, from the error tracker or the issue tracker, and each reproduction is tagged with its
-  problem's id.
+  problem's id. The id can be the file name: pi names its regression tests `<issue>-<what>.test.ts`, 93 of them in
+  one folder, so `run` finds a problem's reproduction without a separate index.
 - **Red first.** The reproduction's run from before the fix is kept: a CI job on the commit that adds the
   reproduction, or a run in the task's evidence. The gate compares this run with the run after the fix.
 - **A protected suite.** The agent fixing the problem cannot change the other tests: a PreToolUse hook denies its
@@ -58,6 +62,8 @@ them.
   for a bug. This gate checks the record that loop leaves: red before the fix, green after it, no other test
   weakened, and a bug no test can catch handed to the confirmation.
 - It is to remediation what the [acceptance loop](../acceptance-loop/card.md) is to delivery.
+- When the problem is in code around a model, the reproduction runs against a scripted model, so it fails the same
+  way every time ([scripted-model-tests](../scripted-model-tests/card.md)).
 
 ## Agent step
 

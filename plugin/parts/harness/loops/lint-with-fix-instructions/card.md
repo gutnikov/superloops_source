@@ -8,7 +8,7 @@ places: [delivery/work, remediation/work, maintenance/work]
 stages: [commit, ci]
 speed: [seconds]
 needs: []
-related: [taste-invariants, architecture-fitness-functions, pre-commit-pre-push]
+related: [taste-invariants, architecture-fitness-functions, pre-commit-pre-push, tool-use-telemetry]
 links:
   - title: "Maintainability sensors for coding agents"
     url: "https://martinfowler.com/articles/sensors-for-coding-agents.html"
@@ -19,6 +19,12 @@ links:
   - title: "ESLint: Custom Formatters"
     url: "https://eslint.org/docs/latest/extend/custom-formatters"
     author: "ESLint"
+  - title: "edit-diff.ts: the edit tool's errors"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/packages/coding-agent/src/core/tools/edit-diff.ts"
+    author: "pi (earendil-works)"
+  - title: "agent-loop.ts: tool calls from a truncated response"
+    url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/packages/agent/src/agent-loop.ts#L478-L513"
+    author: "pi (earendil-works)"
 ---
 
 ## Why
@@ -66,3 +72,9 @@ violation with a comment that gives the reason.
 - Böckeler calls the extra context in lint messages "a good kind of prompt injection".
 - The size rules "weren't even active in ESLint's default preset" (Böckeler); she had to configure their maximums
   first.
+- The same holds for the errors of the agent's own tools: custom tools, MCP servers, hooks. Pi's edit tool answers a
+  match that is not unique with "Found N occurrences of the text in <path>. The text must be unique. Please provide
+  more context to make it unique.", and overlapping edits with "Merge them into one edit or target disjoint regions."
+  When the model's output was cut off by the token limit, pi runs none of its tool calls and answers each with
+  "Re-issue the tool call with complete arguments." [tool-use-telemetry](../tool-use-telemetry/card.md) counts how
+  often each such error comes back.
