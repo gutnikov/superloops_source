@@ -12,8 +12,7 @@ terms:
   - term: loop group
     meaning: "a group of loop types in the catalog, one folder of plugin/parts/harness/loop-types/, such as testing or security"
   - term: super-loop
-    meaning: "the path a piece of work takes from its entry to a change confirmed where it is used: delivery, remediation, maintenance or discovery"
-    not: [superloop]
+    meaning: "the path a piece of work takes from its entry to a change confirmed where it is used: delivery, remediation, maintenance or discovery; SuperLoop in a name"
   - term: phase
     meaning: "one step of a super-loop: entry, oracle, work, gate, release or confirmation"
   - term: place
