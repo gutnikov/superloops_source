@@ -1,0 +1,1259 @@
+{
+  "version": 1,
+  "about": "The superloops wizard: the questions a person answers before the first /superloops, and which loop types each answer brings in. `loops` are added to the project's plan; `suggest` are listed for later, to build when a failure shows that the project needs them. `wizard.py check` validates this file against the catalog; `wizard.py resolve` turns a set of answers into a profile and a plan.",
+  "core": {
+    "prompt": "steps/wizard-core.md",
+    "loops": [
+      "build",
+      "lint-with-fix-instructions",
+      "red-green-tdd",
+      "stop-hook",
+      "autoformat-hook",
+      "secret-scanning",
+      "dependency-scanning-sbom",
+      "bug-failing-test-fix",
+      "stall-detector",
+      "risky-action-gates",
+      "plan-approval",
+      "correction-becomes-rule"
+    ]
+  },
+  "bundles": [
+    {
+      "id": "verify",
+      "type": "build",
+      "title": "verify: build, types, lint and tests in one command, before every stop and in CI",
+      "covers": [
+        "build",
+        "type-check",
+        "lint-with-fix-instructions",
+        "red-green-tdd",
+        "stop-hook"
+      ],
+      "why": "One command over the project's build, type check, lint and tests, run by the Stop hook before the agent ends its turn and by CI where the agent cannot change it. One loop, not five: the harness's rule \"The cheapest form that catches the failure\"."
+    }
+  ],
+  "order": [
+    "verify",
+    "risky-action-gates",
+    "autoformat-hook",
+    "secret-scanning",
+    "e2e-browser",
+    "agentic-manual-testing",
+    "scripted-model-tests",
+    "llm-evals",
+    "integration-tests-emulators",
+    "run-tests-first",
+    "ci-clean-infra",
+    "pre-commit-pre-push",
+    "stall-detector",
+    "plan-approval",
+    "dependency-scanning-sbom",
+    "bug-failing-test-fix",
+    "reproduction-gate",
+    "taste-invariants",
+    "sast",
+    "dependency-updates",
+    "benchmarks-vs-baseline",
+    "db-migration-lint",
+    "api-breaking-changes",
+    "approved-fixtures",
+    "config-validation",
+    "i18n-pseudolocalization",
+    "health-checks-smoke",
+    "error-tracking",
+    "release-confirmation",
+    "human-diff-review",
+    "verification-subagent",
+    "agent-code-review",
+    "progress-file-feature-list",
+    "agent-ci-hardening",
+    "triage",
+    "correction-becomes-rule"
+  ],
+  "first_wave": 5,
+  "steps": [
+    {
+      "id": "phase",
+      "title": "Phase",
+      "question": "Is the project new, or does it already have code?",
+      "multi": false,
+      "required": true,
+      "prompt": "steps/wizard-phase.md",
+      "options": [
+        {
+          "id": "new",
+          "label": "From scratch",
+          "description": "No code yet, or a fresh skeleton",
+          "loops": [],
+          "suggest": [
+            "interview",
+            "task-restatement",
+            "architecture-fitness-functions",
+            "acceptance-loop"
+          ]
+        },
+        {
+          "id": "existing",
+          "label": "Existing project",
+          "description": "Code, tests and history already exist",
+          "loops": [
+            "run-tests-first"
+          ],
+          "suggest": [
+            "behaviour-invariance",
+            "dependency-updates",
+            "approved-fixtures",
+            "code-coverage"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kind",
+      "title": "Type",
+      "question": "What does the project ship? Pick every part it has.",
+      "multi": true,
+      "required": true,
+      "prompt": "steps/wizard-kind.md",
+      "options": [
+        {
+          "id": "web",
+          "label": "Web app",
+          "description": "Pages or a single-page app in a browser",
+          "loops": [
+            "e2e-browser"
+          ],
+          "suggest": [
+            "browser-console-devtools",
+            "visual-screenshot-check",
+            "accessibility-checks",
+            "bundle-size-budget",
+            "lighthouse-ci"
+          ],
+          "profile": {
+            "kind": [
+              "web"
+            ]
+          }
+        },
+        {
+          "id": "mobile",
+          "label": "Mobile app",
+          "description": "iOS, Android, React Native, Flutter",
+          "loops": [
+            "agentic-manual-testing"
+          ],
+          "suggest": [
+            "approved-fixtures",
+            "platform-matrix",
+            "accessibility-tree-navigation"
+          ],
+          "profile": {
+            "kind": [
+              "mobile"
+            ]
+          }
+        },
+        {
+          "id": "cli",
+          "label": "CLI tool",
+          "description": "A command-line program or a terminal UI",
+          "loops": [
+            "agentic-manual-testing"
+          ],
+          "suggest": [
+            "approved-fixtures",
+            "terminal-ui-tmux",
+            "executable-docs",
+            "platform-matrix"
+          ],
+          "profile": {
+            "kind": [
+              "library"
+            ]
+          }
+        },
+        {
+          "id": "library",
+          "label": "Library or SDK",
+          "description": "A package other code imports",
+          "loops": [],
+          "suggest": [
+            "api-breaking-changes",
+            "property-based-tests",
+            "executable-docs",
+            "platform-matrix"
+          ],
+          "profile": {
+            "kind": [
+              "library"
+            ]
+          }
+        },
+        {
+          "id": "api",
+          "label": "API",
+          "description": "HTTP, gRPC or GraphQL that clients call",
+          "loops": [
+            "agentic-manual-testing"
+          ],
+          "suggest": [
+            "api-breaking-changes",
+            "contract-tests",
+            "structured-logs"
+          ],
+          "profile": {
+            "kind": [
+              "api"
+            ]
+          }
+        },
+        {
+          "id": "service",
+          "label": "Backend service or worker",
+          "description": "Jobs, consumers, schedulers without a public API",
+          "loops": [
+            "agentic-manual-testing"
+          ],
+          "suggest": [
+            "structured-logs",
+            "fault-injection",
+            "config-validation"
+          ],
+          "profile": {
+            "kind": [
+              "api"
+            ]
+          }
+        },
+        {
+          "id": "bot",
+          "label": "Chat bot",
+          "description": "Telegram, Slack, Discord",
+          "loops": [
+            "agentic-manual-testing"
+          ],
+          "suggest": [
+            "approved-fixtures",
+            "integration-tests-emulators",
+            "structured-logs"
+          ],
+          "profile": {
+            "kind": [
+              "api"
+            ]
+          }
+        },
+        {
+          "id": "agent",
+          "label": "AI agent or LLM app",
+          "description": "The product calls a model and acts on its answers",
+          "loops": [
+            "llm-evals",
+            "scripted-model-tests"
+          ],
+          "suggest": [
+            "prompt-snapshots",
+            "ai-judges-telemetry",
+            "llm-judge-calibration"
+          ],
+          "profile": {
+            "kind": [
+              "llm"
+            ]
+          }
+        },
+        {
+          "id": "data",
+          "label": "Data pipeline",
+          "description": "ETL, batch jobs, notebooks that ship",
+          "loops": [
+            "approved-fixtures"
+          ],
+          "suggest": [
+            "property-based-tests",
+            "config-validation"
+          ],
+          "profile": {
+            "kind": [
+              "data"
+            ]
+          }
+        },
+        {
+          "id": "infra",
+          "label": "Infrastructure as code",
+          "description": "Terraform, Helm, Pulumi, Ansible",
+          "loops": [
+            "config-validation"
+          ],
+          "suggest": [
+            "sast"
+          ],
+          "profile": {
+            "kind": [
+              "infra"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "stack",
+      "title": "Stack",
+      "question": "Which languages is it written in?",
+      "multi": true,
+      "required": true,
+      "prompt": "steps/wizard-stack.md",
+      "options": [
+        {
+          "id": "typescript",
+          "label": "TypeScript / JavaScript",
+          "description": "Node, Bun, Deno, the browser",
+          "loops": [
+            "type-check"
+          ],
+          "suggest": []
+        },
+        {
+          "id": "python",
+          "label": "Python",
+          "description": "",
+          "loops": [
+            "type-check"
+          ],
+          "suggest": [
+            "property-based-tests"
+          ]
+        },
+        {
+          "id": "go",
+          "label": "Go",
+          "description": "",
+          "loops": [],
+          "suggest": [
+            "lsp-diagnostics"
+          ]
+        },
+        {
+          "id": "jvm",
+          "label": "Java / Kotlin",
+          "description": "",
+          "loops": [],
+          "suggest": [
+            "lsp-diagnostics",
+            "architecture-fitness-functions"
+          ]
+        },
+        {
+          "id": "rust",
+          "label": "Rust",
+          "description": "",
+          "loops": [],
+          "suggest": [
+            "lsp-diagnostics"
+          ]
+        },
+        {
+          "id": "swift",
+          "label": "Swift",
+          "description": "",
+          "loops": [],
+          "suggest": []
+        },
+        {
+          "id": "csharp",
+          "label": "C#",
+          "description": "",
+          "loops": [],
+          "suggest": [
+            "lsp-diagnostics"
+          ]
+        },
+        {
+          "id": "ruby",
+          "label": "Ruby",
+          "description": "",
+          "loops": [],
+          "suggest": [
+            "type-check"
+          ]
+        },
+        {
+          "id": "php",
+          "label": "PHP",
+          "description": "",
+          "loops": [],
+          "suggest": [
+            "type-check"
+          ]
+        },
+        {
+          "id": "other",
+          "label": "Something else",
+          "description": "",
+          "loops": [],
+          "suggest": []
+        }
+      ]
+    },
+    {
+      "id": "surfaces",
+      "title": "Works with",
+      "question": "What does the code work with? Pick all that apply.",
+      "multi": true,
+      "required": false,
+      "prompt": "steps/wizard-surfaces.md",
+      "options": [
+        {
+          "id": "database",
+          "label": "A database with migrations",
+          "description": "",
+          "loops": [
+            "integration-tests-emulators",
+            "db-migration-lint"
+          ],
+          "suggest": [
+            "backup-restore-rollback"
+          ]
+        },
+        {
+          "id": "queue",
+          "label": "Queues or caches",
+          "description": "Kafka, RabbitMQ, Redis, SQS",
+          "loops": [
+            "integration-tests-emulators"
+          ],
+          "suggest": [
+            "fault-injection"
+          ]
+        },
+        {
+          "id": "external-apis",
+          "label": "Third-party APIs",
+          "description": "Payments, email, maps, other services",
+          "loops": [],
+          "suggest": [
+            "fault-injection",
+            "contract-tests"
+          ]
+        },
+        {
+          "id": "public-api",
+          "label": "An API others depend on",
+          "description": "A published schema, SDK users, other teams",
+          "loops": [
+            "api-breaking-changes"
+          ],
+          "suggest": [
+            "contract-tests",
+            "executable-docs",
+            "changelog-audit"
+          ]
+        },
+        {
+          "id": "translations",
+          "label": "A UI in several languages",
+          "description": "",
+          "loops": [
+            "i18n-pseudolocalization"
+          ],
+          "suggest": [
+            "translation-sync"
+          ]
+        },
+        {
+          "id": "llm-calls",
+          "label": "Calls to an LLM",
+          "description": "Prompts in the product, even if it is not an agent",
+          "loops": [
+            "llm-evals",
+            "scripted-model-tests"
+          ],
+          "suggest": [
+            "prompt-snapshots"
+          ]
+        },
+        {
+          "id": "money",
+          "label": "Money, permissions or regulated data",
+          "description": "Rules that cost real money or trust when wrong",
+          "loops": [],
+          "suggest": [
+            "acceptance-loop",
+            "property-based-tests",
+            "mutation-testing",
+            "security-review-agent"
+          ]
+        },
+        {
+          "id": "none",
+          "label": "None of these",
+          "description": "",
+          "exclusive": true,
+          "loops": [],
+          "suggest": []
+        }
+      ]
+    },
+    {
+      "id": "checks",
+      "title": "Dev",
+      "question": "Where do the project's checks run today?",
+      "multi": true,
+      "required": true,
+      "prompt": "steps/wizard-checks.md",
+      "options": [
+        {
+          "id": "local-only",
+          "label": "Only on a developer's machine",
+          "description": "No CI yet",
+          "exclusive": true,
+          "loops": [
+            "pre-commit-pre-push"
+          ],
+          "suggest": []
+        },
+        {
+          "id": "github-actions",
+          "label": "GitHub Actions",
+          "description": "",
+          "loops": [
+            "ci-clean-infra"
+          ],
+          "suggest": [
+            "platform-matrix",
+            "check-incubation"
+          ],
+          "profile": {
+            "stages": [
+              "ci"
+            ],
+            "tools": {
+              "ci": "GitHub Actions via gh"
+            }
+          }
+        },
+        {
+          "id": "gitlab-ci",
+          "label": "GitLab CI",
+          "description": "",
+          "loops": [
+            "ci-clean-infra"
+          ],
+          "suggest": [
+            "platform-matrix",
+            "check-incubation"
+          ],
+          "profile": {
+            "stages": [
+              "ci"
+            ],
+            "tools": {
+              "ci": "GitLab CI via glab"
+            }
+          }
+        },
+        {
+          "id": "other-ci",
+          "label": "Another CI",
+          "description": "Jenkins, CircleCI, Buildkite, TeamCity",
+          "loops": [
+            "ci-clean-infra"
+          ],
+          "suggest": [
+            "platform-matrix",
+            "check-incubation"
+          ],
+          "profile": {
+            "stages": [
+              "ci"
+            ],
+            "tools": {
+              "ci": "the CI's API or CLI (confirm)"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "release",
+      "title": "Release",
+      "question": "Where does a change go after it is merged?",
+      "multi": true,
+      "required": true,
+      "prompt": "steps/wizard-release.md",
+      "options": [
+        {
+          "id": "none",
+          "label": "Nowhere yet",
+          "description": "Not deployed or published",
+          "exclusive": true,
+          "loops": [],
+          "suggest": []
+        },
+        {
+          "id": "preview",
+          "label": "A preview per pull request",
+          "description": "Vercel, Netlify, review apps",
+          "loops": [],
+          "suggest": [
+            "preview-environments",
+            "dast",
+            "lighthouse-ci"
+          ],
+          "profile": {
+            "stages": [
+              "preview"
+            ]
+          }
+        },
+        {
+          "id": "staging",
+          "label": "Staging",
+          "description": "",
+          "loops": [
+            "health-checks-smoke"
+          ],
+          "suggest": [
+            "exploratory-testing",
+            "load-testing"
+          ],
+          "profile": {
+            "stages": [
+              "staging"
+            ]
+          }
+        },
+        {
+          "id": "production",
+          "label": "Production",
+          "description": "Real users",
+          "loops": [
+            "health-checks-smoke"
+          ],
+          "suggest": [
+            "release-confirmation",
+            "canary-feature-flags",
+            "structured-logs",
+            "slo-degradation"
+          ],
+          "profile": {
+            "stages": [
+              "production"
+            ]
+          }
+        },
+        {
+          "id": "app-store",
+          "label": "An app store",
+          "description": "App Store, Google Play, TestFlight",
+          "loops": [],
+          "suggest": [
+            "platform-matrix",
+            "exploratory-testing"
+          ],
+          "profile": {
+            "stages": [
+              "staging",
+              "production"
+            ]
+          }
+        },
+        {
+          "id": "package-registry",
+          "label": "A package registry",
+          "description": "npm, PyPI, Maven, crates.io",
+          "loops": [
+            "api-breaking-changes"
+          ],
+          "suggest": [
+            "changelog-audit",
+            "platform-matrix"
+          ],
+          "profile": {
+            "stages": [
+              "production"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "title": "Tools",
+      "question": "Which of these can the agent use from its session (a CLI, an MCP server, an API)?",
+      "multi": true,
+      "required": false,
+      "prompt": "steps/wizard-tools.md",
+      "options": [
+        {
+          "id": "github-cli",
+          "label": "GitHub (gh)",
+          "description": "",
+          "loops": [],
+          "suggest": [],
+          "profile": {
+            "tools": {
+              "ci": "GitHub via gh",
+              "tracker": "GitHub Issues via gh"
+            }
+          }
+        },
+        {
+          "id": "gitlab-cli",
+          "label": "GitLab (glab)",
+          "description": "",
+          "loops": [],
+          "suggest": [],
+          "profile": {
+            "tools": {
+              "ci": "GitLab via glab",
+              "tracker": "GitLab Issues via glab"
+            }
+          }
+        },
+        {
+          "id": "sentry",
+          "label": "Sentry or another error tracker",
+          "description": "Bugsnag, Crashlytics, Rollbar",
+          "loops": [],
+          "suggest": [],
+          "profile": {
+            "tools": {
+              "errors": "Sentry (confirm the access)"
+            }
+          }
+        },
+        {
+          "id": "posthog",
+          "label": "PostHog or product analytics",
+          "description": "Amplitude, Mixpanel",
+          "loops": [],
+          "suggest": [
+            "production-users"
+          ],
+          "profile": {
+            "tools": {
+              "metrics": "product analytics (confirm the access)"
+            }
+          }
+        },
+        {
+          "id": "grafana",
+          "label": "Grafana or Prometheus",
+          "description": "",
+          "loops": [],
+          "suggest": [
+            "metrics-promql",
+            "slo-degradation"
+          ],
+          "profile": {
+            "tools": {
+              "metrics": "Grafana / Prometheus (confirm the access)"
+            }
+          }
+        },
+        {
+          "id": "logs",
+          "label": "A log store",
+          "description": "Datadog, Loki, Elasticsearch, CloudWatch",
+          "loops": [],
+          "suggest": [
+            "structured-logs"
+          ],
+          "profile": {
+            "tools": {
+              "logs": "(confirm which and how)"
+            }
+          }
+        },
+        {
+          "id": "otel",
+          "label": "OpenTelemetry traces",
+          "description": "Jaeger, Tempo, Honeycomb",
+          "loops": [],
+          "suggest": [
+            "traces-opentelemetry",
+            "perf-budgets-telemetry"
+          ],
+          "profile": {
+            "tools": {
+              "traces": "(confirm which and how)"
+            }
+          }
+        },
+        {
+          "id": "browser",
+          "label": "A browser the agent drives",
+          "description": "Playwright, Chrome DevTools MCP",
+          "loops": [],
+          "suggest": [
+            "browser-console-devtools",
+            "visual-screenshot-check"
+          ],
+          "profile": {
+            "tools": {
+              "browser": "(confirm which)"
+            }
+          }
+        },
+        {
+          "id": "simulator",
+          "label": "A mobile simulator",
+          "description": "iOS Simulator, adb",
+          "loops": [],
+          "suggest": [],
+          "profile": {
+            "tools": {
+              "browser": "mobile simulator (confirm which)"
+            }
+          }
+        },
+        {
+          "id": "deploy",
+          "label": "A deploy the agent can start",
+          "description": "kubectl, helm, Vercel CLI, a CI job",
+          "loops": [],
+          "suggest": [
+            "canary-feature-flags",
+            "backup-restore-rollback"
+          ],
+          "profile": {
+            "tools": {
+              "deploy": "(confirm which and how)"
+            }
+          }
+        },
+        {
+          "id": "tracker",
+          "label": "An issue tracker",
+          "description": "Jira, Linear, GitHub Issues",
+          "loops": [],
+          "suggest": [
+            "triage"
+          ],
+          "profile": {
+            "tools": {
+              "tracker": "(confirm which and how)"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "team",
+      "title": "Team",
+      "question": "Who works on the project?",
+      "multi": false,
+      "required": true,
+      "prompt": "steps/wizard-team.md",
+      "options": [
+        {
+          "id": "solo",
+          "label": "One person",
+          "description": "",
+          "loops": [],
+          "suggest": [
+            "sample-audit"
+          ]
+        },
+        {
+          "id": "team",
+          "label": "A team",
+          "description": "Pull requests reviewed by people",
+          "loops": [
+            "human-diff-review"
+          ],
+          "suggest": [
+            "agent-code-review",
+            "taste-invariants",
+            "architecture-fitness-functions"
+          ]
+        },
+        {
+          "id": "open-source",
+          "label": "An open-source project",
+          "description": "Outside contributors, public issues",
+          "loops": [
+            "human-diff-review",
+            "triage"
+          ],
+          "suggest": [
+            "agent-ci-hardening",
+            "check-incubation",
+            "taste-invariants"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "autonomy",
+      "title": "Autonomy",
+      "question": "How far may the agent go without asking?",
+      "multi": false,
+      "required": true,
+      "prompt": "steps/wizard-autonomy.md",
+      "options": [
+        {
+          "id": "ask",
+          "label": "Ask before every change",
+          "description": "The agent proposes; a person applies",
+          "loops": [],
+          "suggest": [
+            "task-restatement",
+            "choose-from-options"
+          ],
+          "profile": {
+            "autonomy": "ask"
+          }
+        },
+        {
+          "id": "branch",
+          "label": "Work on a branch, open a pull request",
+          "description": "A person merges",
+          "loops": [],
+          "suggest": [
+            "agent-code-review",
+            "result-demo"
+          ],
+          "profile": {
+            "autonomy": "branch"
+          }
+        },
+        {
+          "id": "merge",
+          "label": "Merge when the gates are green",
+          "description": "A person releases",
+          "loops": [
+            "verification-subagent",
+            "agent-code-review"
+          ],
+          "suggest": [
+            "sample-audit",
+            "agent-audit-trail"
+          ],
+          "profile": {
+            "autonomy": "merge"
+          }
+        },
+        {
+          "id": "deploy",
+          "label": "Merge and release",
+          "description": "A person is asked only for what cannot be undone",
+          "loops": [
+            "verification-subagent",
+            "agent-code-review"
+          ],
+          "suggest": [
+            "sample-audit",
+            "canary-feature-flags",
+            "approval-reviewer-agent"
+          ],
+          "profile": {
+            "autonomy": "deploy"
+          }
+        }
+      ]
+    },
+    {
+      "id": "runs",
+      "title": "Agent runs",
+      "question": "How does the agent run?",
+      "multi": true,
+      "required": false,
+      "prompt": "steps/wizard-runs.md",
+      "options": [
+        {
+          "id": "interactive",
+          "label": "In a session a person watches",
+          "description": "",
+          "loops": [],
+          "suggest": [
+            "observe-and-interrupt",
+            "escalation-on-uncertainty"
+          ]
+        },
+        {
+          "id": "background",
+          "label": "Long tasks on its own",
+          "description": "Hours, /goal, headless, several sessions",
+          "loops": [
+            "progress-file-feature-list"
+          ],
+          "suggest": [
+            "isolated-environment",
+            "approval-reviewer-agent",
+            "async-questions-with-assumptions"
+          ]
+        },
+        {
+          "id": "ci-bots",
+          "label": "In CI, on issues and pull requests",
+          "description": "Triage, review or fix bots",
+          "loops": [
+            "agent-ci-hardening"
+          ],
+          "suggest": [
+            "triage",
+            "repo-health-agent"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pains",
+      "title": "Catch first",
+      "question": "What goes wrong most often now, or worries you most?",
+      "multi": true,
+      "required": false,
+      "prompt": "steps/wizard-pains.md",
+      "options": [
+        {
+          "id": "breaks-build",
+          "label": "The agent's changes break the build or the tests",
+          "description": "",
+          "loops": [],
+          "suggest": [
+            "pre-commit-pre-push"
+          ],
+          "profile": {
+            "pains": [
+              "breaks-build: delivery/work — named in the wizard"
+            ]
+          }
+        },
+        {
+          "id": "not-really-working",
+          "label": "Tests pass, but the feature does not work for real",
+          "description": "",
+          "loops": [
+            "verification-subagent"
+          ],
+          "suggest": [
+            "acceptance-loop",
+            "agentic-manual-testing"
+          ],
+          "profile": {
+            "pains": [
+              "not-really-working: delivery/work — named in the wizard"
+            ]
+          }
+        },
+        {
+          "id": "conventions",
+          "label": "The code ignores our conventions or architecture",
+          "description": "",
+          "loops": [
+            "taste-invariants"
+          ],
+          "suggest": [
+            "architecture-fitness-functions",
+            "agent-code-review"
+          ],
+          "profile": {
+            "pains": [
+              "conventions: delivery/work — named in the wizard"
+            ]
+          }
+        },
+        {
+          "id": "escapes",
+          "label": "Bugs reach staging or production",
+          "description": "",
+          "loops": [
+            "reproduction-gate"
+          ],
+          "suggest": [
+            "release-confirmation",
+            "error-tracking"
+          ],
+          "profile": {
+            "pains": [
+              "escapes: delivery/confirmation — named in the wizard"
+            ]
+          }
+        },
+        {
+          "id": "aging",
+          "label": "Dependencies fall behind, and updates break things",
+          "description": "",
+          "loops": [
+            "dependency-updates"
+          ],
+          "suggest": [
+            "behaviour-invariance"
+          ],
+          "profile": {
+            "pains": [
+              "aging: maintenance/gate — named in the wizard"
+            ]
+          }
+        },
+        {
+          "id": "security",
+          "label": "Vulnerabilities, secrets, licenses",
+          "description": "",
+          "loops": [
+            "sast"
+          ],
+          "suggest": [
+            "security-review-agent",
+            "license-check"
+          ],
+          "profile": {
+            "pains": [
+              "security: delivery/work — named in the wizard"
+            ]
+          }
+        },
+        {
+          "id": "performance",
+          "label": "It gets slower or heavier",
+          "description": "",
+          "loops": [
+            "benchmarks-vs-baseline"
+          ],
+          "suggest": [
+            "bundle-size-budget",
+            "perf-budgets-telemetry",
+            "load-testing",
+            "profiling"
+          ],
+          "profile": {
+            "pains": [
+              "performance: delivery/work — named in the wizard"
+            ]
+          }
+        },
+        {
+          "id": "compatibility",
+          "label": "It breaks clients: the API, a schema, migrations",
+          "description": "",
+          "loops": [
+            "api-breaking-changes"
+          ],
+          "suggest": [
+            "db-migration-lint",
+            "contract-tests",
+            "platform-matrix"
+          ],
+          "profile": {
+            "pains": [
+              "compatibility: delivery/work — named in the wizard"
+            ]
+          }
+        },
+        {
+          "id": "agent-loops",
+          "label": "The agent goes in circles, or says done too early",
+          "description": "",
+          "loops": [
+            "verification-subagent"
+          ],
+          "suggest": [
+            "tool-use-telemetry"
+          ],
+          "profile": {
+            "pains": [
+              "not-really-working: delivery/gate — the agent claims done; named in the wizard"
+            ]
+          }
+        },
+        {
+          "id": "none-yet",
+          "label": "Nothing yet",
+          "description": "",
+          "exclusive": true,
+          "loops": [],
+          "suggest": []
+        }
+      ]
+    },
+    {
+      "id": "provider",
+      "title": "Provider",
+      "question": "Which coding agent will work on the project?",
+      "multi": true,
+      "required": true,
+      "prompt": "steps/wizard-provider.md",
+      "options": [
+        {
+          "id": "claude-code",
+          "label": "Claude Code",
+          "description": "",
+          "loops": [],
+          "suggest": [
+            "skill-trigger-eval"
+          ]
+        },
+        {
+          "id": "codex",
+          "label": "Codex",
+          "description": "",
+          "loops": [],
+          "suggest": []
+        },
+        {
+          "id": "other",
+          "label": "Another agent",
+          "description": "Gemini CLI, opencode, Cursor",
+          "loops": [],
+          "suggest": []
+        }
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "if": {
+        "release": [
+          "production"
+        ],
+        "tools": [
+          "sentry"
+        ]
+      },
+      "loops": [
+        "error-tracking"
+      ],
+      "why": "Production and an error tracker the agent can read: the top errors after a release are the cheapest signal that a change broke something."
+    },
+    {
+      "if": {
+        "release": [
+          "production"
+        ],
+        "autonomy": [
+          "deploy"
+        ],
+        "tools": [
+          "logs",
+          "grafana",
+          "sentry",
+          "otel"
+        ]
+      },
+      "loops": [
+        "release-confirmation"
+      ],
+      "why": "The agent releases on its own, so something must judge each release where it runs: the change happened and nothing got worse."
+    },
+    {
+      "if": {
+        "kind": [
+          "web"
+        ],
+        "tools": [
+          "browser"
+        ]
+      },
+      "loops": [],
+      "suggest": [
+        "visual-screenshot-check"
+      ],
+      "why": "A browser the agent drives makes a screenshot against the design cheap."
+    }
+  ]
+}
