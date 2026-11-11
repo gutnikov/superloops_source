@@ -26,7 +26,7 @@ screens:
 states:
   catalogOnMain:
     given: []
-    note: "the repository at a commit of main: the catalog as it is in plugin/parts/harness (96 loop types in 12 groups, 6 super-loop cards); no site built from it yet"
+    note: "the repository at a commit of main: the catalog as it is in plugin/parts/harness: 96 loop-type cards in 12 groups, and 4 super-loop cards (delivery, discovery, maintenance, remediation; README.md and harness-level.md of super-loops/ are documents, not cards); no site built from it yet"
   siteBuilt:
     extends: catalogOnMain
     given: [LoopTypePublished, SuperLoopPublished]
@@ -108,7 +108,7 @@ slices:
     external: Cloudflare
     trigger: external
     reads: []
-    reqs: [SITE-1#4, SITE-1#5, SITE-1#6]
+    reqs: [SITE-1#4, SITE-1#5, SITE-1#6, SITE-1#7, SITE-1#8]
     command:
       name: DeploySite
       fields: {version: ext}
@@ -129,7 +129,12 @@ slices:
             - {screen: HomePage, field: Page.analytics, is: "the Cloudflare Web Analytics beacon, and no banner"}
             - {screen: LoopTypePage, field: Page.analytics, is: "the Cloudflare Web Analytics beacon, and no banner"}
             - {screen: SuperLoopPage, field: Page.analytics, is: "the Cloudflare Web Analytics beacon, and no banner"}
+            - {screen: HomePage, field: Page.stylesheets, is: "none: no linked stylesheet, no style element, no style attribute"}
             - {screen: LoopTypePage, field: Page.stylesheets, is: "none: no linked stylesheet, no style element, no style attribute"}
+            - {screen: SuperLoopPage, field: Page.stylesheets, is: "none: no linked stylesheet, no style element, no style attribute"}
+            - {screen: HomePage, field: Page.language, is: "en"}
+            - {screen: LoopTypePage, field: Page.language, is: "en"}
+            - {screen: SuperLoopPage, field: Page.language, is: "en"}
       - name: a failed deploy leaves the previous site on superloops.dev
         given: siteLive
         external: {Cloudflare: fails}
@@ -186,10 +191,11 @@ slices:
   - id: V06
     name: Page
     type: view
-    reqs: [SITE-1#5, SITE-1#7]
+    reqs: [SITE-1#5, SITE-1#7, SITE-1#8]
     read_model:
       name: Page
       fields:
         analytics: [config]
         stylesheets: [config]
+        language: [config]
     screens: [HomePage, LoopTypePage, SuperLoopPage]

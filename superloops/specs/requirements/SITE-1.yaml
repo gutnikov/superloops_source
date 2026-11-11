@@ -72,3 +72,7 @@ questions:
     reason: H1
     text: "What confirms a release: the agent opens every kind of page on superloops.dev right after the deploy, or real visits within a window, or pages indexed in Search Console?"
     answer: "Synthetic: right after the deploy the agent opens every kind of page on superloops.dev and checks the version and the content against the spec, then checks Cloudflare for errors (4xx/5xx) (the owner, 2026-11-11)."
+  - id: SITE-1?5
+    reason: H1
+    text: "super-loops/ has 4 cards (delivery, discovery, maintenance, remediation) and 2 documents without a card's frontmatter (README.md, harness-level.md). Does the site show only the 4 cards, as SITE-1#3 says, or the 2 documents as pages too?"
+    answer: "Only the 4 cards (the owner, 2026-11-11)."
