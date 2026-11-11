@@ -15,6 +15,7 @@ tools:
   ci: "GitHub via gh: gutnikov/superloops, its pull requests and issues; no workflows yet"
   tracker: "GitHub issues of gutnikov/superloops via gh"
   browser: "agent-browser 0.20.14; Playwright's Chromium headless shell"
+  deploy: "Cloudflare via wrangler 4.86.0 (npx), the owner's OAuth login: workers, pages, zone read; zone superloops.dev active (checked 2026-11-11)"
 # The spend limit in USD for evals and inferential loops; null means no limit.
 budget_usd: null
 # The spec, once it is set up (the spec part): who answers questions about requirements and approves the spec,
@@ -51,5 +52,5 @@ It is open source, so anyone can come and propose changes to the repository.
 - Commits are authored as `Alex <alx.gutnikov@gmail.com>`, never with a work address. It is the owner's pet project.
 - Changes to `plugin/`, `.claude-plugin/` and `.github/` need the owner's review (CODEOWNERS on a protected `main`);
   the owner, as an admin, may bypass it.
-- To confirm: Cloudflare deploys, Cloudflare analytics and Search Console were named in the setup; each goes into
-  `tools` once the agent has reached it with one real call.
+- To confirm: Cloudflare analytics and Search Console were named in the setup; each goes into `tools` once the
+  agent has reached it with one real call. Cloudflare deploys were reached on 2026-11-11.
