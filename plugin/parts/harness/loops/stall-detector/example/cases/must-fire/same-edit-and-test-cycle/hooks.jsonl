@@ -1,0 +1,10 @@
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Edit", "tool_input": {"file_path": "src/billing.ts", "old_string": "a", "new_string": "b"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Bash", "tool_input": {"command": "npm test"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Edit", "tool_input": {"file_path": "src/billing.ts", "old_string": "a", "new_string": "b"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Bash", "tool_input": {"command": "npm test"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Edit", "tool_input": {"file_path": "src/billing.ts", "old_string": "a", "new_string": "b"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Bash", "tool_input": {"command": "npm test"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Edit", "tool_input": {"file_path": "src/billing.ts", "old_string": "a", "new_string": "b"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Bash", "tool_input": {"command": "npm test"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Edit", "tool_input": {"file_path": "src/billing.ts", "old_string": "a", "new_string": "b"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Bash", "tool_input": {"command": "npm test"}}

@@ -1,0 +1,11 @@
+#!/bin/sh
+# The loop's check, run on one case: its only argument is the directory to check.
+# Exit 0 when the check passes, non-zero when it fires; one line per problem, `file:line: message`, saying how to fix it.
+# Replace this example check (a TODO without an issue link) with the loop's own.
+dir="$1"
+found=$(grep -rnE 'TODO(\(|:)' "$dir" | grep -vE 'TODO\(#[0-9]+\)' | sed "s|^$dir/||")
+[ -z "$found" ] && exit 0
+echo "$found" | while IFS=: read -r file line _; do
+  echo "$file:$line: a TODO without an issue: write it as TODO(#<issue>) or open the issue now"
+done
+exit 1

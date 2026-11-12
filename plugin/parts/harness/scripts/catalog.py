@@ -2,18 +2,34 @@
 """The catalog of loops (../loops) and the super-loops (../super-loops): build the index and validate both.
 
     python3 catalog.py index   write loops/index.yaml and the list of loops in loops/README.md from the cards
-    python3 catalog.py check   validate every card, the template, every super-loop and the links of the documents,
-                               and fail if index.yaml or the README's list is out of date
+    python3 catalog.py check [--base REF]
+                               validate every card, its example, the template, every super-loop and the links of
+                               the documents, and fail if index.yaml or the README's list is out of date; with
+                               --base, also fail if loops/examples-baseline.txt gained a line since REF
+    python3 catalog.py example [ID ...] [--changed REF | --all] [--runs N]
+                               run each loop's example through loops.py validate, in a scratch project: every
+                               must-fire case fires, every must-pass case passes
+    python3 catalog.py links [ID ...] [--changed REF | --all]
+                               fetch every GitHub link pinned to a commit and fail when its file or its lines do not
+                               exist; warn when a quote of the card is not in the files it links, or a link is not
+                               pinned
 
 A loop's card is loops/<id>/card.md; loops/loop.schema.json defines its frontmatter, loops/FORMAT.md the rest.
 Needs PyYAML. index.yaml holds only scalars and flow lists; strings are written as JSON, which is valid YAML, so that
 scripts/loops.py can read it without PyYAML.
 """
 import collections
+import concurrent.futures
 import json
+import os
 import pathlib
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
+import urllib.error
+import urllib.request
 
 HARNESS = pathlib.Path(__file__).resolve().parent.parent
 LOOPS = HARNESS / "loops"
@@ -23,6 +39,9 @@ INDEX = LOOPS / "index.yaml"
 README = LOOPS / "README.md"
 SUPER = HARNESS / "super-loops"
 HUMAN = LOOPS / "human-in-the-loop.md"
+BASELINE = LOOPS / "examples-baseline.txt"
+LOOPS_PY = HARNESS / "scripts" / "loops.py"
+EXAMPLE = "example"
 
 PHASES = ["entry", "oracle", "work", "gate", "release", "confirmation"]
 SUPER_SECTIONS = ("## Super-loop", "## Oracle", "## Phases", "## Gate", "## Confirmation", "## Exits", "## Trace",
@@ -432,7 +451,251 @@ def check_loop_card(path, fm, body, root, loop_phases, known):
     return errors
 
 
-def check():
+# ---------------------------------------------------------------- the example: proof that a loop can fire
+
+def project_frontmatter(text):
+    """A LOOP.md's frontmatter as loops.py reads it in a project, without PyYAML."""
+    sys.path.insert(0, str(HARNESS / "scripts"))
+    import loops as project
+    return project.frontmatter(text)
+
+
+def example_problems(folder, template=False):
+    """What keeps loops/<id>/example/ from being a loop that loops.py can validate."""
+    ex = folder / EXAMPLE
+    if not ex.is_dir():
+        return ["no %s/: a working loop with run and cases (FORMAT.md, The example), or a line in %s"
+                % (EXAMPLE, BASELINE.name)]
+    loop_md = ex / "LOOP.md"
+    if not loop_md.is_file():
+        return ["%s/LOOP.md is missing" % EXAMPLE]
+    fm = project_frontmatter(loop_md.read_text(encoding="utf-8"))
+    if not fm:
+        return ["%s/LOOP.md has no frontmatter" % EXAMPLE]
+    problems = []
+    if not template and (fm.get("id") != folder.name or fm.get("type") != folder.name):
+        problems.append("%s/LOOP.md: id and type must be %r" % (EXAMPLE, folder.name))
+    if fm.get("validation", "cases") != "cases":
+        problems.append("%s/LOOP.md: validation is %r; a loop enters the catalog with cases that run"
+                        % (EXAMPLE, fm.get("validation")))
+    run = fm.get("run") or "./run"
+    if run.startswith("./"):
+        file = ex / run[2:].split()[0]
+        if not file.is_file():
+            problems.append("%s/%s: run names a file that is not there" % (EXAMPLE, run[2:]))
+        elif not os.access(file, os.X_OK):
+            problems.append("%s/%s is not executable: chmod +x" % (EXAMPLE, run[2:]))
+    for kind in ("must-fire", "must-pass"):
+        cases = [p for p in (ex / "cases" / kind).glob("*") if p.is_dir()] if (ex / "cases" / kind).is_dir() else []
+        if not cases:
+            problems.append("%s/cases/%s/ has no case" % (EXAMPLE, kind))
+        problems += ["%s/cases/%s/%s/ is empty" % (EXAMPLE, kind, c.name) for c in cases if not any(c.iterdir())]
+    setup = ex / "setup"
+    if setup.exists() and not os.access(setup, os.X_OK):
+        problems.append("%s/setup is not executable: chmod +x" % EXAMPLE)
+    return problems
+
+
+def baseline_ids(text):
+    return [line.strip() for line in text.splitlines() if line.strip() and not line.startswith("#")]
+
+
+def git(*args, cwd=None):
+    p = subprocess.run(["git", *args], cwd=cwd or HARNESS, capture_output=True, text=True)
+    return p.stdout if p.returncode == 0 else None
+
+
+def baseline_problems(known, base=None):
+    """The baseline lists the cards that have no example yet; it only shrinks."""
+    if not BASELINE.exists():
+        return []
+    ids = baseline_ids(BASELINE.read_text(encoding="utf-8"))
+    errors = ["%s: %s is listed twice" % (BASELINE.name, i) for i, n in collections.Counter(ids).items() if n > 1]
+    if ids != sorted(ids):
+        errors.append("%s: keep the ids sorted" % BASELINE.name)
+    errors += ["%s: %s names no loop" % (BASELINE.name, i) for i in ids if i not in known]
+    errors += ["%s: %s has an example now: remove its line" % (BASELINE.name, i) for i in ids
+               if i in known and (LOOPS / i / EXAMPLE).is_dir()]
+    if base:
+        top = (git("rev-parse", "--show-toplevel") or "").strip()
+        before = git("show", "%s:%s" % (base, BASELINE.relative_to(top).as_posix()), cwd=top) if top else None
+        if before is not None:
+            added = sorted(set(ids) - set(baseline_ids(before)))
+            errors += ["%s: %s was added since %s; the baseline only shrinks, and a new loop enters with its "
+                       "example" % (BASELINE.name, i, base) for i in added]
+    return errors
+
+
+def changed_ids(base):
+    """The loop folders a change touches since REF (the merge base)."""
+    top = (git("rev-parse", "--show-toplevel") or "").strip()
+    out = git("diff", "--name-only", "%s...HEAD" % base, "--", LOOPS.relative_to(top).as_posix(), cwd=top)
+    if out is None:
+        sys.exit("git diff %s...HEAD failed: is %s fetched?" % (base, base))
+    rel = LOOPS.relative_to(top).as_posix() + "/"
+    ids = {line[len(rel):].split("/")[0] for line in out.splitlines() if line.startswith(rel) and
+           "/" in line[len(rel):]}
+    return sorted(i for i in ids if (LOOPS / i).is_dir())
+
+
+def chosen_ids(args, keep):
+    """The ids a command works on: named, changed since --changed REF, or --all."""
+    ids, i = [], 0
+    while i < len(args):
+        if args[i] == "--changed" and i + 1 < len(args):
+            ids += changed_ids(args[i + 1])
+            i += 2
+            continue
+        if args[i] == "--all":
+            ids += [p.parent.name for p in loop_cards()] + ["_template"]
+        elif args[i] == "--runs":
+            i += 1
+        elif not args[i].startswith("--"):
+            ids.append(args[i])
+        i += 1
+    return sorted(i for i in dict.fromkeys(ids) if keep(i))
+
+
+def option(args, name, default):
+    return args[args.index(name) + 1] if name in args and args.index(name) + 1 < len(args) else default
+
+
+def cmd_example(args):
+    """Run each example through loops.py validate in a scratch project."""
+    ids = chosen_ids(args, lambda i: (LOOPS / i / EXAMPLE).is_dir())
+    if not ids:
+        print("no example to run")
+        return 0
+    failed = []
+    for loop_id in ids:
+        ex = LOOPS / loop_id / EXAMPLE
+        name = "my-loop" if loop_id == "_template" else loop_id
+        with tempfile.TemporaryDirectory(prefix="example-") as tmp:
+            dest = pathlib.Path(tmp) / "superloops" / "loops" / name
+            shutil.copytree(ex, dest, symlinks=True)
+            print("## %s" % loop_id, flush=True)
+            if (dest / "setup").exists():
+                p = subprocess.run([str(dest / "setup")], cwd=dest, timeout=600)
+                if p.returncode != 0:
+                    failed.append("%s: setup exited %d" % (loop_id, p.returncode))
+                    continue
+            p = subprocess.run([sys.executable, str(LOOPS_PY), "--root", tmp, "validate", name,
+                                "--runs", option(args, "--runs", "2")])
+            if p.returncode != 0:
+                failed.append(loop_id)
+        print()
+    print("NOT VALID: %s" % ", ".join(failed) if failed else "VALID: %d examples" % len(ids))
+    return 1 if failed else 0
+
+
+# ---------------------------------------------------------------- links: pinned files and lines exist
+
+GITHUB = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)/(blob|tree)/([^/\s\"')]+)/([^\s\"')#?]+)"
+                    r"(?:#L(\d+)(?:-L(\d+))?)?")
+
+
+def fetch(url, cache={}):
+    """(status, text) of a URL; status None when it could not be reached."""
+    if url not in cache:
+        req = urllib.request.Request(url, headers={"User-Agent": "superloops-catalog-check"})
+        if url.startswith("https://api.github.com/") and os.environ.get("GITHUB_TOKEN"):
+            req.add_header("Authorization", "Bearer " + os.environ["GITHUB_TOKEN"])
+        cache[url] = (None, "")
+        for _ in range(3):
+            try:
+                with urllib.request.urlopen(req, timeout=20) as r:
+                    cache[url] = (r.status, r.read().decode("utf-8", "replace"))
+                    break
+            except urllib.error.HTTPError as e:
+                cache[url] = (e.code, "")
+                if e.code == 404:
+                    break
+            except (urllib.error.URLError, TimeoutError):
+                pass
+    return cache[url]
+
+
+def plain(text):
+    """Text with comment leaders, Markdown marks and line breaks removed, for finding a quote in it."""
+    lines = [re.sub(r"^\s*(?:#+|//+|\*+|>+|-\s)\s?", "", line) for line in text.splitlines()]
+    text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", " ".join(lines))
+    text = re.sub(r"[\"“”‘’]", "'", re.sub(r"[*_`]", "", text))
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def quotes(path):
+    """The quotes of a card, from its body and its links' notes: quote marks paired in order within a paragraph,
+    with code spans and fences left out."""
+    fm, body, _ = read(path)
+    texts = re.split(r"\n\s*\n", FENCE.sub("", body))
+    texts += [link.get("note", "") for link in (fm or {}).get("links") or [] if isinstance(link, dict)]
+    out = []
+    for text in texts:
+        text = re.sub(r"`[^`]*`", lambda m: m.group(0).replace('"', "'"), str(text))
+        marks = [m.start() for m in re.finditer(r'["“”]', text)]
+        if len(marks) % 2:
+            continue
+        out += [text[a + 1:b] for a, b in zip(marks[::2], marks[1::2]) if len(text[a + 1:b]) >= 30]
+    return out
+
+
+def link_report(path):
+    """(errors, warnings) for the pinned GitHub links of one card, and its quotes against the files they link."""
+    text = path.read_text(encoding="utf-8")
+    errors, warnings, files = [], [], []
+    links = list(GITHUB.finditer(text))
+    urls = []
+    for m in links:
+        repo, kind, ref, file = m.groups()[:4]
+        if re.fullmatch(r"[0-9a-f]{40}", ref):
+            urls.append("https://api.github.com/repos/%s/contents/%s?ref=%s" % (repo, file, ref) if kind == "tree"
+                        else "https://raw.githubusercontent.com/%s/%s/%s" % (repo, ref, file))
+    with concurrent.futures.ThreadPoolExecutor(8) as pool:
+        list(pool.map(fetch, dict.fromkeys(urls)))
+    for m in links:
+        repo, kind, ref, file, first, last = m.groups()
+        if not re.fullmatch(r"[0-9a-f]{40}", ref):
+            warnings.append("%s: not pinned to a full commit sha" % m.group(0))
+            continue
+        if kind == "tree":
+            status, _ = fetch("https://api.github.com/repos/%s/contents/%s?ref=%s" % (repo, file, ref))
+        else:
+            status, body = fetch("https://raw.githubusercontent.com/%s/%s/%s" % (repo, ref, file))
+            if status == 200:
+                files.append(body)
+                n = body.count("\n") + (0 if body.endswith("\n") else 1)
+                if first and (int(last or first) > n or (last and int(last) < int(first))):
+                    errors.append("%s: lines %s-%s, but the file has %d" % (m.group(0), first, last or first, n))
+        if status == 404:
+            errors.append("%s: no such file at that commit" % m.group(0))
+        elif status != 200:
+            warnings.append("%s: could not be checked (%s)" % (m.group(0), status or "unreachable"))
+    if files:
+        haystack = plain("\n".join(files))
+        for q in quotes(path):
+            parts = [plain(x) for x in re.split(r"…|\.\.\.", q) if len(plain(x).split()) >= 4]
+            if parts and not all(part in haystack for part in parts):
+                warnings.append("quote not found in the files it links: \"%s\"" % q[:100].replace("\n", " "))
+    return errors, warnings
+
+
+def cmd_links(args):
+    ids = chosen_ids(args, lambda i: (LOOPS / i / "card.md").is_file() and not i.startswith("_"))
+    errors, warnings = [], []
+    for loop_id in ids:
+        e, w = link_report(LOOPS / loop_id / "card.md")
+        errors += ["loops/%s: %s" % (loop_id, x) for x in e]
+        warnings += ["loops/%s: %s" % (loop_id, x) for x in w]
+    for w in warnings:
+        print("warning: " + w)
+    for e in errors:
+        print(e)
+    print("%s: %d cards, %d errors, %d warnings" % ("NOT OK" if errors else "OK", len(ids), len(errors),
+                                                    len(warnings)))
+    return 1 if errors else 0
+
+
+def check(base=None):
     errors = []
     root = schema()
     loop_phases = super_loop_phases()
@@ -450,6 +713,13 @@ def check():
             places_of[path.parent.name] = [t for t in fm.get("places") or [] if isinstance(t, str)]
             if fm.get("sensor") == "human":
                 human.add(path.parent.name)
+    waiting = set(baseline_ids(BASELINE.read_text(encoding="utf-8"))) if BASELINE.exists() else set()
+    for path in paths:
+        if path.parent.name not in waiting:
+            errors += ["loops/%s: %s" % (path.parent.name, e) for e in example_problems(path.parent)]
+    if TEMPLATE.exists():
+        errors += ["loops/_template: %s" % e for e in example_problems(TEMPLATE.parent, template=True)]
+    errors += baseline_problems(known, base)
     stray = sorted(p.name for p in LOOPS.iterdir() if p.is_dir() and not p.name.startswith("_")
                    and not (p / "card.md").exists())
     errors += ["loops/%s/: a folder without card.md" % name for name in stray]
@@ -481,9 +751,13 @@ def main():
         README.write_text(updated, encoding="utf-8")
         print("wrote %s and the list in %s (%d loops)" % (INDEX, README, len(loop_cards())))
     elif cmd == "check":
-        errors = check()
+        errors = check(option(sys.argv, "--base", None))
         print("\n".join(errors) if errors else "OK: %d loops" % len(loop_cards()))
         sys.exit(1 if errors else 0)
+    elif cmd == "example":
+        sys.exit(cmd_example(sys.argv[2:]))
+    elif cmd == "links":
+        sys.exit(cmd_links(sys.argv[2:]))
     else:
         sys.exit(__doc__)
 

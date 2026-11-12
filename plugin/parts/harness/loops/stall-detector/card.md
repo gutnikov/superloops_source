@@ -164,7 +164,7 @@ without telling you". The hook denies only the spawn, and the leaf does the work
   done, the tasks left and what to do next. The tool definitions stay in that request "to preserve the provider's
   cached prefix".
 - **Silence is a stall no hook sees.** A wrapper that runs the agent unattended resets a timer on every line of
-  output: sandcastle fails the run after 10 minutes ("Agent idle for 600 seconds — no output received"). After the
+  output: sandcastle fails the run after 10 minutes ("Agent idle for N seconds — no output received", with N at 600). After the
   agent's completion signal the timer drops to 60 seconds and its end is a success with a warning, since a child
   such as `gh` or an MCP server can hold the output open, and failing there discarded "the already-committed work".
   Switch on the signal, not on a final event: sandcastle synthesizes a `result` event for every Codex and OpenCode

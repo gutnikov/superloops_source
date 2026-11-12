@@ -1,0 +1,9 @@
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}}
+{"hook_event_name": "UserPromptSubmit", "session_id": "s1", "prompt": "next task"}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}}

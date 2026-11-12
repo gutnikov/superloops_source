@@ -4,17 +4,21 @@ A loop is a check an agent runs on its own work, with a signal it can read: an e
 a screenshot, a verdict, a person's answer. Every loop has a place in the four [super-loops](../super-loops/README.md)
 (delivery, remediation, maintenance and discovery). What the catalog holds: [README.md](README.md).
 
-Each loop is one folder, `loops/<id>/`, with its card, `card.md`, and its image, if it has one. The card is the one
-description of the loop: the plugin and the site both read it, and nothing about a loop is written anywhere else.
+Each loop is one folder, `loops/<id>/`, with its card, `card.md`, its example, `example/`, and its image, if it has
+one. The card is the one description of the loop: the plugin and the site both read it, and nothing about a loop is
+written anywhere else. The example is the proof that the loop can fire: a working loop that catches the failure the
+card names and leaves correct work alone.
 
 ## Add a loop
 
 1. Copy [`_template/`](_template/card.md) to a folder named after the loop's id.
 2. Fill in the frontmatter and the sections.
-3. Run `python3 ../scripts/catalog.py index`: it adds the loop to [index.yaml](index.yaml) and to the list in
+3. Build the example ([The example](#the-example)) and run `python3 ../scripts/catalog.py example <id>` until it
+   prints VALID.
+4. Run `python3 ../scripts/catalog.py index`: it adds the loop to [index.yaml](index.yaml) and to the list in
    [README.md](README.md).
-4. Run `python3 ../scripts/catalog.py check` until it prints OK; CI runs the same check. Both need PyYAML
-   (`python3 -m pip install pyyaml`).
+5. Run `python3 ../scripts/catalog.py check` until it prints OK, and `python3 ../scripts/catalog.py links <id>`
+   until it prints no error. CI runs all three. They need PyYAML (`python3 -m pip install pyyaml`).
 
 ## The frontmatter
 
@@ -85,6 +89,40 @@ which reason of `defaults/hitl.yaml` calls the person and where the answer is wr
 `catalog.py check` fails on a sentence about the card's source, such as "the source does not say" or "the research
 cites no source".
 
+## The example
+
+`example/` is a loop the way the harness builds one in a project (`superloops/loops/<id>/`), so that
+`loops.py validate` runs it:
+
+| Path | What |
+|---|---|
+| `LOOP.md` | The loop's file, from the [template](../templates/LOOP.md): `id` and `type` are the card's id, `validation: cases`, `run`, `wiring` with what triggers it; the sections say what each case stands for |
+| `run` | Executable. Takes the directory to check as its only argument; exits 0 when the check passes, non-zero when it fires, and prints `file:line: message` or JSON that says how to fix the problem |
+| `cases/must-fire/<case>/` | At least one per kind of failure the card's `## Why` names: a small copy of a project, or the input the loop reads, that has that failure |
+| `cases/must-pass/<case>/` | At least one: correct work the loop must leave alone, including the case nearest to a failure (the same tool on twenty files, a debugging cycle with a different edit each time) |
+| `setup` | Optional, executable: installs the tools `run` calls that CI does not have, pinned to a version |
+| any other file | What `run` and the wiring need: a script, a config, the hook settings to merge |
+
+`python3 ../scripts/catalog.py example <id>` copies the folder into a scratch project, runs `setup`, and runs
+`loops.py validate`: every must-fire case fires with output, every must-pass case passes, each twice with the same
+result, within `budget_seconds`.
+
+What runs depends on who gives the signal:
+
+- **computational**: the check itself.
+- **inferential**: everything around the model, with a scripted model in its place
+  ([scripted-model-tests](scripted-model-tests/card.md)): the input the agent gets, the parsing of its answer, the
+  verdict and the exit code. Its eval cases, with the expected verdicts, are in the folder; a reviewer runs them on
+  a real model by hand, since CI holds no model key.
+- **human**: the machine side: where the person's answer is written and the `run` that reads it. Must fire: no
+  answer, or a negative one; must pass: a positive one.
+
+The example runs as code from a pull request: CI runs it on `pull_request` only, with a read-only token, no secrets
+and a time limit.
+
+[`examples-baseline.txt`](examples-baseline.txt) lists the loops that are in the catalog without an example yet. It
+only shrinks: a loop leaves it in the change that adds its example, and a new loop enters the catalog with one.
+
 ## What the check verifies
 
 `catalog.py check` fails on a card that does not match `loop.schema.json`, and on what a schema cannot say: a
@@ -92,5 +130,12 @@ sentence about the card's source ([The voice](#the-voice)); the `id` is not the 
 unknown, repeated or out of order; `agent` without `## Agent step`, or the other way round; a `speed` range with the
 slower value first; a place whose super-loop has no such phase; a `related` id or a link that names no loop; an
 image that is missing or too large; a super-loop's Phases table that does not name a loop with that place;
-[human-in-the-loop.md](human-in-the-loop.md) not listing exactly the cards with `sensor: human`. It checks the
-template as well, and fails when `index.yaml` or the list in the README is out of date.
+[human-in-the-loop.md](human-in-the-loop.md) not listing exactly the cards with `sensor: human`; a card without
+an example that is not in the baseline, an example whose `LOOP.md`, `run` or cases are missing, and, with `--base`,
+a baseline that gained a line. It checks the template as well, and fails when `index.yaml` or the list in the README
+is out of date.
+
+`catalog.py example` runs the examples; `catalog.py links` fetches every GitHub link pinned to a commit and fails
+when its file or its lines do not exist. It also warns when a quote in the card is not in the files the card links
+and when a GitHub link is not pinned to a full commit; a warning does not fail, since a card also quotes pages that
+are not on GitHub and its own messages.

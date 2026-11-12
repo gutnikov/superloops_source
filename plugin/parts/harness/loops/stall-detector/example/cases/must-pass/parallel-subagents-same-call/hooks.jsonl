@@ -1,0 +1,8 @@
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}, "agent_id": "a1", "agent_type": "explorer"}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}, "agent_id": "a2", "agent_type": "explorer"}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}, "agent_id": "a1", "agent_type": "explorer"}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}, "agent_id": "a2", "agent_type": "explorer"}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}, "agent_id": "a1", "agent_type": "explorer"}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}, "agent_id": "a2", "agent_type": "explorer"}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}, "agent_id": "a1", "agent_type": "explorer"}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": "src/app.ts"}, "agent_id": "a2", "agent_type": "explorer"}

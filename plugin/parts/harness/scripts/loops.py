@@ -97,7 +97,8 @@ def frontmatter(text):
         else:
             value = value.split(" #")[0].strip()
             if value.startswith("["):
-                value = [v.strip() for v in value[1:value.rindex("]")].split(",") if v.strip()]
+                value = [v.strip().strip('"') for v in re.findall(r'\s*("[^"]*"|[^,]+)\s*(?:,|$)',
+                                                                  value[1:value.rindex("]")]) if v.strip()]
         data[key.strip()] = value
     return data
 

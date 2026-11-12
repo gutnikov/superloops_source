@@ -1,6 +1,8 @@
 # The catalog check (plugin/parts/harness/scripts/catalog.py): every loop card matches loops/loop.schema.json and
-# loops/FORMAT.md, the super-loops agree with the cards' places, and loops/index.yaml and the list in loops/README.md
-# are up to date. The checker runs from the change itself; CODEOWNERS makes the owner review any change to it.
+# loops/FORMAT.md, has its example or a line in loops/examples-baseline.txt (which only shrinks), the super-loops
+# agree with the cards' places, and loops/index.yaml and the list in loops/README.md are up to date. On a pull
+# request, the GitHub links of the changed cards are fetched: a pinned file or line that does not exist fails.
+# The checker runs from the change itself; CODEOWNERS makes the owner review any change to it.
 name: catalog-check
 
 on:
@@ -14,11 +16,19 @@ permissions:
 jobs:
   catalog-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: python -m pip install pyyaml
-      - run: python plugin/parts/harness/scripts/catalog.py check
+      - name: Cards, examples present, baseline only shrinks
+        run: python plugin/parts/harness/scripts/catalog.py check ${{ github.event_name == 'pull_request' && format('--base origin/{0}', github.base_ref) || '' }}
       - run: python plugin/parts/wizard/scripts/wizard.py check
+      - name: Links of the changed cards
+        if: github.event_name == 'pull_request'
+        run: python plugin/parts/harness/scripts/catalog.py links --changed origin/${{ github.base_ref }}

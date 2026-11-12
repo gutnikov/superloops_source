@@ -1,0 +1,5 @@
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Grep", "tool_input": {"pattern": "TODO", "path": "src"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Grep", "tool_input": {"path": "src", "pattern": "TODO"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Grep", "tool_input": {"pattern": "TODO", "path": "src"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Grep", "tool_input": {"path": "src", "pattern": "TODO"}}
+{"hook_event_name": "PostToolUse", "session_id": "s1", "tool_name": "Grep", "tool_input": {"pattern": "TODO", "path": "src"}}
