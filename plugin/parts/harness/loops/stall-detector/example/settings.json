@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {"matcher": "*", "hooks": [{"type": "command", "command": "python3 superloops/loops/stall-detector/stall.py"}]}
+    ],
+    "PreToolUse": [
+      {"matcher": "Agent|Task", "hooks": [{"type": "command", "command": "python3 superloops/loops/stall-detector/stall.py --spawn"}]}
+    ],
+    "UserPromptSubmit": [
+      {"hooks": [{"type": "command", "command": "python3 superloops/loops/stall-detector/stall.py --reset"}]}
+    ]
+  }
+}

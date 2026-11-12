@@ -1,0 +1,11 @@
+{"hook_event_name": "PreToolUse", "session_id": "s1", "tool_name": "Agent", "tool_input": {"description": "ticket 0", "prompt": "..."}}
+{"hook_event_name": "PreToolUse", "session_id": "s1", "tool_name": "Agent", "tool_input": {"description": "ticket 1", "prompt": "..."}}
+{"hook_event_name": "PreToolUse", "session_id": "s1", "tool_name": "Agent", "tool_input": {"description": "ticket 2", "prompt": "..."}}
+{"hook_event_name": "PreToolUse", "session_id": "s1", "tool_name": "Agent", "tool_input": {"description": "ticket 3", "prompt": "..."}}
+{"hook_event_name": "PreToolUse", "session_id": "s1", "tool_name": "Agent", "tool_input": {"description": "ticket 4", "prompt": "..."}}
+{"hook_event_name": "PreToolUse", "session_id": "s1", "tool_name": "Agent", "tool_input": {"description": "ticket 5", "prompt": "..."}}
+{"hook_event_name": "PreToolUse", "session_id": "s1", "tool_name": "Agent", "tool_input": {"description": "ticket 6", "prompt": "..."}}
+{"hook_event_name": "PreToolUse", "session_id": "s1", "tool_name": "Agent", "tool_input": {"description": "ticket 7", "prompt": "..."}}
+{"hook_event_name": "PreToolUse", "session_id": "s1", "tool_name": "Agent", "tool_input": {"description": "ticket 8", "prompt": "..."}}
+{"hook_event_name": "PreToolUse", "session_id": "s1", "tool_name": "Agent", "tool_input": {"description": "ticket 9", "prompt": "..."}}
+{"hook_event_name": "PreToolUse", "session_id": "s1", "tool_name": "Agent", "tool_input": {"description": "ticket 10", "prompt": "..."}}
