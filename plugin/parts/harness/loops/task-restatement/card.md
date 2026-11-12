@@ -21,6 +21,12 @@ links:
     url: "https://code.claude.com/docs/en/goal"
     author: "Anthropic"
     note: "/goal: a separate model checks a completion condition after every turn."
+  - title: "implement SKILL.md: fetch the ticket and state its title"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/skills/engineering/implement/SKILL.md#L9"
+    author: "skills (Matt Pocock)"
+  - title: "implement.md: #2 resolved against another numbered list"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/docs/engineering/implement.md#L73-L75"
+    author: "skills (Matt Pocock)"
 ---
 
 ## Why
@@ -31,7 +37,11 @@ will not do and in the done criterion, and the person catches them there before 
 
 ## How it works
 
-Before starting work, the agent restates the task in its own words, in three parts:
+Before starting work, the agent restates the task in its own words. When the task points somewhere, to a ticket, an
+issue or a spec, the agent first fetches it from where it lives and opens the restatement with its id and title as
+fetched. Pocock: "`/implement #2` in a fresh session worked on something completely unrelated. The agent resolved
+`#2` against another numbered list in context". A reference that matches more than one item, or none, is asked about
+before anything else. Then three parts:
 
 - **I understood**: how the agent reads the task.
 - **Not doing**: what is out of scope.
@@ -43,7 +53,7 @@ correction folded in, and starts only on a "yes". After a second correction it s
 
 Example:
 
-> Task: add CSV export to the reports page.
+> Task: #482 "CSV export on the reports page" (fetched from the tracker).
 > I understood: add an "Export CSV" button that downloads the rows shown in the current table.
 > Not doing: PDF or Excel export, changes to the table layout.
 > Done when: the button downloads a CSV file with the same rows and columns as the table, and a new test checks this.
@@ -57,6 +67,9 @@ A person who also needed Excel export spots the mismatch in "Not doing" and corr
   `loops.py hitl H1 --loop task-restatement --question "<the restatement>" --answer "yes"`.
 - **The person who gave the task answers.** With the [`spec`](../../../spec/README.md) part, that is the
   `spec_approver` in `superloops/superloops.md`.
+- **The reference is resolved from the tracker named in `superloops/superloops.md`** (`tools.tracker`), never from a
+  list in the context such as a todo file or a plan's numbered steps. A full reference (`owner/repo#2`, a URL) leaves
+  no doubt; a bare number in a session that holds other numbered lists is checked against the fetched title.
 - **Skip it when done is already fixed.** An approved spec, or a failing test that says what done is, leaves nothing
   to restate.
 - **No answer, no start.** The agent may read and explore while it waits, but changes nothing. A run nobody watches

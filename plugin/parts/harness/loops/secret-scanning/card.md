@@ -15,10 +15,14 @@ links:
     author: "Birgitta Böckeler"
   - title: "Gitleaks"
     url: "https://github.com/gitleaks/gitleaks"
-    note: "the pre-commit hook, exit codes, `gitleaks:allow`, `.gitleaksignore` and baselines."
+    note: "the pre-commit hook, exit codes, `gitleaks:allow`, `.gitleaksignore`, baselines and custom rules in `.gitleaks.toml`."
   - title: "TruffleHog"
     url: "https://github.com/trufflesecurity/trufflehog"
     note: "verifying found credentials, and exit code 183 with `--fail`."
+  - title: "lint.js: the sensitive-keyword linter"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/scripts/lint.js#L245-L322"
+    author: "gemini-cli (Google)"
+    note: "unreleased model names in the changed files, a warning annotation, never a failure."
 ---
 
 ## Why
@@ -58,8 +62,8 @@ revokes and rotates it (H2).
   secret redacted, and per new allow comment or ignore line, and exits non-zero on any of them or when no report was
   written.
 - **Cases.** Must fire: a copy with a generated key in a provider's format in a config file; a copy with a private key
-  block; a copy that adds `gitleaks:allow`. Must pass: the same code reading the key from an environment variable,
-  with a placeholder in `.env.example`.
+  block; a copy that adds `gitleaks:allow`; a copy that adds a name the confidential rule lists. Must pass: the same
+  code reading the key from an environment variable, with a placeholder in `.env.example`.
 - **Out of the agent's reach.** `SKIP=gitleaks git commit` or `git commit --no-verify` skips the hook, so a PreToolUse
   hook on Bash denies both in the agent's session, and a CI job scans the PR's commits again. The CI run is the one
   that counts.
@@ -69,3 +73,9 @@ revokes and rotates it (H2).
 - Böckeler: "GitLeaks runs as part of the pre-commit hook, I consider it to be a sensor as well, as it will give the
   agent feedback when it tries to commit".
 - Other fast checks at commit time: [pre-commit-pre-push](../pre-commit-pre-push/card.md).
+- **Confidential is not only a credential.** An agent writes names it saw in training or in internal documents: an
+  unreleased model, a codename, an internal host. A custom Gitleaks rule in `.gitleaks.toml` finds them: a pattern,
+  and an allowlist of the names already public. gemini-cli's lint matches `gemini-\d+(\.\d+)?` in the changed files
+  against its released names and annotates any other match, "Found sensitive keyword "X". Please make sure this
+  change is appropriate to submit.", without failing. In the agent's `run` such a match fails like a secret, because
+  an agent does not weigh a warning; the list of public names is a reviewed file that a person extends at a release.

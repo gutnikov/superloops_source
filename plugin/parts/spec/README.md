@@ -87,8 +87,8 @@ choice between options that behave differently is H4; the approval of a requirem
 - **Do not ask what you can find out**: the ticket, its comments and links, the code, the running app, the docs.
   Every question says what you already checked.
 - **One batch per requirement file.** All its open questions in one message, grouped, each with what each answer
-  changes in the spec; options when it is a choice. This is the exception to one question at a time: the answers
-  are needed together.
+  changes in the spec; options when it is a choice. The answers are needed together, so they go in one batch, as the
+  harness's rule for independent questions says.
 - **Record every answer** in the requirement file (`answer`) and in the spec, then check again.
 - **Show, do not describe**: the trace for the key, the delta, the check output.
 

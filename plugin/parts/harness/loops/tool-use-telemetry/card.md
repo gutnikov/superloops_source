@@ -8,7 +8,7 @@ places: [harness:remediation/entry, harness:maintenance/entry]
 stages: [scheduled]
 speed: [seconds, minutes]
 needs: []
-related: [correction-becomes-rule, steering-loop, lint-with-fix-instructions]
+related: [correction-becomes-rule, steering-loop, lint-with-fix-instructions, stall-detector, skill-trigger-eval, secret-scanning]
 links:
   - title: "edit-tool-stats.mjs"
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/scripts/edit-tool-stats.mjs"
@@ -37,6 +37,15 @@ links:
     url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/session-report/skills/session-report/analyze-sessions.mjs#L386-L404"
     author: "Anthropic"
     note: "more than 100,000 uncached input tokens in one call (--cache-break)."
+  - title: "diagnosing-superpowers: scrub, audit, repeat until CLEAN, then the person approves"
+    url: "https://github.com/obra/superpowers/blob/22f0b463e7a5e579904dd6211a520321035526f7/skills/diagnosing-superpowers/SKILL.md#L55-L66"
+    author: "superpowers (obra)"
+  - title: "scrub-audit.md: the auditor's output"
+    url: "https://github.com/obra/superpowers/blob/22f0b463e7a5e579904dd6211a520321035526f7/skills/diagnosing-superpowers/prompts/scrub-audit.md#L22-L33"
+    author: "superpowers (obra)"
+  - title: "redaction-policy.md: the categories and their placeholders"
+    url: "https://github.com/obra/superpowers/blob/22f0b463e7a5e579904dd6211a520321035526f7/skills/diagnosing-superpowers/references/redaction-policy.md#L6-L19"
+    author: "superpowers (obra)"
 ---
 
 ## Why
@@ -91,8 +100,12 @@ or the guide.
 
 ## Notes
 
-- Transcripts hold prompts, code and tool output. Keep the reports local, or strip them before they leave the
-  machine.
+- **Transcripts hold prompts, code, tool output and secrets.** Keep the reports local. A bundle that must leave the
+  machine goes through superpowers' scrub loop: a scrubber replaces each sensitive value with a stable placeholder
+  by category (email, person, org id, secret, host, home path, repository, a term the person calls proprietary); a
+  separate auditor reads every file and returns `CLEAN`, or `MISSED` with `<file>:<line> — <category>` per miss and
+  never the value; the two repeat until the audit is `CLEAN`. Nothing is archived before the person approves the
+  scrub log and the file list, and since "scrubbing can miss things", the person reads every file before sharing.
 - **Tokens and the cache are a dimension too.** Anthropic's session-report plugin reads the same transcripts,
   subagents included, and counts a "cache break", a call with more than 100,000 uncached input tokens. It looks for a
   cache-hit rate under 85%, a single prompt over 2% of all tokens, subagent types that average over 1M tokens a call,

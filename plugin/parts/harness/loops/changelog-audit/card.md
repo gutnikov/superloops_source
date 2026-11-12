@@ -9,7 +9,7 @@ stages: [ci, task]
 speed: [seconds, minutes]
 needs: []
 agent: [reviewer]
-related: [api-breaking-changes]
+related: [api-breaking-changes, release-trust-boundary]
 links:
   - title: "check-released-changelogs.mjs"
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/scripts/check-released-changelogs.mjs"
@@ -18,6 +18,18 @@ links:
   - title: "/cl: audit changelog entries before release (a prompt template)"
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/.pi/prompts/cl.md"
     author: "pi (earendil-works)"
+  - title: "opencode release.ts: the edited review checked before the release starts"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/script/release.ts#L61-L114"
+    author: "opencode (anomalyco)"
+  - title: "opencode release.ts: the drafting agent's read-only permissions"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/script/release.ts#L117-L142"
+    author: "opencode (anomalyco)"
+  - title: "opencode release.ts: the prompt, from diffs to the public surface audit"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/script/release.ts#L176-L227"
+    author: "opencode (anomalyco)"
+  - title: "opencode plan-release.sh: no stable release without notes"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.github/release/plan-release.sh#L23-L25"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -30,7 +42,7 @@ entry, and the released sections are compared with what was released.
 
 ## How it works
 
-Two checks:
+Two checks, and a draft where the notes are written at release time:
 
 1. **Released sections are fixed.** A script compares every released section of each package's changelog with the
    same file at the newest release tag. A difference fails with the changed lines and the fix: "Released sections
@@ -40,6 +52,11 @@ Two checks:
    doc-only changes, release housekeeping, and regenerated files with no change users see. A change in a lower-level
    package that users see needs an entry in the user-facing package's changelog too. The reviewer lists the commits
    without entries and the entries to copy, and the working agent adds them.
+3. **Notes written at release time come from the diffs.** Where the changelog is written when the release is cut,
+   the reviewer drafts it from each commit's diff: opencode's prompt, "Do not rely only on commit titles" and "Never
+   invent, guess, or embellish". After the notes it writes a public surface audit, one heading per surface (HTTP
+   API, Plugin API, Other risks) with "None found." under a surface with no change: "This is an audit, not a second
+   changelog." A person edits the draft in their editor before the release starts.
 
 ## Set up
 
@@ -49,20 +66,29 @@ Two checks:
   because it needs the tag.
 - **The audit as a prompt template** that runs before every release, such as pi's `/cl`, with the skip rules and the
   cross-package rule written in it.
+- **The drafting reviewer can only read.** opencode's session denies every action and allows read, glob, grep and
+  `git`/`gh` commands; the prompt ends "Do not modify any files.", and the script writes the answer to a file.
+- **No release without the edited notes.** opencode's script fails with "Release review is missing its changelog
+  markers" or "Release review has no changelog" and asks before it starts the release; the release workflow refuses
+  a stable release with blank notes: "Stable releases need release notes; generate them with ./script/release.ts
+  --print".
 - **Attribution in each entry**: the issue link for internal work; the PR and its author for an outside contribution.
 - **`run`** runs the released-sections check, then prints the reviewer's findings, one line per commit:
   `<hash> <subject>: no entry in <package>` or `<hash> <subject>: copy to <package>`. It exits non-zero when a
-  released section differs from the tag. The reviewer's findings make it exit non-zero only once the reviewer is
-  `gate` in `superloops/agents.yaml`.
+  released section differs from the tag, or a release review lacks its markers or its notes. The reviewer's
+  findings make it exit non-zero only once the reviewer is `gate` in `superloops/agents.yaml`.
 - **Cases.** Must fire: a changelog with a new entry under the newest released heading; a commit that changes a
-  package with no entry under its `[Unreleased]`. Must pass: the changelogs as at the newest tag, plus a new entry
-  under `[Unreleased]` for each changed package.
+  package with no entry under its `[Unreleased]`; a release review whose changelog markers were deleted in editing; a
+  stable release started with blank notes. Must pass: the changelogs as at the newest tag, plus a new entry under
+  `[Unreleased]` for each changed package; an edited review with its markers and notes.
 - **Wiring:** the released-sections check in the CI job of every pull request, after it fetches the newest tag; the
-  audit at the start of the release job, or as the prompt a release starts with.
+  audit at the start of the release job, or as the prompt a release starts with; the blank-notes refusal in the
+  release workflow, where no one starting a release can skip it.
 
 ## Agent step
 
 The auditor is a reviewer. It gets the commits since the last tag and the `[Unreleased]` sections, and returns
-Findings: a commit without an entry, or an entry missing from the user-facing package. The script needs no agent and
-may block at once; the reviewer's findings block only once it is calibrated
+Findings: a commit without an entry, or an entry missing from the user-facing package. Where it drafts the notes, it
+gets the commits and read-only tools for their diffs, and returns the draft and the surface audit for a person to
+edit. The script needs no agent and may block at once; the reviewer's findings block only once it is calibrated
 ([agent-calibration](../agent-calibration/card.md)).

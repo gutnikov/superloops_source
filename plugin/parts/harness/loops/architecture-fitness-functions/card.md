@@ -8,7 +8,7 @@ places: [delivery/work, remediation/work, maintenance/work]
 stages: [commit, ci]
 speed: [seconds]
 needs: []
-related: [lint-with-fix-instructions, coupling-analysis, correction-becomes-rule, pre-commit-pre-push]
+related: [lint-with-fix-instructions, coupling-analysis, correction-becomes-rule, pre-commit-pre-push, taste-invariants, test-admission, code-coverage]
 links:
   - title: "Maintainability sensors for coding agents"
     url: "https://martinfowler.com/articles/sensors-for-coding-agents.html"
@@ -40,6 +40,32 @@ links:
   - title: "lint-changed.ts: a touched file is left clean"
     url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/script/lint-changed.ts#L1-L17"
     author: "opencode (anomalyco)"
+  - title: "setup-ts-deep-modules: tests through the entry points; prove the rules bite"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/skills/in-progress/setup-ts-deep-modules/SKILL.md#L26-L87"
+    author: "skills (Matt Pocock)"
+    note: "a pass, a fail on a planted deep import naming the rule, a pass again."
+  - title: "setup-ts-deep-modules: the dependency-cruiser rules"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/skills/in-progress/setup-ts-deep-modules/dependency-cruiser.config.cjs#L49-L67"
+    author: "skills (Matt Pocock)"
+  - title: "sandcastle .dependency-cruiser.mjs: tests use only the public API"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.dependency-cruiser.mjs#L11-L51"
+    author: "sandcastle (Matt Pocock)"
+  - title: "lint-ratchet.ts: counts per file and rule, and the two failures"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/scripts/lint-ratchet.ts#L1-L27"
+    author: "sandcastle (Matt Pocock)"
+  - title: "lint-ratchet.ts: the messages"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/scripts/lint-ratchet.ts#L92-L107"
+    author: "sandcastle (Matt Pocock)"
+  - title: "lint-ratchet.ts: a baseline that grew; an override not reviewed"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/scripts/lint-ratchet.ts#L166-L196"
+    author: "sandcastle (Matt Pocock)"
+  - title: "lint-shrink.yml: one shrink PR after each push to main"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.github/workflows/lint-shrink.yml#L1-L72"
+    author: "sandcastle (Matt Pocock)"
+    note: "pushed with a PAT: a push made with GITHUB_TOKEN does not trigger CI on the PR."
+  - title: "CODING_STANDARDS.md: The lint ratchet"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.sandcastle/CODING_STANDARDS.md#L95-L107"
+    author: "sandcastle (Matt Pocock)"
 ---
 
 ## Why
@@ -64,14 +90,26 @@ belongs in, and moves the code there.
 - **A rule for where new files go.** In dependency-cruiser, `allowed` rules whose paths are the predefined folders: a
   dependency of a file outside them matches none and gets a `not-in-allowed` message. Böckeler's setup has a rule
   that every new file sits somewhere in the predefined folder structure.
+- **Tests reach a module only through its entry points.** A test that imports internals breaks on every refactor and
+  pins the implementation. Pocock's `setup-ts-deep-modules` makes it a dependency-cruiser error,
+  `tests-through-entrypoints`: tests "may import any package's entry points and their own tests/ fixtures, but never
+  any package's internals, not even their own"; `tests-folder-is-private` keeps fixtures out of shipped code.
+  sandcastle's `tests-only-public-api` does the same for `tests/`. The check runs in the command that runs the types.
 - **A text that teaches the layers.** Every rule says what the layer is for and where the code goes instead. In
   dependency-cruiser it is the rule's `comment`, which `--output-type err-long` prints with each violation. In
   ArchUnit it is the rule text, set with `.because(...)` or replaced with `.as(...)`.
 - **Old violations do not block new work.** On an existing codebase, record today's violations and fail only on new
-  ones: dependency-cruiser's `--baseline` with `--ignore-known`, ArchUnit's `FreezingArchRule`. The agent never adds
-  to the baseline; it shrinks as code moves. Without a baseline file, a ratchet on touched files does the same: the
-  rule warns everywhere and fails only in files the change edits, which must be left fully clean (opencode's
-  `lint:changed`, in [taste-invariants](../taste-invariants/card.md)).
+  ones: dependency-cruiser's `--baseline` with `--ignore-known`, ArchUnit's `FreezingArchRule`. The baseline only
+  shrinks, and CI holds it there without trusting the agent. sandcastle counts violations per file and rule and
+  fails a count that grew, "New violations (file: rule baseline -> found). Fix them; never add a disable comment or
+  raise the baseline.", and a baseline file that grew, "`<baseline>` grew against origin/main. It only shrinks". A
+  disable comment outside a reviewed allowlist counts as a violation, and a new per-file override of the config
+  fails: "Lower the baseline instead of turning a rule off." Fix PRs leave the baseline alone so they do not
+  conflict; after each push to main a job lowers it in one pull request, pushed with a token that triggers CI. The
+  agent picks its work from live counts, never from the baseline file, which lags until that pull request lands.
+  Without a baseline file, a ratchet on touched files does the same: the rule warns everywhere and fails only in
+  files the change edits, which must be left fully clean (opencode's `lint:changed`, in
+  [taste-invariants](../taste-invariants/card.md)).
 - **The exception list is a ratchet.** An entry that no longer matches any code fails the check, so the list cannot
   outlive the debt it records, and a migration's progress is the list getting shorter. Codex's manifest check fails
   with "remove the stale `[features]` exception from `MANIFEST_FEATURE_EXCEPTIONS`"; its `cargo-deny` config lets
@@ -84,8 +122,13 @@ belongs in, and moves the code there.
   It prints each violating dependency (`from → to`) with the rule's name and text. dependency-cruiser exits with the
   number of violations of severity `error`; ArchUnit fails with an `AssertionError` that names the rule and each
   class and line. Any violation is a non-zero exit.
+- **Proved at setup.** A rule that never fires looks the same as one that holds. Pocock: "a config that doesn't fail
+  on a violation is worthless". When a rule is added, run the check three times: on the clean tree (pass), with a
+  planted violation such as `import { thing } from "../lib/impl"` in a test (fail, naming
+  `tests-through-entrypoints`), and reverted (pass). The planted violation stays as a must-fire case.
 - **Cases.** Must fire: a copy where a client imports a service; a copy with a new file outside the predefined
-  folders; a copy with an import cycle. Must pass: the real tree with its baseline.
+  folders; a copy with an import cycle; a test that imports a module's internals; a baseline file with a count
+  higher than on main; a new disable comment. Must pass: the real tree with its baseline.
 - **Wiring.** A pre-commit hook ([pre-commit-pre-push](../pre-commit-pre-push/card.md)) and a CI job; the CI run is
   the final one. A PreToolUse hook in `.claude/settings.json` denies the agent's writes to the rules file, the ArchUnit
   tests and the baseline: a rule that is wrong goes to a person, it is not relaxed by the agent it stops.

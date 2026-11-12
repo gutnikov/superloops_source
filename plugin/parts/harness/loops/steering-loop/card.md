@@ -9,7 +9,7 @@ stages: [continuous]
 speed: [hours, days]
 needs: []
 agent: [investigator]
-related: [correction-becomes-rule, sample-audit, release-confirmation, agent-calibration]
+related: [correction-becomes-rule, sample-audit, release-confirmation, agent-calibration, guide-lift-eval]
 links:
   - title: "Harness engineering for coding agent users"
     url: "https://martinfowler.com/articles/harness-engineering.html"
@@ -22,6 +22,13 @@ links:
   - title: "Harness engineering: leveraging Codex in an agent-first world"
     url: "https://openai.com/index/harness-engineering/"
     author: "OpenAI"
+  - title: "SCOPE.md: the bar for an issue, an observed failure"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/SCOPE.md#L5-L12"
+    author: "skills (Matt Pocock)"
+  - title: "bug.yml: the fields of a report on a skill"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/.github/ISSUE_TEMPLATE/bug.yml#L11-L52"
+    author: "skills (Matt Pocock)"
+    note: "the skill, its version or commit, the harness and its version, the model and effort, how full the context was, the repro, the line of SKILL.md."
 ---
 
 ## Why
@@ -50,6 +57,12 @@ as a must-fire case there, and fixes or adds the loop at that phase: a sensor wh
   [sample audit](../sample-audit/card.md) found, a false positive or a miss of a loop's agent (it becomes an eval
   case, [agent-calibration](../agent-calibration/card.md)), and a person's correction made twice
   ([correction-becomes-rule](../correction-becomes-rule/card.md)).
+- **An escape past a guide carries its conditions.** When the agent broke a rule a guide states, the record names
+  the guide and the line that says it, the guide's commit, the harness and its version, the model and its effort,
+  how full the context was, and the smallest steps that show it: the fields of Pocock's bug form for a skill. They
+  tell a wording failure from a model, harness or context failure, and each has another fix: the guide's text, the
+  model or effort, the guide not loading, a shorter session. Only an observed failure is an entry. Pocock's bar: "A
+  hypothetical improvement ('it would be better if...') does not clear this part."
 - **Answer three questions for each escape**: where it was caught, where it was introduced, and the earliest phase
   that could have caught it. The loop goes to that earliest phase.
 - **Record the escape as a case**: its input becomes a must-fire case of the loop at that phase, and the loop is

@@ -12,7 +12,7 @@ when: [during]
 initiator: rule
 sync: blocking
 assesses: [action-risk]
-related: [isolated-environment, escalation-on-uncertainty, db-migration-lint, approval-reviewer-agent, agent-ci-hardening]
+related: [isolated-environment, escalation-on-uncertainty, db-migration-lint, approval-reviewer-agent, agent-ci-hardening, plan-approval, release-trust-boundary]
 links:
   - title: "Configure permissions"
     url: "https://code.claude.com/docs/en/permissions"
@@ -112,6 +112,12 @@ links:
     url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/external_plugins/telegram/server.ts#L423-L452"
     author: "Anthropic"
     note: "sent to allowlisted DMs only; a reply must name the request's 5-letter id (#L89-L93); answered once (#L735-L791)."
+  - title: "issue-tracker-github.md: check the target repository before the first issue"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/skills/engineering/setup-matt-pocock-skills/issue-tracker-github.md#L19"
+    author: "skills (Matt Pocock)"
+  - title: "CHANGELOG: agents in forks filed issues #541 to #550 upstream"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/CHANGELOG.md#L17"
+    author: "skills (Matt Pocock)"
 ---
 
 ## Why
@@ -181,6 +187,13 @@ comment to Claude as the reason, and Claude continues working; "No" with no comm
   `git checkout .`, `git clean -fd`, `git stash` and `git add -A` destroy the others' uncommitted work; pi's AGENTS.md
   forbids them and stages explicit paths only. Give each session its own
   [isolated environment](../isolated-environment/card.md), or gate those commands like any deletion.
+- **Check where a write lands before the first one.** A harmless-looking command sends work outside the project
+  when the tool picks the target: in a fork, `gh` can default to the upstream parent. Agents working in clones and
+  forks of Pocock's skills repository filed their own specs and tickets into it, ten issues (#541 to #550). Before a
+  session's first write to a remote service (an issue, a comment, a pull request, a release), a PreToolUse hook
+  resolves the target, `gh repo view --json nameWithOwner` on GitHub, and compares it with the repository that
+  `tools.tracker` in `superloops/superloops.md` names. Another target is a call to the person under H2: it sends
+  something outside the project. After a yes, the commands name it (`--repo owner/name`).
 - **Who confirms** is written in `superloops/superloops.md`: the person running the session for an action in it, the
   environment's reviewers for a release. At every autonomy level, anything that cannot be undone is a call to a person.
 - **Nobody there.** In a run nobody watches, the gate refuses: with `--permission-mode dontAsk`, Claude Code denies a
@@ -214,9 +227,11 @@ comment to Claude as the reason, and Claude continues working; "No" with no comm
   prints one line per command, `<command>: gated`, `not gated` or `allowed` (an allow rule matches it and no ask rule
   does). The exit is non-zero for anything but `gated`.
 - **Cases.** Must fire: the settings with the ask rule for migrations removed; the settings with `Bash(kubectl *)`
-  under `allow` and no ask rule for `kubectl apply`. Must pass: the project's own settings. A guard hook has cases
-  of its own, run against the hook as it ships: Claude Code's `claude plugin test` loads a mod with nothing beneath
-  its hooks, so "a call they leave unanswered throws, naming its event".
+  under `allow` and no ask rule for `kubectl apply`. Must pass: the project's own settings. The target hook must ask
+  on `gh issue create` with no `--repo` in a fork whose `gh` default is the upstream, and pass the same command with
+  `--repo` naming the project. A guard hook has cases of its own, run against the hook as it ships: Claude Code's
+  `claude plugin test` loads a mod with nothing beneath its hooks, so "a call they leave unanswered throws, naming
+  its event".
 - **Out of the agent's reach.** `run` runs in CI. The agent's own writes to `.claude/` are protected-path writes:
   Claude Code prompts for them in Manual mode and denies them in `dontAsk`.
 

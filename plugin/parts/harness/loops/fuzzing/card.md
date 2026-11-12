@@ -19,6 +19,22 @@ links:
   - title: "Fuzzing with cargo-fuzz"
     url: "https://rust-fuzz.github.io/book/cargo-fuzz.html"
     author: "Rust Fuzz Book"
+  - title: "Miri"
+    url: "https://github.com/rust-lang/miri"
+    author: "The Rust Project"
+    note: "no access to most FFI; `-Zmiri-tree-borrows` \"replaces Stacked Borrows with the Tree Borrows rules\"."
+  - title: "opencode process daemon CI: the Miri job"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.github/workflows/check-process-daemon.yml#L27-L47"
+    author: "opencode (anomalyco)"
+  - title: "opencode process daemon README: what the Miri tests cover"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/process-daemon/README.md#L278-L288"
+    author: "opencode (anomalyco)"
+  - title: "effects.rs: the module kept free of native calls"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/process-daemon/src/ghostty/effects.rs#L1-L2"
+    author: "opencode (anomalyco)"
+  - title: "ghostty-effects/Cargo.toml: the Miri crate imports the production module"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/process-daemon/tests/ghostty-effects/Cargo.toml#L11-L13"
+    author: "opencode (anomalyco)"
 ---
 
 ## Why
@@ -44,6 +60,12 @@ code. Turning the minimal crashing input into a regression test keeps the fix fr
   a fuzzer" (libFuzzer).
 - **Sanitizers on.** libFuzzer: "In most cases you may want to combine libFuzzer with AddressSanitizer (ASAN),
   UndefinedBehaviorSanitizer (UBSAN), or both." Without them a memory error that does not crash goes unseen.
+- **Unsafe code's ordinary tests run under the checker too**, on every PR that touches it, not only the fuzz targets.
+  opencode runs two Rust test crates of its process daemon with `cargo miri test --locked` twice, under Stacked
+  Borrows and under `MIRIFLAGS=-Zmiri-tree-borrows`, on a pinned nightly. Miri cannot call most native code, so the
+  ownership logic lives in a module kept "independent of native calls so its ownership rules can also be checked by
+  Miri", and the Miri crate "imports the production effects module directly, rather than copying its
+  implementation"; the native suites still test the C integration.
 - **The corpus lives in the repository**: the seed inputs and every failing input that was fixed. In Go, a failing
   input is written to `testdata/fuzz/<FuzzTest>/` and "it will now be run by default with `go test`, serving as a
   regression test once the bug has been fixed". The libFuzzer binary, given files instead of directories, re-runs
@@ -55,10 +77,11 @@ code. Turning the minimal crashing input into a regression test keeps the fix fr
   report>`, and exits non-zero on any. Failing inputs with the same stack are one problem: triage merges them by that
   fingerprint ([triage](../triage/card.md)).
 - **Cases.** Fuzzing is random, so the cases replay the corpus. Must fire: a parser copy with a seeded out-of-bounds
-  read, against a corpus that holds the input that reaches it. Must pass: the fixed parser against the same corpus.
+  read, against a corpus that holds the input that reaches it; under Miri, a copy of the ownership module that
+  reads a buffer after its owner freed it. Must pass: the fixed parser against the same corpus; the module as it is.
 - **Wiring.** A scheduled CI job fuzzes each target and opens a problem per new failure with the minimized input
-  attached. Every PR's CI replays the corpus. A PreToolUse hook denies the agent's deletes under the corpus folder,
-  so it cannot make a crash go away by removing its input.
+  attached. Every PR's CI replays the corpus, and a PR that touches unsafe code runs its Miri job. A PreToolUse hook
+  denies the agent's deletes under the corpus folder, so it cannot make a crash go away by removing its input.
 
 ## Notes
 

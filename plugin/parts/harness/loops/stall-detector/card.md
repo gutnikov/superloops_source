@@ -1,7 +1,7 @@
 ---
 id: stall-detector
 title: "Stall detector"
-summary: "A hook hashes every tool call; the same call or cycle of calls five times in a row tells the agent to step back, and a second stall in the same task stops it for a person."
+summary: "A hook hashes every tool call: the same call or cycle five times in a row tells the agent to step back, a second stall stops it for a person, and a leaf subagent's spawn is denied."
 sensor: computational
 ilities: [alignment]
 places: [delivery/work, remediation/work, maintenance/work]
@@ -9,7 +9,7 @@ stages: [edit, task]
 speed: [sub-second]
 needs: []
 agent: [judge]
-related: [stop-hook, escalation-on-uncertainty, observe-and-interrupt, tool-use-telemetry, agent-calibration, approval-reviewer-agent]
+related: [stop-hook, escalation-on-uncertainty, observe-and-interrupt, tool-use-telemetry, agent-calibration, approval-reviewer-agent, agent-code-review, afk-run-handoff]
 links:
   - title: "loopDetectionService.ts: thresholds and the judge's prompt"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/services/loopDetectionService.ts#L29-L118"
@@ -55,6 +55,28 @@ links:
   - title: "opencode llm.ts: two continuations after a truncated response"
     url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/session/runner/llm.ts#L346-L376"
     author: "opencode (anomalyco)"
+  - title: "code-review: sub-agents that invoke /code-review again"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/docs/engineering/code-review.md#L59-L61"
+    author: "skills (Matt Pocock)"
+  - title: "research: a background agent that spawns another"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/docs/engineering/research.md#L27-L37"
+    author: "skills (Matt Pocock)"
+  - title: "Out of scope: guards against sub-agents recursing into skills"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/.out-of-scope/subagent-recursion.md#L1-L14"
+    author: "skills (Matt Pocock)"
+  - title: "Claude Code changelog: agent_id and agent_type in hook events (2.1.69)"
+    url: "https://github.com/anthropics/claude-code/blob/e379c8eca0af5b02a49bf8e784aeefdd1308de6f/CHANGELOG.md#L8200"
+    author: "Anthropic"
+  - title: "Orchestrator.ts: the idle timeout, and the completion timeout after the signal"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/src/Orchestrator.ts#L120-L142"
+    author: "sandcastle (Matt Pocock)"
+    note: "600 s and 60 s by default (L293-L295)."
+  - title: "ADR 0019: completion timeout for a hanging process"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/docs/adr/0019-completion-timeout-for-hanging-process.md#L3-L12"
+    author: "sandcastle (Matt Pocock)"
+  - title: "CODING_STANDARDS.md: output reaches the timer as it arrives"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.sandcastle/CODING_STANDARDS.md#L49"
+    author: "sandcastle (Matt Pocock)"
 ---
 
 ## Why
@@ -84,28 +106,50 @@ different code between builds is debugging, and the keys differ.
 A hook sees only tool calls. An agent that restates the same plan in text without calling tools needs the judge
 (Agent step).
 
+### Agents that spawn agents
+
+A subagent that finds the skill it was dispatched by can call it again and spawn more agents, each a new session
+with new arguments, so no key repeats. With Matt Pocock's code-review skill, "One report reached more than 50
+agents"; one research task cost "roughly 450k tokens across three overlapping runs". The hook counts spawns too: a
+spawn from a subagent whose type is not an orchestrator, or the 11th in one task, is denied with "You are a leaf
+agent: do this work yourself and start no agents."; a second denial stops the agent for the person, with the tree of
+spawns. It is a hook, not a line in a prompt. Pocock: "A guard written into one skill's prose covers only that skill,
+costs tokens on every run, and still depends on the model choosing to obey it." A blanket rule fails the other way:
+when global instructions forbid re-delegating, the background agent "declines the task, and the skill does nothing
+without telling you". The hook denies only the spawn, and the leaf does the work itself.
+
 ## Set up
 
-- **One script, two hooks.** In `.claude/settings.json`, a `PostToolUse` hook with matcher `*` runs the script on
-  each call; a `UserPromptSubmit` hook runs it with `--reset`. The script keeps its keys in a temporary file named by
-  the hook input's `session_id`, and hashes `tool_name` with `tool_input` serialized with sorted keys, so the same
-  arguments in another order give the same key.
+- **One script, three hooks.** In `.claude/settings.json`, a `PostToolUse` hook with matcher `*` runs the script on
+  each call; a `UserPromptSubmit` hook runs it with `--reset`; a `PreToolUse` hook with matcher `Agent|Task` runs it
+  with `--spawn`. The script keeps its keys in a temporary file named by the hook input's `session_id`, and by its
+  `agent_id` inside a subagent, so parallel subagents do not mix their calls. It hashes `tool_name` with
+  `tool_input` serialized with sorted keys, so the same arguments in another order give the same key.
 - **First stall:** exit 2, with the message on stderr and the repeated calls named: the tool and a short form of
   the arguments, such as `Edit src/billing.ts` or `Bash npm test`. Claude Code shows the agent stderr of a
   `PostToolUse` hook that exits 2.
 - **Second stall:** print `{"continue": false, "stopReason": "stall: <the cycle>, twice in this task"}` and exit 0.
   The agent stops, and the person sees the reason.
+- **The spawn cap.** Claude Code puts `agent_id` and `agent_type` in a hook's input when a subagent makes the call
+  (2.1.69): a spawn with an `agent_id` passes only for the types the script's config lists as orchestrators. The
+  count is per task, cleared by `--reset`, 10 by default; raise it in the config, a reviewed line, for an
+  orchestrator with one implementer per ticket. A denial exits 2 with the message on stderr, which blocks the call;
+  the second prints `{"continue": false, "stopReason": "spawn cap: <tree>"}`. A `tools` list without the spawning
+  tool does the same only for agents in `.claude/agents/`, not for the general-purpose agent a skill dispatches.
 - **A guide for the agent, before the hook fires.** A line in CLAUDE.md, after gemini-cli's: after more than 3 failed
   attempts to fix the same failure, restate the task, list the assumptions and which might be wrong, and propose a
   different approach instead of patching the current one. The hook is the check; the line makes it fire less often.
 - **Out of the agent's reach.** A `PreToolUse` hook denies the agent's writes to the script and to
   `.claude/settings.json`, as for the [stop hook](../stop-hook/card.md).
 - **`run`** reads a case's hook inputs, one JSON object per line, in order, and prints one line per stall,
-  `stall <n>: cycle of <k>: <calls>`. It exits non-zero at the first stall.
+  `stall <n>: cycle of <k>: <calls>`, and per denied spawn, `spawn denied: <agent_type>: <n> in this task`. It exits
+  non-zero at the first stall or denied spawn.
 - **Cases.** Must fire: the same `Read` five times; an `Edit` with the same arguments and `Bash npm test`, alternating
-  five times each. Must pass: one `Edit` on each of 20 files; an `Edit` with different arguments each time,
-  alternating with the same test command; four identical calls, a `--reset`, then four more.
-- **Wiring:** the two hooks in `.claude/settings.json`. Trigger it once for real: ask the agent in a scratch worktree
+  five times each; a reviewer subagent that calls the review skill, which spawns an agent; an 11th spawn in one task.
+  Must pass: one `Edit` on each of 20 files; an `Edit` with different arguments each time, alternating with the same
+  test command; four identical calls, a `--reset`, then four more; the main session spawning 5 reviewers; an
+  orchestrator type from the config spawning a worker.
+- **Wiring:** the three hooks in `.claude/settings.json`. Trigger it once for real: ask the agent in a scratch worktree
   to fix a test that cannot pass, and keep the transcript with the message and the stop. The stops stay in the session
   transcripts, where [tool-use-telemetry](../tool-use-telemetry/card.md) counts them per tool and model.
 
@@ -119,6 +163,13 @@ A hook sees only tool calls. An agent that restates the same plan in text withou
   tools off and a prompt that requires a "Statement that maximum steps for this agent have been reached", what was
   done, the tasks left and what to do next. The tool definitions stay in that request "to preserve the provider's
   cached prefix".
+- **Silence is a stall no hook sees.** A wrapper that runs the agent unattended resets a timer on every line of
+  output: sandcastle fails the run after 10 minutes ("Agent idle for 600 seconds — no output received"). After the
+  agent's completion signal the timer drops to 60 seconds and its end is a success with a warning, since a child
+  such as `gh` or an MCP server can hold the output open, and failing there discarded "the already-committed work".
+  Switch on the signal, not on a final event: sandcastle synthesizes a `result` event for every Codex and OpenCode
+  message. Stream the output to the timer as it arrives, or "the timeout will fire prematurely or hangs won't be
+  detected". The run then ends blocked with its reason ([afk-run-handoff](../afk-run-handoff/card.md)).
 - A response cut off at the output limit is a stall of its own. opencode answers it with "Do not apologize, recap,
   or repeat yourself. Break the remaining work into smaller pieces.", and fails the step after two such
   continuations in a row.

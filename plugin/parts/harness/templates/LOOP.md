@@ -11,7 +11,7 @@ validation: cases               # cases (cases/must-fire, cases/must-pass) or ma
 agents: []                      # agents whose execution is a step of this loop, e.g. .claude/agents/reviewer.md
 parts: []                       # composite loop only: ids of the loops under superloops/loops/ it is made of
 hitl: []                        # ids from the plugin's defaults/hitl.yaml this loop may call a person under
-wiring: []                      # where the loop is hooked in, e.g. .claude/settings.json hooks.PostToolUse
+wiring: []                      # where the loop is hooked in and what triggers it, e.g. ".github/workflows/ci.yml job lint: on pull_request"
 ---
 
 # <title>

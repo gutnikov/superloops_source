@@ -11,7 +11,7 @@ needs: []
 when: [during, after]
 initiator: agent
 assesses: [result, code]
-related: [correction-becomes-rule, taste-invariants, escalation-on-uncertainty]
+related: [correction-becomes-rule, taste-invariants, escalation-on-uncertainty, visual-screenshot-check, async-questions-with-assumptions, interview]
 links:
   - title: "Tools reference"
     url: "https://code.claude.com/docs/en/tools-reference"
@@ -28,6 +28,18 @@ links:
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/tools/ask-user.ts#L57-L64"
     author: "gemini-cli (Google)"
     note: "a choice question takes 2 to 4 options."
+  - title: "prototype UI.md: variants on the existing page, behind ?variant="
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/skills/engineering/prototype/UI.md#L14-L30"
+    author: "skills (Matt Pocock)"
+  - title: "prototype UI.md: 3 variants, structurally different"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/skills/engineering/prototype/UI.md#L36-L54"
+    author: "skills (Matt Pocock)"
+  - title: "prototype UI.md: the switcher hidden in production builds"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/skills/engineering/prototype/UI.md#L85-L90"
+    author: "skills (Matt Pocock)"
+  - title: "wayfinder.md: an agent that chose a variant itself and closed the ticket"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/docs/engineering/wayfinder.md#L74-L75"
+    author: "skills (Matt Pocock)"
 ---
 
 ## Why
@@ -50,16 +62,25 @@ give is recorded as a rule, so the same choice is not asked again.
 
 - **Options that differ in substance.** Each option is named by its trade-off ("one call, a larger payload" against
   "paged, two calls"), not by a cosmetic change. If the agent cannot name a trade-off, there is no question of
-  taste: it decides by the project's conventions and says what it decided.
+  taste: it decides by the project's conventions and says what it decided. Two options that come out alike are
+  redone, one of them under an explicit constraint against the shared shape (Pocock: "If two drafts come out too
+  similar, redo one with explicit 'do not use a card grid' guidance").
 - **As many options as the choice deserves.** gemini-cli's plan mode scales the question to the task: for a simple
   one the agent states its approach and stops for a yes; where several approaches are viable it shows pros, cons and
   its recommendation; for a complex one it "MUST present at least two viable approaches with detailed trade-offs".
   It "MUST NOT proceed … in the same turn", and its question tool takes 2 to 4 options. One option is a statement to
   confirm, not a choice; more than 4 means the agent has not narrowed the question yet.
-- **Show them, do not describe them.** UI: a screenshot of each option side by side, rendered from real components
-  (the [`ui-prototypes`](../../../ui-prototypes/README.md) part makes one prototype file per option). An API: the
-  call and the response of each. A name: a real call site with each name. A module: the tree and one import of
-  each. The options are built in scratch files, and only the chosen one lands.
+- **Show them, do not describe them.** UI: each option rendered from real components on the page it belongs to,
+  with that page's header, data and density, switched by a `?variant=` parameter, and a screenshot of each side by
+  side (the [`ui-prototypes`](../../../ui-prototypes/README.md) part makes one prototype file per option). Pocock: "A
+  throwaway route on its own is a vacuum: every variant looks fine in isolation." The switcher is hidden in
+  production builds, "so a stray prototype merge can't ship the bar". An API: the call and the response of each. A
+  name: a real call site with each name. A module: the tree and one import of each. The options are built in scratch
+  files or behind the switcher, and only the chosen one lands.
+- **The agent never picks.** Pocock reports "an agent that built three UI variations, chose one itself, and closed
+  the ticket. That choice is yours". The task stays open while the question does. In a run nobody watches, the
+  options stay built, the agent goes on with work that does not depend on the choice, and the question waits in the
+  handoff ([async questions](../async-questions-with-assumptions/card.md)); no option lands on the agent's pick.
 - **Called under H4**: two or more valid options differ in a trade-off only the person can weigh. The agent asks
   through the session's question tool with the options, the recommended one first, and a free answer for "none of
   these". In Claude Code that tool is `AskUserQuestion`: the person picks an option or types their own text in its

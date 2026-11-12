@@ -57,6 +57,7 @@
     "benchmarks-vs-baseline",
     "db-migration-lint",
     "api-breaking-changes",
+    "shipped-artifact-check",
     "approved-fixtures",
     "config-validation",
     "i18n-pseudolocalization",
@@ -652,7 +653,9 @@
           "loops": [],
           "suggest": [
             "platform-matrix",
-            "exploratory-testing"
+            "exploratory-testing",
+            "shipped-artifact-check",
+            "patch-backport"
           ],
           "profile": {
             "stages": [
@@ -666,11 +669,14 @@
           "label": "A package registry",
           "description": "npm, PyPI, Maven, crates.io",
           "loops": [
-            "api-breaking-changes"
+            "api-breaking-changes",
+            "shipped-artifact-check"
           ],
           "suggest": [
             "changelog-audit",
-            "platform-matrix"
+            "platform-matrix",
+            "release-trust-boundary",
+            "patch-backport"
           ],
           "profile": {
             "stages": [
@@ -985,7 +991,9 @@
           "suggest": [
             "isolated-environment",
             "approval-reviewer-agent",
-            "async-questions-with-assumptions"
+            "async-questions-with-assumptions",
+            "afk-run-handoff",
+            "agent-branch-integration"
           ]
         },
         {
@@ -1185,7 +1193,8 @@
           "description": "",
           "loops": [],
           "suggest": [
-            "skill-trigger-eval"
+            "skill-trigger-eval",
+            "third-party-extension-scan"
           ]
         },
         {
@@ -1193,7 +1202,9 @@
           "label": "Codex",
           "description": "",
           "loops": [],
-          "suggest": []
+          "suggest": [
+            "third-party-extension-scan"
+          ]
         },
         {
           "id": "other",

@@ -37,8 +37,8 @@ SDK in the code means the project sends data there, not that the agent can read 
 ## 2. Ask what is left, in one form
 
 Ask only the questions that finding out and the user's own words did not settle. Put them all in one call of the
-session's question tool; it takes up to 4 questions. This form is the one exception to "one question at a time":
-the answers do not depend on each other and you need them together.
+session's question tool; it takes up to 4 questions. The answers do not depend on each other and you need them
+together ("Talking to the user" in the harness README).
 
 - The user may see only the form. So each question starts with what you found: "Found: `.gitlab-ci.yml` with the
   jobs test and deploy-staging."

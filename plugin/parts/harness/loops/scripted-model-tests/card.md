@@ -31,7 +31,7 @@ links:
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/test-utils/src/test-rig.ts#L545-L557"
     author: "gemini-cli (Google)"
   - title: "responses.rs: protocol invariants on every request the agent sends"
-    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/tests/common/responses.rs#L1634-L1773"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/codex-rs/core/tests/common/responses.rs#L1634-L1772"
     author: "Codex (OpenAI)"
     note: "every tool output has its call in the same input, and every call has its output."
   - title: "responses.rs: a sequence of replies, each requested exactly once"
@@ -62,6 +62,22 @@ links:
   - title: "mock-server.ts: an unmocked API request fails the test"
     url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/app/e2e/utils/mock-server.ts#L402-L412"
     author: "opencode (anomalyco)"
+  - title: "verify SKILL.md: a real agent on its cheapest model"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.agents/skills/verify/SKILL.md#L42-L48"
+    author: "sandcastle (Matt Pocock)"
+    note: "\"A faked or scripted agent proves the fake\"; a missing key is UNVERIFIABLE, with no downgrades."
+  - title: "verify SKILL.md: the seam the mocked suite cannot prove; deterministic observables"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.agents/skills/verify/SKILL.md#L54-L73"
+    author: "sandcastle (Matt Pocock)"
+  - title: "verify SKILL.md: verdicts, and a bug found becomes a unit test"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.agents/skills/verify/SKILL.md#L87-L96"
+    author: "sandcastle (Matt Pocock)"
+  - title: "CLAUDE.md: npm test, then verify"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/CLAUDE.md#L1"
+    author: "sandcastle (Matt Pocock)"
+  - title: "features/agents.md: proof that the cheap model ran"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.agents/skills/verify/features/agents.md#L27-L34"
+    author: "sandcastle (Matt Pocock)"
 ---
 
 ## Why
@@ -137,5 +153,13 @@ error or an abort.
 
 - It complements [llm-evals](../llm-evals/card.md): evals measure the model's answers on cases; these tests check
   that the code does the right thing with whatever answer comes back.
-- A script replays only what someone wrote down. A bug that depends on what a real model does for the first time is
+- **A script proves the code, not the seam.** Where the code's job is the seam itself (starting a real agent CLI,
+  its keys, its stream format, a sandbox), a scripted model skips what breaks. sandcastle's suite "mocks every agent
+  and every sandbox, so it proves the logic and nothing about those seams", and a change is finished after `npm test`
+  and a run of "the real agent on its cheapest model": "A check tests Sandcastle, not the model, so a pricier model
+  proves nothing more." The run asks the agent for "one fixed artefact (one file holding one line, one commit)", so
+  "The model's wording never decides the verdict", and reads the model's name from the agent's own session file. A
+  missing key is UNVERIFIABLE, never a pass: "no other agent, no other key, no stand-in binary". A proof through one
+  entry point leaves the others open. A bug the run finds becomes a scripted test where the suite can reach it.
+- A script replays only what someone wrote down. A bug that depends on what a real model says for the first time is
   left to the evals and to production.

@@ -9,16 +9,22 @@ stages: [scheduled]
 speed: [minutes, days]
 needs: [ci]
 agent: [worker, reviewer]
-related: [garbage-collection, tool-use-telemetry, sample-audit, triage, steering-loop]
+related: [garbage-collection, tool-use-telemetry, sample-audit, triage, steering-loop, agent-ci-hardening]
 links:
   - title: "Gemini CLI Bot: Brain (the workflow)"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.github/workflows/gemini-cli-bot-brain.yml#L120-L203"
     author: "gemini-cli (Google)"
     note: "one improvement per run; a patch only when the critique exits 0 and prints [APPROVED]."
   - title: "Gemini CLI Bot: publishing"
-    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.github/workflows/gemini-cli-bot-brain.yml#L205-L318"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.github/workflows/gemini-cli-bot-brain.yml#L205-L350"
     author: "gemini-cli (Google)"
-    note: "state kept 90 days as an artifact; draft pull requests from bot/ branches only."
+    note: "state kept 90 days as an artifact; only the bot/ prefix is checked; git add .; a refused push retried with a PAT; the PR to comment on read from the agent's file."
+  - title: "Gemini CLI Bot: a mention turns pull requests on"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.github/workflows/gemini-cli-bot-brain.yml#L127-L135"
+    author: "gemini-cli (Google)"
+  - title: "The prs skill: the files the agent writes instead of acting"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/tools/gemini-cli-bot/.gemini/skills/prs/SKILL.md#L28-L48"
+    author: "gemini-cli (Google)"
   - title: "The scheduled prompt"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/tools/gemini-cli-bot/brain/scheduled.md#L1-L40"
     author: "gemini-cli (Google)"
@@ -80,16 +86,29 @@ helped.
   decisions.
 - **Untrusted input.** Issue and pull-request text reaches the agent wrapped in `<untrusted_context>` tags, as data;
   a mention starts a run only from a collaborator, member or owner.
-- **Permissions split by job.** The worker and the reviewer run in a job with read permissions only; a separate job
-  applies the approved patch, pushes a branch whose name must start with `bot/` and opens a draft pull request.
+- **Permissions split by job, and the publisher checks every file it is handed.** The worker and the reviewer run
+  with read permissions only and act by writing files: gemini-cli's `issue-comment.md`, `pr-comment.md`,
+  `pr-number.txt`, `branch-name.txt`, `pr-description.md` and the staged patch. A separate job publishes them, and a
+  check of the branch alone is not enough: gemini-cli's stops a branch outside `bot/` ("Safety abort."), then applies
+  the patch with `git add .`, comments on whatever PR `pr-number.txt` names, and retries a push its App token cannot
+  make with a personal access token ("Push failed. Retrying with FALLBACK_PAT..."). The publisher here:
+  - pushes only to a new `bot/` branch or the branch of an open bot PR;
+  - stages only the paths the patch lists, and refuses a patch that touches a protected path: `.github/workflows/`,
+    CODEOWNERS, the bot's own prompts, skills and policy;
+  - comments only on the triggering issue, or on an open PR from a `bot/` branch;
+  - fails the run when a push is refused, and never retries it with a wider credential: the refusal is the token's
+    scope doing its job.
 - **Record-only to start.** The scheduled run writes its findings to the ledger and opens no pull request until a
-  person turns pull requests on, after reading a few weeks of findings (H4: how much noise is acceptable).
+  person turns pull requests on, after reading a few weeks of findings (H4: how much noise is acceptable). The
+  default holds for every trigger: in gemini-cli a collaborator's mention turns pull requests on for that run.
 - **`run`** appends today's metrics and prints one line per metric, `<metric>: <median of the last 4 weeks> (previous
   4 weeks <m>, <change>%)`. It exits non-zero when a metric is more than 20% worse than in the previous four weeks:
   four-week medians keep a day's spike from firing it. The worker runs either way, and a metric that fired is its
   first candidate.
 - **Cases.** Must fire: a series in which the median wait for a first review goes from 20 to 30 hours. Must pass: a
-  flat series; a flat series with a one-day spike.
+  flat series; a flat series with a one-day spike. The publisher has its own. Must fire: a patch that touches
+  `.github/workflows/`; a `pr-number.txt` that names a person's PR; a `branch-name.txt` outside `bot/`; a refused
+  push, which fails with no second attempt. Must pass: a patch to a metric script on a new `bot/` branch.
 - **Wiring:** a daily scheduled workflow, metrics, then the worker, the reviewer and the publishing job; the merge
   is a person's.
 

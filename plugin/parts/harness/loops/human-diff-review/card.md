@@ -12,7 +12,7 @@ when: [after]
 initiator: rule
 sync: async
 assesses: [code, intent]
-related: [agent-code-review, result-demo, correction-becomes-rule, sample-audit]
+related: [agent-code-review, result-demo, correction-becomes-rule, sample-audit, afk-run-handoff, agent-branch-integration]
 links:
   - title: "Human review"
     url: "https://www.aihero.dev/ai-coding-dictionary/human-review"
@@ -40,6 +40,21 @@ links:
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.gemini/config.yaml#L4-L6"
     author: "gemini-cli (Google)"
     note: "comment_severity_threshold: 'HIGH'."
+  - title: "implement-pr prompt: change, reply, decline or ignore each comment"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.sandcastle/agent-workflows/implement-pr/prompt.md#L26-L44"
+    author: "sandcastle (Matt Pocock)"
+  - title: "review prompt: address, decline, defer"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.sandcastle/agent-workflows/review/prompt.md#L32-L35"
+    author: "sandcastle (Matt Pocock)"
+  - title: "review-context.ts: only unresolved review threads are fetched"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.sandcastle/agent-workflows/shared/review-context.ts#L49-L74"
+    author: "sandcastle (Matt Pocock)"
+  - title: "review-output.ts: a reply to a comment that was not fetched is dropped"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.sandcastle/agent-workflows/shared/review-output.ts#L118-L130"
+    author: "sandcastle (Matt Pocock)"
+  - title: "implement-pr.ts: a run with no commit and no comment fails"
+    url: "https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.sandcastle/agent-workflows/implement-pr/implement-pr.ts#L52-L69"
+    author: "sandcastle (Matt Pocock)"
 ---
 
 ## Why
@@ -78,11 +93,19 @@ change, or whether the approach fits the codebase; a person reading the diff can
   logs it: `loops.py hitl H2 --loop <loop-id> --checked "<AI review, size>" --question "…" --answer "…"`. At
   `merge` and above the agent merges on its own, so the project lists the paths that still need a person in
   CODEOWNERS and the protected branch requires a code owner's review.
-- **Comments and replies.** The agent reads the review comments with `gh api
-  repos/{owner}/{repo}/pulls/<n>/comments` and answers each with `POST
-  /repos/{owner}/{repo}/pulls/<n>/comments/<comment_id>/replies`, naming the commit that fixes it. GitHub supports
-  replies only to a top-level review comment ("Replies to replies are not supported"). The agent leaves resolving a
-  thread to the person who opened it. A question back goes to the session, not the thread.
+- **Comments and replies.** The agent works on the threads still open: GitHub's GraphQL `reviewThreads` query gives
+  each thread's `isResolved`, and sandcastle fetches only the unresolved ones. Each comment ends one of four ways:
+  **address** (change the code, and reply naming the commit), **reply** (context that helps, no change), **decline**
+  (no change, and a reply that says why: the request is wrong or out of scope), **defer** (no reply, sandcastle:
+  "only for stale/context-only comments"). Replies go to `POST
+  /repos/{owner}/{repo}/pulls/<n>/comments/<comment_id>/replies`; GitHub supports replies only to a top-level review
+  comment ("Replies to replies are not supported"). The agent leaves resolving a thread to the person who opened it.
+  A question back goes to the session, not the thread.
+- **The agent drafts, a script posts.** In sandcastle the agent returns its replies as data, under "Do not resolve
+  review threads. Do not create GitHub comments yourself." The wrapper posts only replies to comment ids it fetched
+  from unresolved threads, and fails a run in which the agent "made no commits and emitted no comments". Must fire:
+  a reply to a comment id that was not fetched (dropped, with a warning); a run with no commit and no reply. Must
+  pass: a commit that addresses one open thread, with its reply.
 - **Where the answer goes.** A comment that states a rule ("handlers never call the database") becomes a lint, a
   fitness function or a line in CLAUDE.md, and is logged as a correction at the phase that should have caught it:
   `loops.py trace correction <super-loop>/work --item <PR> --note "<the comment>"`. The same correction twice goes to

@@ -9,7 +9,7 @@ stages: [preview, staging]
 speed: [seconds]
 needs: [logs]
 agent: [investigator]
-related: [release-confirmation, preview-environments, config-validation, canary-feature-flags]
+related: [release-confirmation, preview-environments, config-validation, canary-feature-flags, shipped-artifact-check]
 links:
   - title: "Liveness, Readiness, and Startup Probes"
     url: "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/"
@@ -24,6 +24,9 @@ links:
     note: "`until` polls every 30 seconds by default, wakes once when it passes, and gives up after 24 hours."
   - title: "opencode shell.ts: a background command resumes the agent"
     url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/packages/core/src/tool/plugin/shell.ts#L30-L31"
+    author: "opencode (anomalyco)"
+  - title: "opencode deploy.yml: a deploy job that ends at the deploy"
+    url: "https://github.com/anomalyco/opencode/blob/72616be4dbe772dc645640b5623cb3d6f4453bd3/.github/workflows/deploy.yml#L56-L119"
     author: "opencode (anomalyco)"
 ---
 
@@ -63,13 +66,18 @@ change is fresh. The startup logs show why the service did not start.
   variable missing, which exits at start; a copy whose database is unreachable, so `/ready` stays 503; a copy where
   one smoke step answers 500. Must pass: the current version.
 - **Wiring and reach.** A step of the deploy pipeline after every deploy to a preview or to staging, before
-  promotion. The agent reads the result; it does not run the step. The smoke suite and the polling limits are in the
-  protected suite, so the agent cannot turn a red deploy green by trimming them.
+  promotion; a deploy job with nothing after it is a gap: opencode's Worker deploys end at the deploy command, and no
+  job requests the site afterwards. The agent reads the result; it does not run the step. The smoke suite and the
+  polling limits are in the protected suite, so the agent cannot turn a red deploy green by trimming them.
 
 ## Notes
 
 - Green here means the version starts and answers, not that the change works for users. That is
   [release-confirmation](../release-confirmation/card.md), which waits for real traffic.
+- **For what users install, a deploy is a publish.** A package, a binary or an image has no `/ready`: it is ready when
+  the registry serves it and every dependency it installs, and its smoke runs the installed copy, not the workspace.
+  That is [shipped-artifact-check](../shipped-artifact-check/card.md), which also keeps the channel pointer from moving
+  before the checks pass.
 - **When the agent itself waits for a deploy, it should not spend turns polling.** A model that sleeps and re-reads
   `/ready` pays a turn per poll and drifts. Poll outside the model: opencode's `schedule_create` with `until`
   runs a shell check "with no model call", every 30 seconds by default, wakes the session once when the command
