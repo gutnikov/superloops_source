@@ -43,13 +43,20 @@ Suggest:
 
 Adds no loop. The internal track (TestFlight, Firebase App Distribution) is staging; the store release is production.
 
-Suggest `platform-matrix` (OS versions and devices) and `exploratory-testing` (a person on a real device before the
-store release).
+Suggest `platform-matrix` (OS versions and devices), `exploratory-testing` (a person on a real device before the
+store release), `shipped-artifact-check` (the signed build users install, checked before it is submitted) and
+`patch-backport` (a fix carried to the version already in the store, with its own tests).
 
 ## `package-registry`: a package registry
 
 Adds `api-breaking-changes`: a published package's users break on the next version they install, far from the change.
 The public API is compared with the last release before every release.
 
-Suggest `changelog-audit` (every commit since the last tag in the changelog) and `platform-matrix` (runtime versions
-the package claims to support).
+Adds `shipped-artifact-check`: the tests run against the workspace, and users install the packed package. A file left
+out of the package, a bundler that drops a module, a binary built for the wrong architecture pass every test. The
+release installs what it built into an empty project, runs it, and moves the `latest` tag only then.
+
+Suggest `changelog-audit` (every commit since the last tag in the changelog), `platform-matrix` (runtime versions
+the package claims to support), `release-trust-boundary` (the job that holds the publish token runs only the release
+scripts and checks each artifact against the digest its build reported) and `patch-backport` (a fix carried to a
+release line that is still supported).

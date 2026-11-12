@@ -8,7 +8,7 @@ places: [delivery/work, maintenance/work]
 stages: [task]
 speed: [minutes]
 needs: []
-related: [agent-code-review, behaviour-invariance, garbage-collection]
+related: [agent-code-review, behaviour-invariance, garbage-collection, red-green-tdd]
 links:
   - title: "/deslop: simplify a completed workpackage (a prompt template)"
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/.pi/prompts/deslop.md"
@@ -21,7 +21,9 @@ An agent that has just made something work leaves the traces of getting there: w
 cases that never come, defensive branches inside trusted code, a fallback for a state the types already forbid.
 Review comments point at some of it, and nobody removes it, because the work already passes. A pass whose only goal
 is to simplify, run while the work is fresh and held by the same checks, removes that complexity before other code is
-built on it.
+built on it. It is also the refactor of test-first work: [red-green-tdd](../red-green-tdd/card.md) stops at green,
+because a refactor step inside it is the step agents skip, and the refactor runs here with the tests green before and
+after.
 
 ## How it works
 

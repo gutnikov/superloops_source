@@ -22,6 +22,10 @@ links:
     url: "https://newsletter.kentbeck.com/p/genie-wants-to-leap"
     author: "Kent Beck"
     note: "agents that disable or delete tests."
+  - title: "to-tickets docs: acceptance criteria that graded nothing"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/docs/engineering/to-tickets.md#L76-L77"
+    author: "skills (Matt Pocock)"
+    note: "three shapes: already true at the base, satisfiable only by another ticket, a restated request."
 ---
 
 ## Why
@@ -42,8 +46,11 @@ over them.
    [escalation-on-uncertainty](../escalation-on-uncertainty/card.md)), and a person approves the spec
    ([human-acceptance-criteria](../human-acceptance-criteria/card.md)).
 2. **Spec → acceptance tests, red.** A test writer derives the tests from the spec's examples, one test per
-   example, tagged with the example's id and its requirements. They run and fail: a test that passes before the
-   work tests nothing.
+   example, tagged with the example's id and its requirements, and names for each the observation that would show
+   it false. They run and fail at the commit the implementer starts from: a test that passes before the work tests
+   nothing. Pocock reports generated criteria that "passed before any work was done", in three shapes: "a criterion
+   already true at the base commit, a criterion that only work in another ticket can satisfy, and one that restates
+   the request rather than deriving from the artifact".
 3. **Work.** The agent implements with its inner loops: [build](../build/card.md), [types](../type-check/card.md),
    [lint](../lint-with-fix-instructions/card.md), [red/green TDD](../red-green-tdd/card.md) for the units,
    [e2e](../e2e-browser/card.md) to look at the app.
@@ -66,6 +73,7 @@ A test that is red after the work goes back to where the mistake is:
 | the code does not do what the example says | the agent's inner loops |
 | the test does not do what the example says | the test writer |
 | the example is wrong or ambiguous | the spec, with a question to a person and a new approval |
+| the example needs work another ticket owns | the spec: the example moves to that ticket |
 
 ## Set up
 
@@ -78,15 +86,16 @@ A test that is red after the work goes back to where the mistake is:
 - **Red first.** Keep the acceptance run from before the work: a CI job on the branch's first commit, or a run in
   the task's evidence. The gate compares that run with the final run.
 - **The gate is the `run`.** One command prints one line per requirement, `<requirement id>: <status>` (`no test`,
-  `red`, `green`, `green before the work`, `changed without approval`), and exits non-zero while any approved
-  requirement is not `green`. It reuses the acceptance suite's report and the requirement trace (with the `spec`
-  part: `specs.py trace`, and tests tagged with example ids); it adds no check a part already makes.
+  `no observation`, `red`, `green`, `green before the work`, `changed without approval`), and exits non-zero while
+  any approved requirement is not `green`. It reuses the acceptance suite's report and the requirement trace (with
+  the `spec` part: `specs.py trace`, and tests tagged with example ids); it adds no check a part already makes.
 - **Parts.** `parts:` in the loop's `LOOP.md` lists the project's loops for each stage, such as `spec-check`, the
   inner loops and the Stop hook. The acceptance loop is validated after its parts, and is `active` only while they
   are.
-- **Cases.** Must fire: a requirement without a test; a test that was green before the work; an acceptance test the
-  implementing agent weakened; an example changed without a new approval. Must pass: a requirement whose tests went
-  from red to green with the spec and the tests untouched.
+- **Cases.** Must fire: a requirement without a test; an example with no observation that would show it false; a
+  test that was green before the work; an acceptance test the implementing agent weakened; an example changed without
+  a new approval; for the refuter, a criterion that restates the request and one only a sibling ticket's work can
+  satisfy. Must pass: a requirement whose tests went from red to green with the spec and the tests untouched.
 
 ## Notes
 
@@ -104,5 +113,7 @@ A test that is red after the work goes back to where the mistake is:
 
 Besides the writers, two agents: a guard that returns a Verdict on whether the implementing agent touched or
 weakened the spec or the acceptance tests, and a refuter that tries to prove each requirement's "done" wrong by
-running its tests and opening the app. Both get the requirement and the artifacts, never the implementing agent's
-reasoning, and both block only once calibrated ([agent-calibration](../agent-calibration/card.md)).
+running its tests and opening the app. Before the work, the refuter also reads each criterion against the base
+commit and the sibling tickets, and flags one that restates the request or that another ticket's work must
+satisfy. Both get the requirement and the artifacts, never the implementing agent's reasoning, and both block only
+once calibrated ([agent-calibration](../agent-calibration/card.md)).

@@ -26,6 +26,11 @@ Suggest:
   at each one.
 - `async-questions-with-assumptions`: the agent writes down each non-blocking question with the assumption it made and
   keeps working; the person answers them in one batch.
+- `afk-run-handoff`: when an unattended run ends, a wrapper checks what it left (commits ahead of the main branch, no
+  unresolved conflicts, the branch not moved by someone else) and hands a failure back with its reason and how to
+  retry, instead of a run that reports success and did nothing.
+- `agent-branch-integration`: once several agents work in parallel, their branches are merged one at a time, with the
+  checks run after each merge and only real conflicts left to an agent.
 
 ## `ci-bots`: in CI, on issues and pull requests
 

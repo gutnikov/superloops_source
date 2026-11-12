@@ -43,9 +43,10 @@ hitl:
   # How every call is made.
   rules:
     - >-
-      One question per message. Two exceptions: the form of the first /superloops, up to 4 questions in one call;
-      and the open questions of one requirement file, asked in one batch (the spec part). Say what was already
-      checked to answer it without the user.
+      Questions that do not depend on each other go in one call of the question tool, up to 4: the form of the
+      first /superloops, the wizard, a round of an interview, the open questions of one requirement file (the spec
+      part). A question whose options depend on another's answer waits for that answer. Say what was already
+      checked to answer each without the user.
     - 2–4 options, the recommended one first, plus a free answer.
     - Show, don't describe: a schema of the loop, a table, a screenshot, real command output.
     - Ask in the agent session only, with its question tool when it has one.

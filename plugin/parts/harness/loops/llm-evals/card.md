@@ -37,6 +37,9 @@ links:
   - title: "changed_prompt.js: when a diff changes the prompt"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/scripts/changed_prompt.js#L8-L21"
     author: "gemini-cli (Google)"
+  - title: "CODEOWNERS: prompts, tools and evals to one team"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.github/CODEOWNERS#L19-L22"
+    author: "gemini-cli (Google)"
   - title: "eval-validate.ts: the positive-assertion rule"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/scripts/utils/eval-validate.ts#L207-L230"
     author: "gemini-cli (Google)"
@@ -116,7 +119,10 @@ what needs judgement, such as whether a summary is faithful (see Agent step).
   that touches a prompt or the model's configuration. Tool descriptions and schemas are prompt: gemini-cli's
   `changed_prompt.js` also matches a diff that touches a tool definition, and runs the evals when it cannot tell.
   The CI job takes the suite, the baseline and the threshold from the base branch, so a case deleted or a threshold
-  lowered in the same pull request still counts against it.
+  lowered in the same pull request still counts against it. The prompts, the tool definitions and the evals have one
+  set of code owners, so a pull request that changes a prompt and the eval that grades it needs the same reviewers
+  for both: gemini-cli's CODEOWNERS sends `/packages/core/src/prompts/`, `/packages/core/src/tools/` and `/evals/`
+  to its prompt approvers.
 
 ## Notes
 

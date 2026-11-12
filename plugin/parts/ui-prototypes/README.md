@@ -40,8 +40,9 @@ from its `node_modules`.
 
 - Talk in the user's language.
 - Answer with the screen: the URL and a screenshot, not a description.
-- Do not ask what you can find out from the code. One question at a time, with the session's question tool, 2–4
-  options, the recommended one first.
+- Do not ask what you can find out from the code. Ask with the session's question tool, 2–4 options, the
+  recommended one first: independent questions together, up to 4 in one call, and a question that depends on
+  another's answer after it.
 
 ## Setup: once per project
 

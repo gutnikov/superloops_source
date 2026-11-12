@@ -5,7 +5,7 @@ summary: "The agent benchmarks its code against a baseline, such as existing lib
 sensor: computational
 ilities: [performance]
 places: [delivery/work, maintenance/oracle, discovery/work]
-stages: [local]
+stages: [local, ci]
 speed: [minutes]
 needs: []
 related: [profiling, behaviour-invariance, perf-budgets-telemetry, scripted-model-tests]
@@ -44,6 +44,12 @@ links:
   - title: "perf-test-harness.ts: the comparison and its failure message"
     url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/test-utils/src/perf-test-harness.ts#L214-L322"
     author: "gemini-cli (Google)"
+  - title: "Codex justfile: bench-smoke and bench-e2e-smoke"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/justfile#L104-L119"
+    author: "Codex (OpenAI)"
+  - title: "rust-ci.yml: the benchmark smoke test on pull requests"
+    url: "https://github.com/openai/codex/blob/e58bf8f5233b51e7cd1679d947e3028c1ed91b06/.github/workflows/rust-ci.yml#L78-L79"
+    author: "Codex (OpenAI)"
 ---
 
 ## Why
@@ -97,8 +103,12 @@ but faster at range scanning". One total would have hidden both halves, so compa
   results go into the pull request as a generated block that the tool refuses to update once someone edits it.
 - **`run`** prints one line per operation, `<benchmark>: <result> vs <baseline> (<ratio>): <status>`, where the
   status is `ok` or `slower than allowed`, and exits non-zero when any operation is slower than its threshold allows.
-- **Cases.** Must fire: a copy with a deliberate slowdown on one operation (a linear scan in lookup). Must pass: the
-  clean copy, run twice, to show that the noise does not fire.
+- **Cases.** Must fire: a copy with a deliberate slowdown on one operation (a linear scan in lookup); for the smoke
+  run, a benchmark that panics on start. Must pass: the clean copy, run twice, to show that the noise does not fire.
 - **Wiring.** The agent runs `run` locally after a change to the code the requirement covers. Run benchmarks on one
-  machine, not on shared CI runners whose speed varies from job to job. A PreToolUse hook denies the agent's writes to
-  the thresholds and to the saved baseline runs: moving the bar is a person's decision.
+  machine, not on shared CI runners whose speed varies from job to job. CI runs each benchmark once, without
+  measuring, so one that no longer builds or starts fails the PR that broke it: Codex's `just bench-smoke` ("Run
+  benchmark targets once to ensure they start successfully") runs `cargo bench … -- --test` in its PR CI, and its
+  end-to-end smoke builds without the optimizer, "Avoid optimizer cost because smoke runs only check that benchmarks
+  work". A PreToolUse hook denies the agent's writes to the thresholds and to the saved baseline runs: moving the bar
+  is a person's decision.

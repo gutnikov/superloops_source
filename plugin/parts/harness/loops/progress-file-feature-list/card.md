@@ -8,7 +8,7 @@ places: [delivery/work]
 stages: [task]
 speed: [minutes, hours]
 needs: []
-related: [acceptance-loop, e2e-browser, isolated-environment, stop-hook]
+related: [acceptance-loop, e2e-browser, isolated-environment, stop-hook, plan-approval, agent-branch-integration, afk-run-handoff]
 links:
   - title: "Effective harnesses for long-running agents"
     url: "https://anthropic.com/engineering/effective-harnesses-for-long-running-agents"
@@ -49,6 +49,30 @@ links:
   - title: "math-proof siege: state.md rewritten after every step"
     url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/math-proof/skills/siege/SKILL.md#L304-L308"
     author: "Anthropic"
+  - title: "subagent-driven-development: a ledger per plan, named on its first line"
+    url: "https://github.com/obra/superpowers/blob/22f0b463e7a5e579904dd6211a520321035526f7/skills/subagent-driven-development/SKILL.md#L108-L128"
+    author: "superpowers (obra)"
+  - title: "resuming.md: another plan's ledger is left in place"
+    url: "https://github.com/obra/superpowers/blob/22f0b463e7a5e579904dd6211a520321035526f7/skills/subagent-driven-development/references/resuming.md#L6-L12"
+    author: "superpowers (obra)"
+  - title: "task-done: the completion line written only when the tests pass"
+    url: "https://github.com/obra/superpowers/blob/22f0b463e7a5e579904dd6211a520321035526f7/skills/executing-plans/scripts/task-done#L1-L55"
+    author: "superpowers (obra)"
+  - title: "SDD design: 269 dispatches for about 22 tasks"
+    url: "https://github.com/obra/superpowers/blob/22f0b463e7a5e579904dd6211a520321035526f7/docs/superpowers/specs/2026-06-09-sdd-task-scoped-review-dispatch-design.md#L91-L94"
+    author: "superpowers (obra)"
+  - title: "Plan-scoped workspace eval: 6 to 13 tool calls per resume"
+    url: "https://github.com/obra/superpowers/blob/22f0b463e7a5e579904dd6211a520321035526f7/docs/superpowers/specs/2026-07-06-sdd-plan-scoped-workspace-eval-results.md#L36-L64"
+    author: "superpowers (obra)"
+  - title: "implement-spec SKILL.md: tickets as a task graph, one worktree each"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/skills/engineering/implement-spec/SKILL.md#L13-L42"
+    author: "skills (Matt Pocock)"
+  - title: "implement-spec.md: blocked tickets that never start"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/docs/engineering/implement-spec.md#L58-L60"
+    author: "skills (Matt Pocock)"
+  - title: "to-tickets.md: one shared tickets file, written by parallel agents"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/docs/engineering/to-tickets.md#L70-L71"
+    author: "skills (Matt Pocock)"
 ---
 
 ## Why
@@ -84,9 +108,16 @@ feature passes when its acceptance tests are green.
 - **Two prompts.**
   - The initializer's: build the list from the spec with every feature failing, write `init.sh`, commit.
   - Each session's: the steps above, one feature only, and never edit a feature's description or steps.
-- **Only `passes` changes.** A PreToolUse hook on writes to `feature_list.json` denies any change other than
-  `passes`. Better still, a script sets `passes` from the e2e suite's report, where tests are tagged with the feature's
-  id, and the agent never writes it.
+- **Only `passes` changes, and only a passing run sets it.** A PreToolUse hook on writes to `feature_list.json`
+  denies any change other than `passes`. Better still, a script runs the feature's e2e tests, tagged with its id, and
+  sets `passes` only when they exit 0, adding a line to the progress file with the commit range and the command's
+  last line; the agent never writes it. superpowers' `task-done` appends `Task <N>: complete (commits
+  <base7>..<head7>, tests: <command> → <last line>)`, and "A failing command records nothing".
+- **The progress file names its plan.** Its first line names the feature list it tracks, as superpowers' ledger
+  does with `# SDD ledger — plan: <plan file path>`. A progress file that names another list "is another plan's
+  progress: leave it in place and start your own, fresh". Without that line, each resume in a repository with an old
+  ledger spent 6 to 13 tool calls proving it was not its own (superpowers' eval). With no ledger at all, sessions
+  "re-dispatched entire completed task sequences after compaction — 269 dispatches for ~22 tasks".
 - **A failed check or an unfinished session** leaves the feature at `false`. The progress entry says where the work
   stopped, and the session commits on its branch or reverts with git, so the next one starts from a working state.
 - **Write as you go, and mark the end.** A worker that may be cut off writes its plan and the step it is attempting
@@ -96,11 +127,13 @@ feature passes when its acceptance tests are green.
   handed to one rerun, whose worker is told to "treat none of it as established". The orchestrator rewrites its own
   state file after every step, "your only memory if this conversation is ever compacted", and the same command
   resumes from the recorded phase, "never redoing a step whose output files exist".
-- **`run`** compares `feature_list.json` with the main branch and the latest e2e report. It prints one line per
-  changed feature, `<id>: <status>`, where the status is `passing`, `passing without evidence`, `steps changed` or
-  `removed`. It exits non-zero on anything but `passing`.
-- **Cases.** Must fire: a feature set to `true` with no green e2e run for it; a feature whose steps were edited; a
-  removed feature. Must pass: one feature set to `true` after its e2e test passed, the rest untouched.
+- **`run`** compares `feature_list.json` with the main branch, the latest e2e report and the progress file's
+  completion lines. It prints one line per changed feature, `<id>: <status>`, where the status is `passing`,
+  `passing without evidence` (no green run, or a commit range `git log` does not have), `steps changed` or `removed`.
+  It exits non-zero on anything but `passing`.
+- **Cases.** Must fire: a feature set to `true` with no green e2e run for it; a pass whose commit range `git log`
+  does not have; a feature whose steps were edited; a removed feature. Must pass: one feature set to `true` after its
+  e2e test passed, the rest untouched.
 - **Wiring**: a [Stop hook](../stop-hook/card.md) runs `run` at the end of each session, and CI runs it on the
   branch.
 
@@ -112,6 +145,11 @@ feature passes when its acceptance tests are green.
   Markdown files."
 - Without an explicit instruction to test as a user would, Claude marked features complete after unit tests or
   `curl` while the feature did not work end to end (Anthropic).
+- **Parallel sessions.** When several agents take features at once, each in its own worktree, the list is a graph:
+  a feature is ready when every feature it depends on has merged. Compute that from what merged into the integration
+  branch, not from the tracker. Pocock's implement-spec: "The tracker's blocked-by count only drops when a blocker
+  *closes*", at the end of the run, so blocked tickets never started. One shared tickets file "caused race conditions
+  when parallel agents wrote to it": give each feature its own progress file, or let only the orchestrator write.
 - Deferred work needs the same file. Pi builds one package in vertical slices: anything a slice leaves for later goes
   into the "Carry-over" section under the slice that will do it, in the same change, and that slice's spec and build
   must include every entry filed under it. Work put off in one session is then where the next session reads it.

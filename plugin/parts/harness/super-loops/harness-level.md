@@ -46,6 +46,11 @@ The catalog's loops of this level:
   that should and should not load it, run several times, with a held-out set to keep a rewrite from overfitting.
 - [agent-ci-hardening](../loops/agent-ci-hardening/card.md) is the gate of the agents a project runs unattended in
   CI: every such job keeps its egress firewall and its reviewed permission mode.
+- [third-party-extension-scan](../loops/third-party-extension-scan/card.md) is the gate of the extensions the agent
+  loads that the project did not write: each plugin, skill or MCP server added or bumped is read against a policy
+  before it runs in a session.
+- [afk-run-handoff](../loops/afk-run-handoff/card.md) is the gate of an unattended run: git, not the agent's report,
+  shows whether it left work to hand on, and a run that did not is blocked with its reason and how to retry.
 
 ## Its signal
 

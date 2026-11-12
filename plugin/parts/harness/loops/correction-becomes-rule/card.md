@@ -1,7 +1,7 @@
 ---
 id: correction-becomes-rule
 title: "Steering: a repeated correction becomes a rule"
-summary: "Every correction a person makes is logged at the phase that should have caught it; the second of a kind is an escape, and it becomes a lint, a test or a line in CLAUDE.md."
+summary: "Every correction a person makes is logged at the phase that should have caught it; the second of a kind is an escape, and it becomes a check, a reviewer's rule or a line in CLAUDE.md."
 sensor: human
 ilities: [alignment]
 places: [harness:remediation/entry]
@@ -9,7 +9,7 @@ stages: [continuous]
 speed: [minutes]
 needs: []
 initiator: human
-related: [steering-loop, human-diff-review, taste-invariants, sample-audit, guide-lift-eval]
+related: [steering-loop, human-diff-review, taste-invariants, sample-audit, guide-lift-eval, tool-use-telemetry, agent-code-review]
 links:
   - title: "session-transcripts.ts"
     url: "https://github.com/earendil-works/pi/blob/4839e41d6463d759a92ee55f4ca7c8ae57e52c9c/scripts/session-transcripts.ts"
@@ -65,6 +65,22 @@ links:
   - title: "hookify example: require-tests-stop"
     url: "https://github.com/anthropics/claude-plugins-official/blob/43fd1f9db0941b2b83cb62268e35970d4a67c202/plugins/hookify/examples/require-tests-stop.local.md#L1-L10"
     author: "Anthropic"
+  - title: "writing-skills: match the form to the failure"
+    url: "https://github.com/obra/superpowers/blob/22f0b463e7a5e579904dd6211a520321035526f7/skills/writing-skills/SKILL.md#L248-L263"
+    author: "superpowers (obra)"
+    note: "a prohibition, a positive recipe, a required slot or a conditional; no nuance clauses."
+  - title: "Positive-instruction redesign: a prohibition worse than no rule"
+    url: "https://github.com/obra/superpowers/blob/22f0b463e7a5e579904dd6211a520321035526f7/docs/superpowers/specs/2026-06-10-positive-instruction-redesign-design.md#L6-L33"
+    author: "superpowers (obra)"
+  - title: "retro: classify the violation, a check for the mechanical, standards for the reviewer"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/skills/engineering/retro/SKILL.md#L15-L42"
+    author: "skills (Matt Pocock)"
+  - title: "retro docs: prune checks that fire on good code; trace each candidate to a moment"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/docs/engineering/retro.md#L37-L43"
+    author: "skills (Matt Pocock)"
+  - title: "chief-of-staff: a retro on about one session in five"
+    url: "https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/skills/in-progress/chief-of-staff/SKILL.md#L53"
+    author: "skills (Matt Pocock)"
 ---
 
 ## Why
@@ -81,8 +97,9 @@ test, it is checked on every run, and the person does not have to make it again.
 3. The first correction of a kind is only logged. The second of the same kind is an escape, and the
    [steering loop](../steering-loop/card.md) takes it: it records the corrected example as a must-fire case at that
    phase and fixes or adds the loop there.
-4. The rule ends in one of two places: an automated sensor (a lint, a test, a fitness function), or a line in
-   CLAUDE.md where no check can express it.
+4. The rule ends in one of three places: an automated sensor (a lint, a test, a fitness function); for a judgement
+   call, the reviewer's standards, read at review time; or, for what the working agent must do as it works, a line
+   in CLAUDE.md.
 
 `loops.py stats` lists the places where corrections pile up; a place with two or more needs a loop or a stronger
 one. The measure is that each kind of correction stops coming back.
@@ -95,7 +112,10 @@ one. The measure is that each kind of correction stops coming back.
   project's session transcripts into files that fit a context and runs one subagent per file. Each reads the existing
   AGENTS.md, then the whole transcript in chunks, and writes down every instruction the user gave two or more times: a
   name, `NEW` or `EXISTING` against AGENTS.md, how often it came, exact quotes as evidence, and a draft rule. Each
-  `NEW` pattern is logged as a correction of its kind; the harness engineer runs it weekly.
+  `NEW` pattern is logged as a correction of its kind; the harness engineer runs it weekly. For agents that run
+  unattended, read about one session in five, those where something went wrong first (Matt Pocock's chief-of-staff).
+  A mined candidate that cannot be traced to a moment in a transcript is dropped: a user of Matt Pocock's retro saw
+  it invent "generic advice to satisfy the retro categories" once the session's struggles were forgotten.
 - **Or a background agent proposes the rules, and a person approves each.** gemini-cli's auto memory, on in the
   repository's own settings, reads sessions idle for 3 hours or more with at least 10 user messages, 10 new ones per
   run and at most one run in 30 minutes. It ranks "User messages — strongest signal… corrections, interruptions,
@@ -112,7 +132,8 @@ one. The measure is that each kind of correction stops coming back.
   validation" counts as uncertain, so a lesson does not come from a success nobody checked. A memory read later is
   verified first when it "is likely to drift and is cheap to verify", and called possibly stale when it is not. For
   rules from this loop, have the agent name the rule it applied in its final message; a rule no session named in 30
-  days goes back to the person who approved it, to keep or remove.
+  days goes back to the person who approved it, to keep or remove. A check that "fires constantly on good code" goes
+  back the same way (Matt Pocock).
 - **The agent's own struggles count as corrections too.** opencode's `/learn` mines the session for "errors that
   took multiple attempts" and "Debugging breakthroughs when error messages were misleading", skips "Things already
   in an AGENTS.md", and writes 1 to 3 lines per lesson into the AGENTS.md nearest the code it concerns, since parent
@@ -122,8 +143,21 @@ one. The measure is that each kind of correction stops coming back.
   `Sources` section whenever you add a new rule"; here each rule names its trace entry or its pull request.
 - **Short, stable kinds**, such as `unstructured log line` or `test edited instead of code`, so that two corrections
   of one kind are seen as one kind. Reuse a kind already in `superloops/trace.jsonl` before writing a new one.
-- **Code before text.** CLAUDE.md is advice, not a guarantee. Prefer a [custom lint](../taste-invariants/card.md) or
-  a test whose message says how to fix the violation; write a line in CLAUDE.md only for what no check can see.
+- **Code before text, and text in the form that fits.** CLAUDE.md is advice, not a guarantee. A mechanical
+  correction, such as a banned API, an import shape or a file location, becomes a
+  [custom lint](../taste-invariants/card.md) or a test whose message says how to fix it: Matt Pocock's retro gives
+  it "a deterministic check, full stop". First read the repository's own check commands: a check that exists but
+  sits unwired or broken is the finding. A judgement call goes to the reviewer's
+  standards, since the reviewer works under the least context pressure. A line in CLAUDE.md takes the form of the
+  failure it fixes (superpowers' writing-skills):
+  - the agent breaks a rule under pressure: a prohibition, with the rationalisations seen and red flags;
+  - it complies, but the output has the wrong shape: a positive recipe that says what the output is, part by part;
+  - it omits a required element: a required slot in the template it fills in;
+  - the behaviour depends on a condition: a conditional on something observable.
+
+  No nuance clauses ("Don't X unless it matters"), and no exemptions: they "don't scope". A prohibition aimed at a
+  shape can do worse than no rule: superpowers measured "don't restate the brief" at 4.4 re-typed spec values, 3.6
+  with no rule and 3.0 with a recipe.
 - **A correction about an action can become a hook.** Anthropic's hookify plugin has an agent read the recent
   messages for "don't do X", reversions and repeated problems, and proposes a pattern for each; the person picks up to
   4 and chooses for each whether it warns or blocks. Each becomes a rule file with an event, conditions and the

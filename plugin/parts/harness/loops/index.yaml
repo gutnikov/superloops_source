@@ -50,6 +50,17 @@ loops:
     speed: [seconds]
     needs: [browser]
     related: [accessibility-checks, e2e-browser, agentic-manual-testing]
+  - id: afk-run-handoff
+    title: "An unattended run ends in a hand-off or a reason"
+    path: afk-run-handoff/card.md
+    summary: "After an unattended agent run, a wrapper checks git, not the agent: commits ahead, no conflicts, a valid plan, the branch unmoved; any failure blocks the item with the reason and a one-step retry."
+    sensor: computational
+    ilities: [reliability, observability]
+    places: [delivery/work, remediation/work, maintenance/work, harness:delivery/gate]
+    stages: [ci]
+    speed: [seconds]
+    needs: [ci]
+    related: [agent-branch-integration, stop-hook, stall-detector, escalation-on-uncertainty, agent-ci-hardening, triage, garbage-collection, human-diff-review]
   - id: agent-audit-trail
     title: "Audit trail of agent actions"
     path: agent-audit-trail/card.md
@@ -65,6 +76,18 @@ loops:
     initiator: rule
     sync: blocking
     assesses: [result]
+  - id: agent-branch-integration
+    title: "Parallel agents' branches merged and re-checked"
+    path: agent-branch-integration/card.md
+    summary: "Parallel agents' branches merge one at a time, typecheck and tests after each; git picks the branches, and the wrapper fails a merge that moved nothing or left conflicts."
+    sensor: computational
+    ilities: [correctness, deployability]
+    places: [delivery/work, remediation/work, maintenance/work]
+    stages: [task, ci]
+    speed: [minutes]
+    needs: []
+    agent: [worker]
+    related: [isolated-environment, afk-run-handoff, progress-file-feature-list, pre-commit-pre-push, ci-clean-infra, human-diff-review]
   - id: agent-calibration
     title: "Calibration of a loop's agent"
     path: agent-calibration/card.md
@@ -75,22 +98,22 @@ loops:
     stages: [local, scheduled]
     speed: [minutes]
     needs: []
-    related: [llm-judge-calibration, sample-audit, steering-loop, llm-evals, docs-audit]
+    related: [llm-judge-calibration, sample-audit, steering-loop, llm-evals, docs-audit, agent-code-review, guide-lift-eval]
   - id: agent-ci-hardening
     title: "Agents in CI run with their guards on"
     path: agent-ci-hardening/card.md
-    summary: "A CI check finds every workflow job that runs an agent and fails when one lacks the egress firewall, the reviewed permission mode or a model that supports it; exemptions carry a reason."
+    summary: "A CI check finds every workflow job that runs an agent and fails when one lacks its guards: egress firewall, reviewed permissions, tool list and turn cap, no write token near untrusted text."
     sensor: computational
     ilities: [security]
     places: [harness:delivery/gate, harness:maintenance/gate]
     stages: [ci]
     speed: [seconds]
     needs: [ci]
-    related: [risky-action-gates, approval-reviewer-agent, isolated-environment, garbage-collection, repo-health-agent, triage]
+    related: [risky-action-gates, approval-reviewer-agent, isolated-environment, garbage-collection, repo-health-agent, triage, release-trust-boundary, third-party-extension-scan]
   - id: agent-code-review
     title: "Code review by another agent"
     path: agent-code-review/card.md
-    summary: "The coding agent asks one or more reviewer agents, each with a fresh context, for a review, and fixes their comments until the reviewers are satisfied."
+    summary: "The coding agent asks reviewer agents with a fresh context to review the committed diff, and fixes confirmed findings for at most five rounds, each re-review checking only the open ones."
     sensor: inferential
     ilities: [maintainability, correctness]
     places: [delivery/work, remediation/work, maintenance/work]
@@ -98,7 +121,7 @@ loops:
     speed: [minutes]
     needs: []
     agent: [reviewer]
-    related: [verification-subagent, security-review-agent, human-diff-review, agent-calibration]
+    related: [verification-subagent, security-review-agent, human-diff-review, agent-calibration, simplification-pass, stall-detector, agent-branch-integration, afk-run-handoff]
   - id: agentic-manual-testing
     title: "Agentic manual testing"
     path: agentic-manual-testing/card.md
@@ -126,14 +149,14 @@ loops:
   - id: api-breaking-changes
     title: "Breaking changes in the API"
     path: api-breaking-changes/card.md
-    summary: "The agent changes a schema; CI compares it with the schema on main and reports each break, and the agent restores compatibility or introduces a new API version."
+    summary: "The agent changes a schema, a library's public types or data released clients read; CI compares them with main or builds the latest release on them, and the agent restores compatibility."
     sensor: computational
     ilities: [compatibility, maintainability]
     places: [delivery/work, remediation/work, maintenance/gate]
     stages: [local, ci]
     speed: [seconds]
     needs: []
-    related: [contract-tests, executable-docs, behaviour-invariance]
+    related: [contract-tests, executable-docs, behaviour-invariance, changelog-audit]
   - id: approval-reviewer-agent
     title: "A reviewer agent answers approval prompts"
     path: approval-reviewer-agent/card.md
@@ -168,7 +191,7 @@ loops:
     stages: [commit, ci]
     speed: [seconds]
     needs: []
-    related: [lint-with-fix-instructions, coupling-analysis, correction-becomes-rule, pre-commit-pre-push]
+    related: [lint-with-fix-instructions, coupling-analysis, correction-becomes-rule, pre-commit-pre-push, taste-invariants, test-admission, code-coverage]
   - id: async-questions-with-assumptions
     title: "Asynchronous questions with assumptions"
     path: async-questions-with-assumptions/card.md
@@ -204,7 +227,7 @@ loops:
     stages: [scheduled]
     speed: [minutes, hours]
     needs: [deploy]
-    related: [chaos-engineering, db-migration-lint, health-checks-smoke, canary-feature-flags]
+    related: [chaos-engineering, db-migration-lint, health-checks-smoke, canary-feature-flags, patch-backport, release-trust-boundary]
   - id: behaviour-invariance
     title: "Behaviour invariance"
     path: behaviour-invariance/card.md
@@ -224,7 +247,7 @@ loops:
     sensor: computational
     ilities: [performance]
     places: [delivery/work, maintenance/oracle, discovery/work]
-    stages: [local]
+    stages: [local, ci]
     speed: [minutes]
     needs: []
     related: [profiling, behaviour-invariance, perf-budgets-telemetry, scripted-model-tests]
@@ -251,7 +274,7 @@ loops:
     speed: [seconds, minutes]
     needs: []
     agent: [explorer]
-    related: [reproduction-gate, red-green-tdd, exploratory-testing, agentic-manual-testing]
+    related: [reproduction-gate, red-green-tdd, debugger-repl, exploratory-testing, agentic-manual-testing, coupling-analysis]
   - id: build
     title: "Build / compile"
     path: build/card.md
@@ -284,7 +307,7 @@ loops:
     stages: [production]
     speed: [minutes, hours]
     needs: [metrics, deploy]
-    related: [release-confirmation, health-checks-smoke, slo-degradation, triage]
+    related: [release-confirmation, health-checks-smoke, slo-degradation, triage, backup-restore-rollback, patch-backport]
   - id: changelog-audit
     title: "Changelog audit before a release"
     path: changelog-audit/card.md
@@ -296,7 +319,7 @@ loops:
     speed: [seconds, minutes]
     needs: []
     agent: [reviewer]
-    related: [api-breaking-changes]
+    related: [api-breaking-changes, release-trust-boundary]
   - id: chaos-engineering
     title: "Chaos engineering"
     path: chaos-engineering/card.md
@@ -331,7 +354,7 @@ loops:
     stages: [task]
     speed: [minutes]
     needs: []
-    related: [correction-becomes-rule, taste-invariants, escalation-on-uncertainty]
+    related: [correction-becomes-rule, taste-invariants, escalation-on-uncertainty, visual-screenshot-check, async-questions-with-assumptions, interview]
     when: [during, after]
     initiator: agent
     assesses: [result, code]
@@ -346,18 +369,18 @@ loops:
     speed: [minutes]
     needs: [ci]
     agent: [investigator]
-    related: [pre-commit-pre-push, platform-matrix, isolated-environment]
+    related: [pre-commit-pre-push, platform-matrix, isolated-environment, dependency-updates]
   - id: code-coverage
     title: "Code coverage"
     path: code-coverage/card.md
-    summary: "The agent runs coverage and writes tests for the uncovered branches."
+    summary: "The agent runs coverage and writes tests for the uncovered branches; CI holds the diff to a threshold and the whole code to a floor that only rises."
     sensor: computational
     ilities: [testability]
     places: [delivery/work, remediation/work, maintenance/oracle]
     stages: [local, ci]
     speed: [seconds]
     needs: []
-    related: [mutation-testing, behaviour-invariance, red-green-tdd]
+    related: [mutation-testing, behaviour-invariance, red-green-tdd, test-admission, architecture-fitness-functions]
   - id: compliance-mutants
     title: "Compliance hardening with mutants"
     path: compliance-mutants/card.md
@@ -373,36 +396,36 @@ loops:
   - id: config-validation
     title: "Configuration check"
     path: config-validation/card.md
-    summary: "Two checks catch configuration errors: a validator checks the configuration against its schema; a smoke start runs with each configuration profile."
+    summary: "Three checks catch configuration errors: a validator checks it against its schema, a probe checks that each endpoint it names answers, and a smoke start runs each profile."
     sensor: computational
     ilities: [deployability, compatibility]
     places: [delivery/work, remediation/work, maintenance/work]
     stages: [edit, commit, ci]
     speed: [seconds, minutes]
     needs: []
-    related: [health-checks-smoke, preview-environments]
+    related: [health-checks-smoke, preview-environments, third-party-extension-scan]
   - id: contract-tests
     title: "Contract tests"
     path: contract-tests/card.md
-    summary: "The agent changes a provider and runs contract verification. Before a deploy, the agent runs `pact-broker can-i-deploy`. The command exits with code 0 (\"yes\") or 1 (\"no\")."
+    summary: "The agent changes a provider and verifies it against its consumers' pacts, a standard's suite or its own past releases; before a deploy, `can-i-deploy` exits 0 (yes) or 1 (no)."
     sensor: computational
     ilities: [compatibility, testability]
     places: [delivery/work, delivery/gate, remediation/work, maintenance/gate]
     stages: [local, ci]
     speed: [minutes]
     needs: [ci]
-    related: [api-breaking-changes, integration-tests-emulators]
+    related: [api-breaking-changes, integration-tests-emulators, shipped-artifact-check]
   - id: correction-becomes-rule
     title: "Steering: a repeated correction becomes a rule"
     path: correction-becomes-rule/card.md
-    summary: "Every correction a person makes is logged at the phase that should have caught it; the second of a kind is an escape, and it becomes a lint, a test or a line in CLAUDE.md."
+    summary: "Every correction a person makes is logged at the phase that should have caught it; the second of a kind is an escape, and it becomes a check, a reviewer's rule or a line in CLAUDE.md."
     sensor: human
     ilities: [alignment]
     places: [harness:remediation/entry]
     stages: [continuous]
     speed: [minutes]
     needs: []
-    related: [steering-loop, human-diff-review, taste-invariants, sample-audit, guide-lift-eval]
+    related: [steering-loop, human-diff-review, taste-invariants, sample-audit, guide-lift-eval, tool-use-telemetry, agent-code-review]
     initiator: human
   - id: coupling-analysis
     title: "Coupling analysis"
@@ -440,14 +463,14 @@ loops:
   - id: debugger-repl
     title: "Debugger and REPL"
     path: debugger-repl/card.md
-    summary: "The agent sets a breakpoint or opens a REPL and checks its hypothesis against real values instead of guessing."
+    summary: "The agent ranks 3 to 5 falsifiable hypotheses, then checks each against real values at a breakpoint or in a REPL instead of guessing; tagged debug logs must be gone before a commit."
     sensor: computational
     ilities: [observability]
     places: [delivery/work, remediation/oracle, remediation/work, discovery/work]
     stages: [local]
     speed: [seconds]
     needs: []
-    related: [bug-failing-test-fix, reproduction-gate, agentic-manual-testing]
+    related: [bug-failing-test-fix, reproduction-gate, agentic-manual-testing, pre-commit-pre-push, profiling]
   - id: dependency-scanning-sbom
     title: "Dependency analysis (SCA) and SBOM"
     path: dependency-scanning-sbom/card.md
@@ -458,11 +481,11 @@ loops:
     stages: [ci, scheduled]
     speed: [minutes]
     needs: []
-    related: [dependency-updates, license-check, triage]
+    related: [dependency-updates, third-party-extension-scan, license-check, triage]
   - id: dependency-updates
     title: "Dependency updates"
     path: dependency-updates/card.md
-    summary: "Renovate or Dependabot opens a PR; the agent runs the sensors and fixes what broke. A script collects the age and activity of the dependencies, and an LLM writes recommendations."
+    summary: "A bot opens one PR per dependency; the agent runs the sensors and fixes what broke. A script collects the age and activity of the dependencies, and an LLM writes recommendations."
     sensor: computational
     ilities: [compatibility, maintainability]
     places: [maintenance/entry, maintenance/work]
@@ -470,7 +493,7 @@ loops:
     speed: [minutes]
     needs: [ci]
     agent: [worker]
-    related: [dependency-scanning-sbom, behaviour-invariance, ci-clean-infra]
+    related: [dependency-scanning-sbom, third-party-extension-scan, behaviour-invariance, ci-clean-infra, config-validation]
   - id: discovery-decision
     title: "Discovery decision"
     path: discovery-decision/card.md
@@ -617,7 +640,7 @@ loops:
     stages: [local, scheduled]
     speed: [minutes, hours]
     needs: []
-    related: [llm-evals, correction-becomes-rule, docs-audit, agent-calibration, skill-trigger-eval]
+    related: [llm-evals, correction-becomes-rule, docs-audit, agent-calibration, skill-trigger-eval, test-admission]
   - id: health-checks-smoke
     title: "Health checks and smoke tests after deploy"
     path: health-checks-smoke/card.md
@@ -629,7 +652,7 @@ loops:
     speed: [seconds]
     needs: [logs]
     agent: [investigator]
-    related: [release-confirmation, preview-environments, config-validation, canary-feature-flags]
+    related: [release-confirmation, preview-environments, config-validation, canary-feature-flags, shipped-artifact-check]
   - id: human-acceptance-criteria
     title: "Acceptance criteria and references from a person"
     path: human-acceptance-criteria/card.md
@@ -655,7 +678,7 @@ loops:
     stages: [ci]
     speed: [hours, days]
     needs: [ci]
-    related: [agent-code-review, result-demo, correction-becomes-rule, sample-audit]
+    related: [agent-code-review, result-demo, correction-becomes-rule, sample-audit, afk-run-handoff, agent-branch-integration]
     when: [after]
     initiator: rule
     sync: async
@@ -685,14 +708,15 @@ loops:
   - id: interview
     title: "Interview"
     path: interview/card.md
-    summary: "Before writing code the agent asks the person about requirements, edge cases and trade-offs, and writes the answers into a spec in the repository."
+    summary: "Before writing code the agent asks the person about requirements, edge cases and trade-offs in rounds, writes the answers into a spec, and builds only after the person confirms it."
     sensor: human
     ilities: [alignment]
     places: [delivery/oracle, discovery/oracle]
     stages: [task]
     speed: [minutes]
     needs: []
-    related: [plan-approval, task-restatement, spec-check, acceptance-loop]
+    agent: [reviewer]
+    related: [plan-approval, task-restatement, spec-check, acceptance-loop, choose-from-options, async-questions-with-assumptions]
     when: [before]
     initiator: agent
     sync: blocking
@@ -707,18 +731,18 @@ loops:
     stages: [task]
     speed: [seconds, minutes]
     needs: []
-    related: [run-tests-first, ci-clean-infra, structured-logs, preview-environments]
+    related: [run-tests-first, ci-clean-infra, structured-logs, preview-environments, agent-branch-integration, afk-run-handoff, agent-ci-hardening]
   - id: knowledge-base-doc-lint
     title: "Doc linters for the knowledge base"
     path: knowledge-base-doc-lint/card.md
-    summary: "CI checks that the `docs/` folder is current, cross-linked and correctly structured. The agent reads the errors CI reports and fixes the docs."
+    summary: "CI checks that `docs/` and the skills the agent loads are current, cross-linked and correctly structured. The agent reads the errors CI reports and fixes the docs."
     sensor: computational
     ilities: [maintainability]
     places: [delivery/work, remediation/work, maintenance/entry, maintenance/work]
     stages: [ci, scheduled]
     speed: [minutes]
     needs: []
-    related: [document-review, executable-docs, garbage-collection]
+    related: [document-review, executable-docs, garbage-collection, skill-trigger-eval, guide-lift-eval]
   - id: license-check
     title: "License check"
     path: license-check/card.md
@@ -850,6 +874,17 @@ loops:
     when: [during]
     initiator: human
     sync: async
+  - id: patch-backport
+    title: "Patch a shipped release from a merged fix"
+    path: patch-backport/card.md
+    summary: "/patch on a merged PR cherry-picks it onto the shipped tag, opens a PR that cannot merge with conflicts, tests it, checks the base and version did not move, publishes and reports each step on the PR."
+    sensor: computational
+    ilities: [deployability, correctness]
+    places: [remediation/release, maintenance/release]
+    stages: [ci]
+    speed: [minutes, hours]
+    needs: [ci]
+    related: [shipped-artifact-check, release-trust-boundary, risky-action-gates, reproduction-gate, human-diff-review, changelog-audit, backup-restore-rollback]
   - id: perf-budgets-telemetry
     title: "Performance budgets through telemetry"
     path: perf-budgets-telemetry/card.md
@@ -872,7 +907,7 @@ loops:
     stages: [task]
     speed: [minutes]
     needs: []
-    related: [interview, task-restatement, agent-code-review]
+    related: [interview, task-restatement, agent-code-review, risky-action-gates, progress-file-feature-list]
     when: [before]
     initiator: agent
     sync: blocking
@@ -887,7 +922,7 @@ loops:
     stages: [ci]
     speed: [minutes]
     needs: [ci]
-    related: [ci-clean-infra, e2e-browser]
+    related: [ci-clean-infra, e2e-browser, shipped-artifact-check]
   - id: pre-commit-pre-push
     title: "Pre-commit / pre-push"
     path: pre-commit-pre-push/card.md
@@ -898,7 +933,7 @@ loops:
     stages: [commit]
     speed: [sub-second]
     needs: []
-    related: [ci-clean-infra, autoformat-hook, secret-scanning, stop-hook]
+    related: [ci-clean-infra, autoformat-hook, secret-scanning, stop-hook, isolated-environment, agent-branch-integration, risky-action-gates]
   - id: preview-environments
     title: "Preview environments per PR"
     path: preview-environments/card.md
@@ -909,7 +944,7 @@ loops:
     stages: [preview]
     speed: [minutes]
     needs: [deploy]
-    related: [health-checks-smoke, dast, lighthouse-ci, load-testing]
+    related: [health-checks-smoke, dast, lighthouse-ci, load-testing, release-trust-boundary, shipped-artifact-check]
   - id: production-users
     title: "Users in production"
     path: production-users/card.md
@@ -947,7 +982,7 @@ loops:
     stages: [task]
     speed: [minutes, hours]
     needs: []
-    related: [acceptance-loop, e2e-browser, isolated-environment, stop-hook]
+    related: [acceptance-loop, e2e-browser, isolated-environment, stop-hook, plan-approval, agent-branch-integration, afk-run-handoff]
   - id: prompt-snapshots
     title: "Snapshots of what the model sees"
     path: prompt-snapshots/card.md
@@ -973,7 +1008,7 @@ loops:
   - id: red-green-tdd
     title: "Unit tests, red/green TDD"
     path: red-green-tdd/card.md
-    summary: "The agent writes a test and sees it fail, then writes the code until the test passes, then refactors."
+    summary: "The agent writes one test, sees it fail for the missing behaviour, then writes just enough code to pass it; a hook denies code edits until that red run is on record."
     sensor: computational
     ilities: [testability, correctness]
     places: [delivery/work, remediation/work]
@@ -981,7 +1016,7 @@ loops:
     speed: [seconds]
     needs: []
     agent: [reviewer]
-    related: [acceptance-loop, mutation-testing]
+    related: [acceptance-loop, mutation-testing, test-admission, bug-failing-test-fix, simplification-pass, observe-and-interrupt]
   - id: release-confirmation
     title: "Release confirmation"
     path: release-confirmation/card.md
@@ -994,6 +1029,17 @@ loops:
     needs: [logs, deploy]
     agent: [investigator]
     related: [canary-feature-flags, health-checks-smoke, reproduction-gate, error-tracking]
+  - id: release-trust-boundary
+    title: "Release credentials meet only reviewed release code"
+    path: release-trust-boundary/card.md
+    summary: "A CI check fails when a job holding publish or deploy credentials runs repository code, trusts what the build output says about itself, or sits outside the release's code owners."
+    sensor: computational
+    ilities: [security, deployability]
+    places: [delivery/release, remediation/release, maintenance/release]
+    stages: [ci]
+    speed: [seconds]
+    needs: [ci]
+    related: [shipped-artifact-check, agent-ci-hardening, risky-action-gates, patch-backport, preview-environments, secret-scanning, dependency-scanning-sbom]
   - id: repo-health-agent
     title: "Repository health agent"
     path: repo-health-agent/card.md
@@ -1005,11 +1051,11 @@ loops:
     speed: [minutes, days]
     needs: [ci]
     agent: [worker, reviewer]
-    related: [garbage-collection, tool-use-telemetry, sample-audit, triage, steering-loop]
+    related: [garbage-collection, tool-use-telemetry, sample-audit, triage, steering-loop, agent-ci-hardening]
   - id: reproduction-gate
     title: "Reproduction gate"
     path: reproduction-gate/card.md
-    summary: "A fix counts only against a reproduction that failed first. The agent fixes until it passes; the gate reports whether it was red before and green after, and whether any other test changed."
+    summary: "A fix counts only against a reproduction that failed first, on the reported symptom. The agent fixes until it passes; the gate reports red before, green after, and any other test changed."
     sensor: computational
     ilities: [correctness, testability]
     places: [remediation/oracle, remediation/gate]
@@ -1017,7 +1063,7 @@ loops:
     speed: [minutes]
     needs: []
     agent: [reviewer]
-    related: [bug-failing-test-fix, acceptance-loop, release-confirmation, exploratory-testing, scripted-model-tests]
+    related: [bug-failing-test-fix, debugger-repl, acceptance-loop, release-confirmation, exploratory-testing, scripted-model-tests]
   - id: result-demo
     title: "Result demo"
     path: result-demo/card.md
@@ -1042,7 +1088,7 @@ loops:
     stages: [task, ci]
     speed: [seconds, minutes]
     needs: []
-    related: [isolated-environment, escalation-on-uncertainty, db-migration-lint, approval-reviewer-agent, agent-ci-hardening]
+    related: [isolated-environment, escalation-on-uncertainty, db-migration-lint, approval-reviewer-agent, agent-ci-hardening, plan-approval, release-trust-boundary]
     when: [during]
     initiator: rule
     sync: blocking
@@ -1118,6 +1164,17 @@ loops:
     needs: []
     agent: [reviewer]
     related: [sast, agent-code-review, compliance-mutants, agent-calibration, verification-subagent]
+  - id: shipped-artifact-check
+    title: "Check what ships before the channel moves"
+    path: shipped-artifact-check/card.md
+    summary: "The release installs the exact package, binary or image it publishes into an empty place and runs it, publishes it unannounced, verifies it from the registry, and only then moves the channel forward."
+    sensor: computational
+    ilities: [deployability, correctness, compatibility]
+    places: [delivery/release, remediation/release, maintenance/release]
+    stages: [ci]
+    speed: [minutes]
+    needs: [ci]
+    related: [health-checks-smoke, release-trust-boundary, patch-backport, platform-matrix, build, canary-feature-flags, backup-restore-rollback, changelog-audit]
   - id: simplification-pass
     title: "Simplification pass after the work"
     path: simplification-pass/card.md
@@ -1128,7 +1185,7 @@ loops:
     stages: [task]
     speed: [minutes]
     needs: []
-    related: [agent-code-review, behaviour-invariance, garbage-collection]
+    related: [agent-code-review, behaviour-invariance, garbage-collection, red-green-tdd]
   - id: skill-trigger-eval
     title: "Does the skill trigger"
     path: skill-trigger-eval/card.md
@@ -1140,7 +1197,7 @@ loops:
     speed: [minutes]
     needs: []
     agent: [worker]
-    related: [guide-lift-eval, llm-evals, agent-calibration, document-review]
+    related: [guide-lift-eval, llm-evals, agent-calibration, document-review, knowledge-base-doc-lint, tool-use-telemetry, third-party-extension-scan]
   - id: slo-degradation
     title: "SLO degradation"
     path: slo-degradation/card.md
@@ -1167,7 +1224,7 @@ loops:
   - id: stall-detector
     title: "Stall detector"
     path: stall-detector/card.md
-    summary: "A hook hashes every tool call; the same call or cycle of calls five times in a row tells the agent to step back, and a second stall in the same task stops it for a person."
+    summary: "A hook hashes every tool call: the same call or cycle five times in a row tells the agent to step back, a second stall stops it for a person, and a leaf subagent's spawn is denied."
     sensor: computational
     ilities: [alignment]
     places: [delivery/work, remediation/work, maintenance/work]
@@ -1175,7 +1232,7 @@ loops:
     speed: [sub-second]
     needs: []
     agent: [judge]
-    related: [stop-hook, escalation-on-uncertainty, observe-and-interrupt, tool-use-telemetry, agent-calibration, approval-reviewer-agent]
+    related: [stop-hook, escalation-on-uncertainty, observe-and-interrupt, tool-use-telemetry, agent-calibration, approval-reviewer-agent, agent-code-review, afk-run-handoff]
   - id: steering-loop
     title: "Steering loop"
     path: steering-loop/card.md
@@ -1187,7 +1244,7 @@ loops:
     speed: [hours, days]
     needs: []
     agent: [investigator]
-    related: [correction-becomes-rule, sample-audit, release-confirmation, agent-calibration]
+    related: [correction-becomes-rule, sample-audit, release-confirmation, agent-calibration, guide-lift-eval]
   - id: stop-hook
     title: "Stop hook / `/goal`"
     path: stop-hook/card.md
@@ -1260,7 +1317,19 @@ loops:
     speed: [seconds, minutes]
     needs: []
     agent: [reviewer]
-    related: [mutation-testing, red-green-tdd, reproduction-gate, code-coverage, agent-code-review, check-incubation]
+    related: [mutation-testing, red-green-tdd, reproduction-gate, code-coverage, agent-code-review, check-incubation, llm-evals]
+  - id: third-party-extension-scan
+    title: "Third-party extensions scanned against a policy"
+    path: third-party-extension-scan/card.md
+    summary: "On each PR that adds or bumps a third-party plugin, skill or MCP server, an agent reads every file it ships against a written policy; verdicts are cached per commit and policy, and a fail blocks."
+    sensor: inferential
+    ilities: [security]
+    places: [harness:delivery/gate, harness:maintenance/gate, maintenance/gate]
+    stages: [ci]
+    speed: [minutes]
+    needs: [ci]
+    agent: [reviewer]
+    related: [dependency-updates, dependency-scanning-sbom, security-review-agent, agent-calibration, agent-ci-hardening, config-validation, ci-clean-infra]
   - id: tool-use-telemetry
     title: "Tool-use telemetry from agent sessions"
     path: tool-use-telemetry/card.md
@@ -1271,7 +1340,7 @@ loops:
     stages: [scheduled]
     speed: [seconds, minutes]
     needs: []
-    related: [correction-becomes-rule, steering-loop, lint-with-fix-instructions]
+    related: [correction-becomes-rule, steering-loop, lint-with-fix-instructions, stall-detector, skill-trigger-eval, secret-scanning]
   - id: traces-opentelemetry
     title: "Traces (OpenTelemetry)"
     path: traces-opentelemetry/card.md
@@ -1307,7 +1376,7 @@ loops:
     speed: [minutes]
     needs: []
     agent: [judge]
-    related: [behaviour-invariance, reproduction-gate, acceptance-loop, discovery-decision]
+    related: [behaviour-invariance, reproduction-gate, acceptance-loop, discovery-decision, agent-ci-hardening, repo-health-agent]
   - id: type-check
     title: "Type checking"
     path: type-check/card.md
@@ -1387,21 +1456,21 @@ loops:
 by_place:
   delivery/entry: [production-users, triage]
   delivery/oracle: [acceptance-loop, choose-from-options, human-acceptance-criteria, interview, plan-approval, spec-check, task-restatement, user-feedback]
-  delivery/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approval-reviewer-agent, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, benchmarks-vs-baseline, browser-console-devtools, build, bundle-size-budget, check-incubation, choose-from-options, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, docs-audit, document-review, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, metrics-promql, mutation-testing, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, progress-file-feature-list, prompt-snapshots, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, scripted-model-tests, secret-scanning, simplification-pass, stall-detector, stop-hook, structured-logs, taste-invariants, terminal-ui-tmux, test-admission, traces-opentelemetry, translation-sync, type-check, visual-screenshot-check, visual-stability-oracle]
+  delivery/work: [accessibility-checks, accessibility-tree-navigation, afk-run-handoff, agent-branch-integration, agent-code-review, agentic-manual-testing, api-breaking-changes, approval-reviewer-agent, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, benchmarks-vs-baseline, browser-console-devtools, build, bundle-size-budget, check-incubation, choose-from-options, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, docs-audit, document-review, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, metrics-promql, mutation-testing, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, progress-file-feature-list, prompt-snapshots, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, scripted-model-tests, secret-scanning, simplification-pass, stall-detector, stop-hook, structured-logs, taste-invariants, terminal-ui-tmux, test-admission, traces-opentelemetry, translation-sync, type-check, visual-screenshot-check, visual-stability-oracle]
   delivery/gate: [acceptance-loop, agent-audit-trail, contract-tests, human-diff-review, result-demo, ux-evaluator, verification-subagent]
-  delivery/release: [canary-feature-flags, changelog-audit, dast, exploratory-testing, health-checks-smoke, lighthouse-ci, load-testing, preview-environments, risky-action-gates, terminal-ui-tmux, translation-sync]
+  delivery/release: [canary-feature-flags, changelog-audit, dast, exploratory-testing, health-checks-smoke, lighthouse-ci, load-testing, preview-environments, release-trust-boundary, risky-action-gates, shipped-artifact-check, terminal-ui-tmux, translation-sync]
   delivery/confirmation: [canary-feature-flags, error-tracking, metrics-promql, production-users, release-confirmation, slo-degradation, structured-logs]
   remediation/entry: [ai-judges-telemetry, backup-restore-rollback, chaos-engineering, dast, docs-audit, error-tracking, exploratory-testing, fuzzing, production-users, sample-audit, security-review-agent, slo-degradation, triage]
   remediation/oracle: [agentic-manual-testing, browser-console-devtools, debugger-repl, fuzzing, reproduction-gate, scripted-model-tests, structured-logs, traces-opentelemetry, user-feedback, visual-stability-oracle]
-  remediation/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approval-reviewer-agent, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, browser-console-devtools, bug-failing-test-fix, build, bundle-size-budget, check-incubation, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, mutation-testing, observe-and-interrupt, platform-matrix, pre-commit-pre-push, profiling, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, secret-scanning, stall-detector, stop-hook, taste-invariants, terminal-ui-tmux, test-admission, type-check, visual-screenshot-check]
+  remediation/work: [accessibility-checks, accessibility-tree-navigation, afk-run-handoff, agent-branch-integration, agent-code-review, agentic-manual-testing, api-breaking-changes, approval-reviewer-agent, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, browser-console-devtools, bug-failing-test-fix, build, bundle-size-budget, check-incubation, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, mutation-testing, observe-and-interrupt, platform-matrix, pre-commit-pre-push, profiling, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, secret-scanning, stall-detector, stop-hook, taste-invariants, terminal-ui-tmux, test-admission, type-check, visual-screenshot-check]
   remediation/gate: [agent-audit-trail, human-diff-review, reproduction-gate, verification-subagent]
-  remediation/release: [canary-feature-flags, changelog-audit, health-checks-smoke, risky-action-gates]
+  remediation/release: [canary-feature-flags, changelog-audit, health-checks-smoke, patch-backport, release-trust-boundary, risky-action-gates, shipped-artifact-check]
   remediation/confirmation: [canary-feature-flags, error-tracking, metrics-promql, release-confirmation, slo-degradation, structured-logs]
   maintenance/entry: [compliance-mutants, coupling-analysis, dependency-scanning-sbom, dependency-updates, garbage-collection, knowledge-base-doc-lint, triage]
   maintenance/oracle: [approved-fixtures, behaviour-invariance, benchmarks-vs-baseline, code-coverage, coupling-analysis, migration-proof-pack, mutation-testing, run-tests-first]
-  maintenance/work: [accessibility-checks, agent-code-review, agentic-manual-testing, approval-reviewer-agent, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, build, bundle-size-budget, ci-clean-infra, compliance-mutants, config-validation, dependency-scanning-sbom, dependency-updates, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, garbage-collection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, profiling, prompt-snapshots, property-based-tests, risky-action-gates, sast, scripted-model-tests, secret-scanning, simplification-pass, stall-detector, stop-hook, taste-invariants, terminal-ui-tmux, test-admission, translation-sync, type-check, visual-screenshot-check]
-  maintenance/gate: [agent-audit-trail, api-breaking-changes, behaviour-invariance, contract-tests, db-migration-lint, human-diff-review, migration-proof-pack, prompt-snapshots, verification-subagent, visual-stability-oracle]
-  maintenance/release: [canary-feature-flags, changelog-audit, health-checks-smoke, load-testing, risky-action-gates]
+  maintenance/work: [accessibility-checks, afk-run-handoff, agent-branch-integration, agent-code-review, agentic-manual-testing, approval-reviewer-agent, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, build, bundle-size-budget, ci-clean-infra, compliance-mutants, config-validation, dependency-scanning-sbom, dependency-updates, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, garbage-collection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, profiling, prompt-snapshots, property-based-tests, risky-action-gates, sast, scripted-model-tests, secret-scanning, simplification-pass, stall-detector, stop-hook, taste-invariants, terminal-ui-tmux, test-admission, translation-sync, type-check, visual-screenshot-check]
+  maintenance/gate: [agent-audit-trail, api-breaking-changes, behaviour-invariance, contract-tests, db-migration-lint, human-diff-review, migration-proof-pack, prompt-snapshots, third-party-extension-scan, verification-subagent, visual-stability-oracle]
+  maintenance/release: [canary-feature-flags, changelog-audit, health-checks-smoke, load-testing, patch-backport, release-trust-boundary, risky-action-gates, shipped-artifact-check]
   maintenance/confirmation: [canary-feature-flags, error-tracking, metrics-promql, perf-budgets-telemetry, release-confirmation, slo-degradation, structured-logs]
   discovery/entry: [production-users, triage]
   discovery/oracle: [discovery-decision, interview, plan-approval, task-restatement]
@@ -1410,11 +1479,11 @@ by_place:
   discovery/confirmation: [choose-from-options, discovery-decision, result-demo]
   harness:delivery/oracle: [llm-judge-calibration]
   harness:delivery/work: [document-review]
-  harness:delivery/gate: [agent-calibration, agent-ci-hardening, check-incubation, guide-lift-eval, skill-trigger-eval]
+  harness:delivery/gate: [afk-run-handoff, agent-calibration, agent-ci-hardening, check-incubation, guide-lift-eval, skill-trigger-eval, third-party-extension-scan]
   harness:delivery/confirmation: [agent-calibration, sample-audit]
   harness:remediation/entry: [check-incubation, correction-becomes-rule, repo-health-agent, sample-audit, tool-use-telemetry]
   harness:remediation/oracle: [agent-calibration, steering-loop]
   harness:remediation/work: [steering-loop]
   harness:maintenance/entry: [repo-health-agent, tool-use-telemetry]
   harness:maintenance/work: [repo-health-agent]
-  harness:maintenance/gate: [agent-calibration, agent-ci-hardening, guide-lift-eval, skill-trigger-eval]
+  harness:maintenance/gate: [agent-calibration, agent-ci-hardening, guide-lift-eval, skill-trigger-eval, third-party-extension-scan]

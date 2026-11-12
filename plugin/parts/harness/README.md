@@ -58,7 +58,7 @@ over-engineered refactorings" (Böckeler).
   (requirement → spec → red acceptance tests → work → green). Its own `run` is a gate that checks what only the
   whole can show; it reuses its parts' output and adds no second check for what a part already checks. A super-loop
   is the largest composite: its parts are the loops at its phases.
-- **Loop type**: a pattern from this part's catalog, `loops/`, that a loop is built from: 96 cards, one folder
+- **Loop type**: a pattern from this part's catalog, `loops/`, that a loop is built from: one card per type, one folder
   each, `loops/<id>/card.md`, in the format of `loops/FORMAT.md`. A card's `sensor` says what gives the signal (a
   program, an LLM agent or a person), its `ilities` what it checks, and its `places` where it serves in the
   super-loops.
@@ -119,8 +119,10 @@ question to a subagent either: a subagent cannot talk to the user, it only repor
   history, the tools' `--help`, and run commands. Every question says what you already checked.
 - **Call a person only under a reason's id** from `$S/defaults/hitl.yaml`. If none fits, decide yourself and say
   what you decided.
-- **One question at a time.** Use the session's question tool with 2–4 options, the recommended one first, and
-  room for a free answer. The one exception is the form of the first `/superloops`: up to 4 questions in one call.
+- **Independent questions together, dependent ones in turn.** Use the session's question tool with 2–4 options,
+  the recommended one first, and room for a free answer. Questions that do not depend on each other go in one call,
+  up to 4 (the form of the first `/superloops`, the wizard, a round of an interview, the open questions of one
+  requirement file); a question whose options depend on another's answer waits for that answer.
 - **Short and clear.** Lead with the decision or the result; leave out what the user does not need to act.
 - **Show, do not describe.** A diagram of the loop in a code block, a table for validation results and options,
   a screenshot when a UI is involved, real command output instead of a summary of it.
@@ -166,14 +168,18 @@ A harness task that asks which loops to build, such as the first one after the s
    - Cases: at least one directory in `cases/must-fire/` for each kind of failure the loop must catch, and at least
      one in `cases/must-pass/` that it must leave alone.
    - Wiring: hook the loop in where it runs: a Claude Code hook, a git hook, a CI job, a scheduled job. List each
-     place under `wiring`.
+     place under `wiring`, with the condition that triggers it: the event, and any branch name, label, path filter
+     or `if:` expression it keys on. That condition is part of the loop, and it breaks without the check changing.
    - Agent steps: see below.
 4. **Validate it.**
    - `python3 $S/scripts/loops.py validate <id>`: every must-fire case fires, every must-pass case passes, each
      run gives the same result, and every run fits `budget_seconds`.
    - Make sure the agent the loop checks cannot edit or switch it off: the final run of the check happens where that
      agent has no write access, such as CI, a protected branch or a hook outside its working tree.
-   - Then trigger the wiring once for real, in a scratch branch or worktree, and keep the output as evidence.
+   - Then trigger the wiring once for real, in a scratch branch or worktree, and keep the output as evidence. Produce
+     the trigger the way the project produces it: when another job makes the branch, the label or the input the
+     wiring keys on, run that job, not a hand-made copy of its output. A failure path (an alert, a revert, a
+     rollback) is triggered too, by making the step it watches fail.
    - Agent steps need their evals to pass as well.
    - Set `status: validated`.
 5. **Iterate.** Fix what validation or the user found, add a line to `CHANGELOG.md`, and validate again.
@@ -252,6 +258,12 @@ Look at a loop again when:
   phase that should have caught the failure, and fix or add the loop there;
 - it fires on correct code, or misses a failure it should catch: add that case, fix the loop, validate again; when
   the loop's agent was wrong, also log the outcome and add the case to the agent's evals;
+- it has stayed silent while its place was busy (no run in the CI job's history, the hook's log or the schedule
+  since the last change it should have seen), or the wiring it keys on changed: trigger the wiring for real again,
+  as in validation. A loop whose check works and whose trigger never fires protects nothing, and nothing reports
+  it. The repositories of the coding agents show how it happens: release alerts whose `if:` compared a string
+  input with a boolean and could never be true, an auto-revert keyed on a branch name the bump job had stopped
+  using, an aggregate CI job that counted skipped jobs as passed, a smoke-test action no workflow called;
 - `python3 $S/scripts/loops.py stats` shows the same question asked more than once: automate the answer, or
   propose to settle it in the Notes of `superloops/superloops.md` (H7);
 - the user corrects the agent twice for the same thing: turn the correction into a loop

@@ -83,6 +83,21 @@ The loop that runs an agent checks what it returns before anything reads it:
 gemini-cli's subagents finish this way: through `complete_task`, its argument checked against the agent's schema,
 with a grace turn of 60 seconds.
 
+Where the loop cannot give the agent a return tool, as when it drives a coding agent's CLI headless, the format comes
+as a tagged block in the agent's output, and the rules above still hold. sandcastle (Matt Pocock) does it this way:
+
+- **Work, then report, in one session.** The work runs on its own prompt. A second prompt resumes that session to
+  emit the block and nothing else ("Do not change files. Do not run commands."), and the block's closing tag ends
+  the run.
+- **The prompt is checked first.** A run whose prompt does not contain the opening tag fails before the agent
+  starts.
+- **The last block counts**, so an agent that corrects itself is not punished. Nothing else is forgiven: invalid JSON
+  fails, since a tolerant parser "Hides genuine model failures behind a forgiving parser".
+- **A bad block is retried in the same session, on a budget.** The retry prompt states "Retries remaining after this
+  attempt: N", the problem, the parser's detail and the block it matched, and ends "Emit only a corrected <tag>
+  block. Do not change files or run commands." sandcastle allows 2 retries; after the last, the run fails with the
+  session id, so the caller can still resume it.
+
 ## Evals
 
 `superloops/agents/<agent-id>/evals/<case>/` holds what the agent gets (its `input/`, in the shape its loop gives it)
@@ -128,3 +143,8 @@ through), `overridden` (a person decided against it).
   [`complete-task.ts`: the schema check](https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/tools/complete-task.ts#L82-L107);
   [`types.ts`: 30 turns and 10 minutes](https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/agents/types.ts#L51-L56);
   [`local-invocation.ts`: the termination reason the caller gets](https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/packages/core/src/agents/local-invocation.ts#L313-L321).
+- sandcastle (Matt Pocock), [`run-with-extraction.ts`: the report pass resumes the work's session](https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.sandcastle/agent-workflows/shared/run-with-extraction.ts#L21-L55)
+  and [its prompt](https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/.sandcastle/agent-workflows/review/extraction.md#L1-L5);
+  [ADR 0010: the tag in the prompt, the last match, no tolerant parsing](https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/docs/adr/0010-structured-output.md#L9-L22);
+  [`run.ts`: the retry prompt](https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/src/run.ts#L54-L93)
+  and [the retry in the same session](https://github.com/mattpocock/sandcastle/blob/14bdcdd1d520a206ace071242f503a715152f23e/src/run.ts#L937-L990).

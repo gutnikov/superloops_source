@@ -16,7 +16,8 @@ for each of them, and keep the commands themselves in one place.
   `agent-code-review`.
 
 Suggest `skill-trigger-eval` once the project has its own skills: whether each skill's description gets it picked for
-the tasks it was written for.
+the tasks it was written for. Suggest `third-party-extension-scan` once the project installs plugins, skills or MCP
+servers written by others: each one added or updated is read against a written policy before it runs in a session.
 
 ## `codex`: Codex
 
@@ -26,6 +27,9 @@ the tasks it was written for.
 - **Approvals**: the approval policy and the exec policy rules (`prefix_rule` with `match` and `not_match` examples)
   are the place of `risky-action-gates`; Guardian (`auto_review`) is the built-in form of `approval-reviewer-agent`.
 - **`/goal`** keeps a long task running; pair it with `verify` in a hook, since the model's own audit is not a check.
+
+Suggest `third-party-extension-scan` once the project installs skills or MCP servers written by others: each one added
+or updated is read against a written policy before it runs.
 
 ## `other`: another agent
 

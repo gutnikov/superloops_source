@@ -8,7 +8,7 @@ places: [remediation/entry]
 stages: [scheduled]
 speed: [minutes, hours]
 needs: [deploy]
-related: [chaos-engineering, db-migration-lint, health-checks-smoke, canary-feature-flags]
+related: [chaos-engineering, db-migration-lint, health-checks-smoke, canary-feature-flags, patch-backport, release-trust-boundary]
 links:
   - title: "Data Integrity: What You Read Is What You Wrote"
     url: "https://sre.google/sre-book/data-integrity/"
@@ -21,6 +21,19 @@ links:
     url: "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
     author: "Kubernetes"
     note: "kubectl rollout undo and kubectl rollout status."
+  - title: "gemini-cli Release: Rollback change: inputs, dry run by default"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.github/workflows/release-rollback.yml#L5-L41"
+    author: "gemini-cli (Google)"
+  - title: "gemini-cli Release: Rollback change: the mutations and their read-backs"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/.github/workflows/release-rollback.yml#L88-L212"
+    author: "gemini-cli (Google)"
+  - title: "get-release-version.js: deprecated versions skipped by the next version"
+    url: "https://github.com/google-gemini/gemini-cli/blob/e5d88fb2c036ce7e0c27131469cd963221b9d9e7/scripts/get-release-version.js#L124-L285"
+    author: "gemini-cli (Google)"
+  - title: "Workflow syntax: jobs.<job_id>.steps[*].shell"
+    url: "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsshell"
+    author: "GitHub"
+    note: "`shell: bash` runs `bash --noprofile --norc -eo pipefail {0}`."
 ---
 
 ## Why
@@ -41,7 +54,12 @@ A scheduled job runs two drills and reports each as its own item:
    `kubectl rollout undo deployment/<name>`, then `kubectl rollout status` until it exits 0), and runs the smoke
    suite of [health-checks-smoke](../health-checks-smoke/card.md) on the previous release against the database the
    candidate migrated. This catches a migration that the previous release cannot run with
-   ([db-migration-lint](../db-migration-lint/card.md)).
+   ([db-migration-lint](../db-migration-lint/card.md)). For a package on a registry, the rollback is three
+   mutations, each read back: the channel tag moves to the previous version, the bad version is deprecated so that
+   installers and the next version calculation skip it (gemini-cli's takes the highest version that is not deprecated
+   as its base), and the GitHub release is deleted and its commit tagged `v<version>-rollback`. The drill runs them
+   against a scratch registry and a test repository with dry run off: gemini-cli's dry run, the default, skips the
+   mutations and their read-backs alike.
 
 A red item enters remediation as a problem. The agent fixes the procedure (the backup job, the restore script, the
 migration), and the next run of the drill is the reproduction that must turn green.
@@ -57,12 +75,21 @@ migration), and the next run of the drill is the reproduction that must turn gre
   objective.
 - **The schedule.** Restore weekly and after every change to the backup configuration. Drill the rollback nightly
   against the latest release candidate: any release can break it.
+- **Every read-back has a must-pass case too.** A check after a mutation must fire when the mutation did not happen
+  and pass when it did. gemini-cli's rollback deletes the GitHub release, then reads it back with
+  `RELEASE_TAG=$(gh release view "$TARGET_TAG" …)` in a step GitHub runs as `bash -eo pipefail`: `gh` exits 1 for a
+  release that is gone, so the step fails exactly when the deletion succeeded, and fails by design when it did not.
+  Tried only on "the release is still there", it looks right and can never pass. Write "not found" as the expected
+  answer (`if gh release view "$tag" >/dev/null 2>&1; then echo "$tag still exists"; exit 1; fi`) and test each
+  read-back on both. The same workflow fetches the token for deprecating the core package with the CLI's package
+  name; only a drill that runs the mutations finds such a step.
 - **The `run`** judges the report the job saves: one line per item, `<item>: <status>`: `restore: ok (41m, newest
   row 3h old)`, `restore: failed (pg_restore: 3 errors)`, `restore: stale (newest row 52h old)`, `restore: too slow
-  (3h10m > 2h)`, `rollback: ok`, `rollback: smoke failed on the previous release`. It exits non-zero for anything but
-  `ok`.
+  (3h10m > 2h)`, `rollback: ok`, `rollback: smoke failed on the previous release`, `rollback: read-back failed
+  (<mutation>)`. It exits non-zero for anything but `ok`.
 - **The cases are recorded reports.** Must fire: a restore with errors; a stale backup; a restore slower than the
-  recovery time; a rollback whose smoke suite fails. Must pass: a report with both items `ok`.
+  recovery time; a rollback whose smoke suite fails; a release still published after the rollback deleted it. Must
+  pass: a report with both items `ok`; the deletion's read-back run on a release that is gone.
 - **Out of the agent's reach.** The job runs with its own credentials, which read the backups and write only to the
   scratch database and to staging. The agent never gets them: it reads the report and changes the procedure through
   a PR. A restore or a rollback in production is H2 and stays with a person or the deploy pipeline.
