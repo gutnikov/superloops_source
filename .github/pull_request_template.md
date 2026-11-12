@@ -6,6 +6,8 @@
 
 - [ ] The card names the failure in `## Why`, and the example's must-fire cases cover each kind of it
 - [ ] `python3 plugin/parts/harness/scripts/catalog.py example <id>` prints VALID
+- [ ] `evals/` has a `build`, a `trigger` and a `no-trigger` case, and `python3 plugin/parts/harness/scripts/catalog.py eval <id> --trust` wrote a passing `evals/REPORT.json`
+- [ ] `/review-loop plugin/parts/harness/loops/<id>` raised nothing left unanswered
 - [ ] `python3 plugin/parts/harness/scripts/catalog.py check` prints OK
 - [ ] `python3 plugin/parts/harness/scripts/catalog.py links <id>` prints no error
 - [ ] No other card catches the same failure (or this pull request changes that card instead)

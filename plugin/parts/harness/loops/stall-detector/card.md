@@ -2,6 +2,7 @@
 id: stall-detector
 title: "Stall detector"
 summary: "A hook hashes every tool call: the same call or cycle five times in a row tells the agent to step back, a second stall stops it for a person, and a leaf subagent's spawn is denied."
+use_when: "the agent repeats the same tool call or the same short cycle of calls without getting anywhere, re-runs a failing test with the same edit, or a subagent starts agents that start agents"
 sensor: computational
 ilities: [alignment]
 places: [delivery/work, remediation/work, maintenance/work]

@@ -2,6 +2,7 @@
 id: my-loop                    # the folder's name: lowercase words joined by hyphens
 title: "My loop"               # the name, up to 60 characters
 summary: "What the agent does and what signal it gets back, in one line."
+use_when: "the failure or the situation, as the person or the agent would put it"   # ends the skill's description
 # image: image.svg             # optional: an illustration in this folder
 sensor: computational          # who gives the signal
 ilities: [correctness]         # 1 to 3, the main one first

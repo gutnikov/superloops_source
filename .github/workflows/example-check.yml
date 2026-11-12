@@ -1,5 +1,7 @@
 # Every changed loop's example runs through loops.py validate (catalog.py example): each must-fire case fires, each
-# must-pass case passes, twice, within its budget. An example is code from the pull request, so this job has a
+# must-pass case passes, twice, within its budget. Its skill, built from the card, passes claude plugin validate
+# --strict (catalog.py skill); the evals themselves run on a person's machine (catalog.py eval), since they need a
+# model key, and catalog-check verifies their report. An example is code from the pull request, so this job has a
 # read-only token, no secrets and a time limit, and runs on pull_request only, never pull_request_target.
 name: example-check
 
@@ -23,9 +25,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Examples of the changed loops
+      - run: python -m pip install pyyaml
+      - run: npm install -g @anthropic-ai/claude-code@2.1.322
+      - name: Examples and skills of the changed loops
         if: github.event_name == 'pull_request'
-        run: python plugin/parts/harness/scripts/catalog.py example --changed origin/${{ github.base_ref }} _template
-      - name: Every example
+        run: |
+          python plugin/parts/harness/scripts/catalog.py example --changed origin/${{ github.base_ref }} _template
+          python plugin/parts/harness/scripts/catalog.py skill --changed origin/${{ github.base_ref }}
+      - name: Every example and skill
         if: github.event_name == 'push'
-        run: python plugin/parts/harness/scripts/catalog.py example --all
+        run: |
+          python plugin/parts/harness/scripts/catalog.py example --all
+          python plugin/parts/harness/scripts/catalog.py skill --all
