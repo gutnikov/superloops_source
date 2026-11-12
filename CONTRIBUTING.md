@@ -18,8 +18,9 @@ the template, fill in the card, build the example, then run
 ```bash
 cd plugin/parts/harness
 python3 scripts/catalog.py example <id>   # the example: every must-fire case fires, every must-pass case passes
-python3 scripts/catalog.py eval <id>      # the evals, with and without the skill; writes evals/REPORT.json (needs a
-                                          # model key, costs money: --max-cost-usd caps it)
+python3 scripts/catalog.py eval <id> --trust   # the evals, with and without the skill; writes evals/REPORT.json
+                                               # (runs the loop's scripts as you; needs a model key and costs money:
+                                               # --max-cost-usd caps it)
 python3 scripts/catalog.py index          # adds the loop to loops/index.yaml and the README's list
 python3 scripts/catalog.py check          # every card, example and super-loop; needs PyYAML
 python3 scripts/catalog.py links <id>     # every GitHub link pinned to a commit points at a file and lines that exist

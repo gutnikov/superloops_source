@@ -740,6 +740,12 @@ def cmd_eval(args):
     loop_id = ids[0]
     if not shutil.which("claude"):
         sys.exit("claude plugin eval needs the claude command (Claude Code 2.1.269 or later)")
+    if "--trust" not in args:
+        scripts = sorted(str(p.relative_to(LOOPS)) for p in (LOOPS / loop_id).rglob("*")
+                         if p.is_file() and (p.suffix == ".sh" or p.name in ("run", "setup") or p.suffix == ".py"))
+        sys.exit("The evals run this loop's code on this machine: each build case's scaffold script runs as you, "
+                 "outside the sandbox, and the agent runs the example's scripts. Read them, then run again with "
+                 "--trust:\n  " + "\n  ".join("loops/" + s for s in scripts))
     model = option(args, "--model", "sonnet")
     with tempfile.TemporaryDirectory(prefix="loop-eval-") as tmp:
         build_skill(loop_id, tmp)
@@ -755,6 +761,7 @@ def cmd_eval(args):
         for flag in ("--runs", "--case"):
             if flag in args:
                 cmd += [flag, option(args, flag, "")]
+        # Bash runs under the run's OS sandbox; the scaffold scripts do not, hence --trust above.
         cmd += ["--allow-tools", "Write", "Edit", "Bash"]
         print("$ " + " ".join(cmd), flush=True)
         code = subprocess.run(cmd).returncode

@@ -56,14 +56,15 @@ Read every case under `evals/`: the prompt, the graders, and the `fixture.sh` a 
 - the `trigger` prompt describes the failure the way a person who just hit it would, without the card's words;
 - the `no-trigger` prompt is ordinary work near the loop's subject, so a description that loads too eagerly fails it.
 
-A `fixture.sh` runs as you with `--scaffold`. If it does anything beyond writing a small project and `git init`,
-such as fetching or reading outside its workspace, stop and report it.
+A `fixture.sh` runs as you, outside the run's sandbox, and `catalog.py eval` refuses to start without `--trust`,
+which says you read it and the example's scripts. If a script does anything beyond writing a small project and
+`git init`, such as fetching or reading outside its workspace, do not pass `--trust`: report it.
 
 Then run the evals once, after telling the person what will run and asking (one question, with the cap as the
 recommended option): the cases, 3 runs each with the skill and 3 without, the model, and the cost cap.
 
 ```bash
-catalog.py eval <id> --max-cost-usd 5 --keep <a scratch folder>
+catalog.py eval <id> --trust --max-cost-usd 5 --keep <a scratch folder>
 ```
 
 Compare the result with the author's `evals/REPORT.json`. A case that passed for them and fails for you is a finding

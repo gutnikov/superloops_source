@@ -149,8 +149,9 @@ by the prompt's `tags`, each at least once:
 `python3 ../scripts/catalog.py eval <id>` builds the skill, runs every case 3 times with the skill and 3 times
 without it, on Sonnet with a Sonnet judge, and writes `evals/REPORT.json`: each case's score and its difference from
 the run without the skill, the cost, and a hash of the skill, the example and the cases. It needs a model key and
-costs money (about $2.50 for `stall-detector`); `--max-cost-usd` caps it. Its scaffold scripts run on your machine,
-so read a case's `fixture.sh` before you run someone else's evals.
+costs money (about $2.50 for `stall-detector`); `--max-cost-usd` caps it. The scaffold scripts run on your machine
+as you, outside the run's sandbox, so `eval` starts only with `--trust`: pass it once you have read every case's
+`fixture.sh` and the example's scripts, which it lists when it refuses.
 
 The report is the evidence: `catalog.py check` fails when it is missing, when it did not pass, or when its hash is
 not the current one, so a change to the card's How it works or Set up, to the example or to the cases needs a new
