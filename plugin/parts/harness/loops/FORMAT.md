@@ -4,10 +4,12 @@ A loop is a check an agent runs on its own work, with a signal it can read: an e
 a screenshot, a verdict, a person's answer. Every loop has a place in the four [super-loops](../super-loops/README.md)
 (delivery, remediation, maintenance and discovery). What the catalog holds: [README.md](README.md).
 
-Each loop is one folder, `loops/<id>/`, with its card, `card.md`, its example, `example/`, and its image, if it has
-one. The card is the one description of the loop: the plugin and the site both read it, and nothing about a loop is
-written anywhere else. The example is the proof that the loop can fire: a working loop that catches the failure the
-card names and leaves correct work alone.
+Each loop is one folder, `loops/<id>/`, with its card, `card.md`, its example, `example/`, its evals, `evals/`,
+and its image, if it has one. The card is the one description of the loop: the plugin, the site and the loop's
+skill all come from it, and nothing about a loop is written anywhere else. The example is the proof that the loop can
+fire: a working loop that catches the failure the card names and leaves correct work alone. The evals are the proof
+that an agent, given the loop's skill, builds that loop in a project, and loads the skill when the failure shows up
+and not otherwise.
 
 ## Add a loop
 
@@ -15,10 +17,13 @@ card names and leaves correct work alone.
 2. Fill in the frontmatter and the sections.
 3. Build the example ([The example](#the-example)) and run `python3 ../scripts/catalog.py example <id>` until it
    prints VALID.
-4. Run `python3 ../scripts/catalog.py index`: it adds the loop to [index.yaml](index.yaml) and to the list in
+4. Write the evals ([The skill and its evals](#the-skill-and-its-evals)) and run
+   `python3 ../scripts/catalog.py eval <id>` until it writes a report that passed.
+5. Run `python3 ../scripts/catalog.py index`: it adds the loop to [index.yaml](index.yaml) and to the list in
    [README.md](README.md).
-5. Run `python3 ../scripts/catalog.py check` until it prints OK, and `python3 ../scripts/catalog.py links <id>`
-   until it prints no error. CI runs all three. They need PyYAML (`python3 -m pip install pyyaml`).
+6. Run `python3 ../scripts/catalog.py check` until it prints OK, and `python3 ../scripts/catalog.py links <id>`
+   until it prints no error. CI runs both, and the example, and validates the skill. They need PyYAML
+   (`python3 -m pip install pyyaml`); `skill` and `eval` need Claude Code 2.1.269 or later.
 
 ## The frontmatter
 
@@ -123,6 +128,35 @@ and a time limit.
 [`examples-baseline.txt`](examples-baseline.txt) lists the loops that are in the catalog without an example yet. It
 only shrinks: a loop leaves it in the change that adds its example, and a new loop enters the catalog with one.
 
+## The skill and its evals
+
+`python3 ../scripts/catalog.py skill <id> --out DIR` builds the loop's skill from the card, as a plugin with one
+skill: `skills/<id>/SKILL.md`, whose `description` is the card's `summary` followed by "Use when" and its `use_when`,
+and whose body is the card's How it works, Set up and Agent step with the commands that install and validate the
+example; the example and `loops.py` beside it; and `evals/`. Without `--out` it builds each skill in a scratch folder
+and runs `claude plugin validate --strict` on it. The skill is never edited by hand: change the card.
+
+`evals/` holds cases for [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals.md), one folder each
+with a `prompt.md` and `graders/`, and a `case.yaml` when the case needs a project to start from. Three kinds, named
+by the prompt's `tags`, each at least once:
+
+| Tag | The case | Its graders |
+|---|---|---|
+| `build` | A small project, written by `case.yaml`'s `scaffold_script` (it cannot read the case's folder), and the task a person would give there, without naming the loop | `file_exists` for the loop's `run`; `regex` on the trace for `VALID: \d+ cases`, the line `loops.py validate` prints only when every case passed; an `llm` rubric for what the card's How it works says the loop does, and for the wiring: in place, or shown to the person for approval |
+| `trigger` | The failure in the words of a person who has just hit it | `tool_used: Skill` with the skill's name |
+| `no-trigger` | An ordinary task near the loop's subject | `tool_used: Skill` with `min: 0`, `max: 0`, `arm: both` |
+
+`python3 ../scripts/catalog.py eval <id>` builds the skill, runs every case 3 times with the skill and 3 times
+without it, on Sonnet with a Sonnet judge, and writes `evals/REPORT.json`: each case's score and its difference from
+the run without the skill, the cost, and a hash of the skill, the example and the cases. It needs a model key and
+costs money (about $2.50 for `stall-detector`); `--max-cost-usd` caps it. Its scaffold scripts run on your machine,
+so read a case's `fixture.sh` before you run someone else's evals.
+
+The report is the evidence: `catalog.py check` fails when it is missing, when it did not pass, or when its hash is
+not the current one, so a change to the card's How it works or Set up, to the example or to the cases needs a new
+run. A run without the skill scores low partly because the run's sandbox refuses writes to `.claude/`: read the
+difference as a lower bound of what the skill adds, not its size.
+
 ## What the check verifies
 
 `catalog.py check` fails on a card that does not match `loop.schema.json`, and on what a schema cannot say: a
@@ -131,8 +165,9 @@ unknown, repeated or out of order; `agent` without `## Agent step`, or the other
 slower value first; a place whose super-loop has no such phase; a `related` id or a link that names no loop; an
 image that is missing or too large; a super-loop's Phases table that does not name a loop with that place;
 [human-in-the-loop.md](human-in-the-loop.md) not listing exactly the cards with `sensor: human`; a card without
-an example that is not in the baseline, an example whose `LOOP.md`, `run` or cases are missing, and, with `--base`,
-a baseline that gained a line. It checks the template as well, and fails when `index.yaml` or the list in the README
+an example that is not in the baseline, an example whose `LOOP.md`, `run` or cases are missing, a loop with an
+example and no `use_when`, no case of each eval kind, or no passing report for its current skill, and, with
+`--base`, a baseline that gained a line. It checks the template as well, and fails when `index.yaml` or the list in the README
 is out of date.
 
 `catalog.py example` runs the examples; `catalog.py links` fetches every GitHub link pinned to a commit and fails

@@ -4,6 +4,8 @@
     python3 loops.py init                        create superloops/: superloops.md with the default preferences, an empty
                                                  map.yaml, an empty log and the registries
     python3 loops.py new ID --type TYPE          create superloops/loops/ID/ from the template; TYPE is a loop-type id or custom
+    python3 loops.py install ID --from DIR       copy a loop type's example (loops/<type>/example/ in the catalog, or
+                                                 a loop skill's example/) to superloops/loops/ID/, to adapt
     python3 loops.py validate ID [--runs N]      run the loop on its cases: must-fire fires, must-pass passes,
                                                  the same result every run, within budget_seconds
     python3 loops.py check                       superloops/ is consistent: files, fields, policy ids, agents, parts of
@@ -413,6 +415,19 @@ def run_once(cmd, case, root, timeout):
     except subprocess.TimeoutExpired:
         code, out = None, "timeout after %ss" % timeout
     return code, out, time.monotonic() - start
+
+
+def cmd_install(a, root):
+    src, dest = pathlib.Path(a.source), home_of(root) / "loops" / a.id
+    if not (src / "LOOP.md").is_file():
+        sys.exit("%s has no LOOP.md: --from names a loop type's example/ folder" % src)
+    if dest.exists():
+        sys.exit("superloops/loops/%s/ exists: adapt it, or pick another id" % a.id)
+    shutil.copytree(src, dest, symlinks=True)
+    text = (dest / "LOOP.md").read_text(encoding="utf-8")
+    (dest / "LOOP.md").write_text(re.sub(r"^id: .*$", "id: %s" % a.id, text, count=1, flags=re.M), encoding="utf-8")
+    print("superloops/loops/%s/: copied from %s. Next: python3 loops.py validate %s, then point run, the cases and "
+          "the wiring at this project" % (a.id, src, a.id))
 
 
 def cmd_validate(a, root):
@@ -1103,6 +1118,10 @@ def main():
     p.add_argument("--type", required=True)
     p.add_argument("--title")
     p.set_defaults(fn=cmd_new)
+    p = sub.add_parser("install")
+    p.add_argument("id")
+    p.add_argument("--from", dest="source", required=True)
+    p.set_defaults(fn=cmd_install)
     p = sub.add_parser("validate")
     p.add_argument("id")
     p.add_argument("--runs", type=int, default=2)

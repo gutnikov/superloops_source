@@ -25,6 +25,13 @@
       "pattern": "^[^\\n]+$",
       "description": "What the loop does, in one line: what the agent does and what signal it gets. The list of loops on the site and the agent choosing loops read only this."
     },
+    "use_when": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400,
+      "pattern": "^[^\\n]+$",
+      "description": "When an agent needs this loop, as the person or the agent would put it: the failure or the situation, not the steps. It ends the description of the loop's skill (\"Use when …\"), so it decides whether the skill is loaded. Required once the loop has evals/."
+    },
     "image": {
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9-]*\\.(svg|png|webp|jpg)$",

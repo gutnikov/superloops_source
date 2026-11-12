@@ -42,6 +42,10 @@ HUMAN = LOOPS / "human-in-the-loop.md"
 BASELINE = LOOPS / "examples-baseline.txt"
 LOOPS_PY = HARNESS / "scripts" / "loops.py"
 EXAMPLE = "example"
+EVALS = "evals"
+REPORT_NAME = "REPORT.json"
+EVAL_KINDS = ["build", "trigger", "no-trigger"]  # the tags a loop's eval cases must cover
+VALUE_OPTIONS = {"--keep", "--runs", "--model", "--judge-model", "--max-cost-usd", "--concurrency", "--case", "--out", "--base"}
 
 PHASES = ["entry", "oracle", "work", "gate", "release", "confirmation"]
 SUPER_SECTIONS = ("## Super-loop", "## Oracle", "## Phases", "## Gate", "## Confirmation", "## Exits", "## Trace",
@@ -496,6 +500,33 @@ def example_problems(folder, template=False):
     return problems
 
 
+def evals_problems(folder, fm, template=False):
+    """What keeps a loop's skill from being measured: use_when, evals/ with a case of each kind, a fresh passing report."""
+    problems = []
+    if not (fm or {}).get("use_when"):
+        problems.append("no use_when: the skill's description ends with it, and it decides when the skill loads")
+    cases = eval_cases(folder.name) if not template else {
+        p.parent.name: list((read(p)[0] or {}).get("tags") or []) for p in (folder / EVALS).glob("*/prompt.md")}
+    kinds = {t for tags in cases.values() for t in tags}
+    missing = [k for k in EVAL_KINDS if k not in kinds]
+    if missing:
+        problems.append("%s/ needs a case tagged %s (FORMAT.md, The skill and its evals)"
+                        % (EVALS, " and ".join(missing)))
+    if template:
+        return problems
+    report_file = folder / EVALS / REPORT_NAME
+    if not report_file.is_file():
+        return problems + ["no %s/%s: run python3 scripts/catalog.py eval %s" % (EVALS, REPORT_NAME, folder.name)]
+    report = json.loads(report_file.read_text(encoding="utf-8"))
+    if report.get("skill_hash") != skill_hash(folder.name):
+        problems.append("%s/%s is for another version of the skill, the example or the cases: run python3 "
+                        "scripts/catalog.py eval %s" % (EVALS, REPORT_NAME, folder.name))
+    elif not report.get("passed"):
+        problems.append("%s/%s: the evals did not pass (%s of %s cases)" % (EVALS, REPORT_NAME,
+                        report.get("cases_passed"), report.get("cases_total")))
+    return problems
+
+
 def baseline_ids(text):
     return [line.strip() for line in text.splitlines() if line.strip() and not line.startswith("#")]
 
@@ -548,7 +579,7 @@ def chosen_ids(args, keep):
             continue
         if args[i] == "--all":
             ids += [p.parent.name for p in loop_cards()] + ["_template"]
-        elif args[i] == "--runs":
+        elif args[i] in VALUE_OPTIONS:
             i += 1
         elif not args[i].startswith("--"):
             ids.append(args[i])
@@ -586,6 +617,173 @@ def cmd_example(args):
         print()
     print("NOT VALID: %s" % ", ".join(failed) if failed else "VALID: %d examples" % len(ids))
     return 1 if failed else 0
+
+
+# ---------------------------------------------------------------- the skill: the loop as an agent loads it
+
+SKILL_SECTIONS = ["How it works", "Set up", "Agent step"]
+
+
+def card_sections(body):
+    """{section: text} of a card's body."""
+    parts = re.split(r"^## (.+?)\s*$", body, flags=re.M)
+    return {parts[i]: parts[i + 1].strip() for i in range(1, len(parts) - 1, 2)}
+
+
+def unlink_cards(text):
+    """Links to other cards become their names: a skill travels without the catalog."""
+    text = re.sub(r"\[([^\]]+)\]\(\.\./([a-z0-9-]+)/card\.md(?:#[^)]*)?\)", r"\1 (`\2`)", text)
+    return re.sub(r"\[([^\]]+)\]\((?!https?:)[^)]*\)", r"\1", text)
+
+
+def skill_text(loop_id):
+    """SKILL.md of a loop, from its card: the description says what the loop does and when to load it."""
+    fm, body, _ = read(LOOPS / loop_id / "card.md")
+    description = "%s. Use when %s." % (fm["summary"].rstrip("."), fm.get("use_when", "").rstrip("."))
+    sections = card_sections(body)
+    out = ["---", "name: %s" % loop_id, "description: %s" % json.dumps(description, ensure_ascii=False), "---", "",
+           "# %s" % fm["title"], "", fm["summary"], ""]
+    for name in SKILL_SECTIONS:
+        if name in sections:
+            out += ["## %s" % name, "", unlink_cards(sections[name]), ""]
+    out += ["## Build it in this project", "",
+            "A working loop is in `${CLAUDE_SKILL_DIR}/example/`: `LOOP.md`, `run`, the scripts it calls, and its",
+            "cases in `cases/must-fire/` and `cases/must-pass/`. Run these commands as written, from the project's root:",
+            "",
+            "```bash",
+            "python3 ${CLAUDE_SKILL_DIR}/bin/loops.py --root . install %s --from ${CLAUDE_SKILL_DIR}/example" % loop_id,
+            "python3 ${CLAUDE_SKILL_DIR}/bin/loops.py --root . validate %s" % loop_id,
+            "```",
+            "",
+            "The last command must print VALID: every must-fire case fires and every must-pass case passes. Then:",
+            "",
+            "1. Point `run` and the wiring at the project's own files and tools; keep the cases that apply and add the",
+            "   project's own: one must-fire case per way this failure can happen here, one must-pass case for the",
+            "   correct work nearest to it. Validate again after each change.",
+            "2. Wire it in where `LOOP.md`'s `wiring` says. A change to the agent's own settings",
+            "   (`.claude/settings.json`) or to CI is the person's to approve: show them the exact change and ask.",
+            "3. Trigger the wiring once for real, as `LOOP.md`'s Validation section says.", ""]
+    return "\n".join(out)
+
+
+def build_skill(loop_id, out):
+    """A plugin in OUT with the loop's skill, its example and loops.py beside it, and its evals."""
+    out = pathlib.Path(out)
+    fm, _, _ = read(LOOPS / loop_id / "card.md")
+    (out / ".claude-plugin").mkdir(parents=True, exist_ok=True)
+    (out / ".claude-plugin" / "plugin.json").write_text(json.dumps(
+        {"name": "loop-%s" % loop_id, "version": "0.0.0", "description": fm["summary"],
+         "author": {"name": "superloops"}, "license": "MIT"}, indent=2) + "\n")
+    skill = out / "skills" / loop_id
+    skill.mkdir(parents=True, exist_ok=True)
+    (skill / "SKILL.md").write_text(skill_text(loop_id), encoding="utf-8")
+    shutil.copytree(LOOPS / loop_id / EXAMPLE, skill / EXAMPLE, symlinks=True, dirs_exist_ok=True)
+    (skill / "bin").mkdir(exist_ok=True)
+    shutil.copy2(LOOPS_PY, skill / "bin" / "loops.py")
+    evals = LOOPS / loop_id / EVALS
+    if evals.is_dir():
+        shutil.copytree(evals, out / "evals", dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns(REPORT_NAME, "results"))
+    return out
+
+
+def skill_hash(loop_id):
+    """What the report of a loop's evals vouches for: its SKILL.md, its example and its eval cases."""
+    import hashlib
+    digest = hashlib.sha256(skill_text(loop_id).encode())
+    for root in (LOOPS / loop_id / EXAMPLE, LOOPS / loop_id / EVALS):
+        for f in sorted(p for p in root.rglob("*") if p.is_file()) if root.is_dir() else []:
+            rel = f.relative_to(LOOPS / loop_id)
+            if rel.name == REPORT_NAME or "results" in rel.parts or rel.name == ".DS_Store":
+                continue
+            digest.update(rel.as_posix().encode() + b"\0" + f.read_bytes() + b"\0")
+    return digest.hexdigest()
+
+
+def cmd_skill(args):
+    """Build the skill of each loop into --out DIR (one loop) or a scratch folder, and run claude plugin validate."""
+    ids = chosen_ids(args, lambda i: (LOOPS / i / EXAMPLE).is_dir() and not i.startswith("_"))
+    out = option(args, "--out", None)
+    if out:
+        if len(ids) != 1:
+            sys.exit("--out takes one loop")
+        print(build_skill(ids[0], out))
+        return 0
+    failed = []
+    for loop_id in ids:
+        with tempfile.TemporaryDirectory(prefix="skill-") as tmp:
+            build_skill(loop_id, tmp)
+            p = subprocess.run(["claude", "plugin", "validate", "--strict", tmp], capture_output=True, text=True)
+            print("## %s: %s" % (loop_id, "valid" if p.returncode == 0 else "NOT VALID"))
+            if p.returncode != 0:
+                print(p.stdout + p.stderr)
+                failed.append(loop_id)
+    print("NOT VALID: %s" % ", ".join(failed) if failed else "VALID: %d skills" % len(ids))
+    return 1 if failed else 0
+
+
+
+def eval_cases(loop_id):
+    """{case name: tags} of a loop's eval cases: each folder under evals/ with a prompt.md."""
+    cases = {}
+    for prompt in sorted((LOOPS / loop_id / EVALS).glob("*/prompt.md")):
+        fm, _, _ = read(prompt)
+        cases[prompt.parent.name] = list((fm or {}).get("tags") or [])
+    return cases
+
+
+def cmd_eval(args):
+    """Run a loop's evals with claude plugin eval, with and without its skill, and write evals/REPORT.json."""
+    ids = chosen_ids(args, lambda i: (LOOPS / i / EVALS).is_dir())
+    if len(ids) != 1:
+        sys.exit("eval takes one loop that has evals/")
+    loop_id = ids[0]
+    if not shutil.which("claude"):
+        sys.exit("claude plugin eval needs the claude command (Claude Code 2.1.269 or later)")
+    model = option(args, "--model", "sonnet")
+    with tempfile.TemporaryDirectory(prefix="loop-eval-") as tmp:
+        build_skill(loop_id, tmp)
+        p = subprocess.run(["claude", "plugin", "validate", "--strict", tmp], capture_output=True, text=True)
+        if p.returncode != 0:
+            print(p.stdout + p.stderr)
+            sys.exit("the skill built from the card does not pass claude plugin validate --strict")
+        result = pathlib.Path(tmp) / "result.json"
+        cmd = ["claude", "plugin", "eval", tmp, "--trust-plugin", "--no-publish", "--scaffold", "--json", str(result),
+               "--model", model, "--max-cost-usd", option(args, "--max-cost-usd", "10"),
+               "--concurrency", option(args, "--concurrency", "3")]
+        cmd += ["--judge-model", option(args, "--judge-model", "sonnet")]
+        for flag in ("--runs", "--case"):
+            if flag in args:
+                cmd += [flag, option(args, flag, "")]
+        cmd += ["--allow-tools", "Write", "Edit", "Bash"]
+        print("$ " + " ".join(cmd), flush=True)
+        code = subprocess.run(cmd).returncode
+        if not result.exists():
+            sys.exit("claude plugin eval wrote no result (exit %d)" % code)
+        data = json.loads(result.read_text())
+        if "--keep" in args:
+            keep = pathlib.Path(option(args, "--keep", "."))
+            shutil.copytree(tmp, keep, dirs_exist_ok=True)
+            print("kept the plugin, the cases and the results in %s" % keep)
+    tags = eval_cases(loop_id)
+    cases = [{"name": c.get("name"), "tags": tags.get(c.get("name"), []),
+              "score": (c.get("aggregates") or {}).get("score"), "delta": (c.get("aggregates") or {}).get("delta")}
+             for c in data.get("cases", [])]
+    agg = data.get("aggregates") or {}
+    report = {"loop": loop_id, "skill_hash": skill_hash(loop_id), "claude_version": data.get("claudeVersion"),
+              "model": model, "judge_model": option(args, "--judge-model", "sonnet"), "runs": option(args, "--runs", "3"),
+              "partial": bool(data.get("partial")), "cases": cases,
+              "cases_passed": agg.get("casesPassed"), "cases_total": agg.get("casesTotal"),
+              "cost_usd": data.get("costUsd"),
+              "passed": code == 0 and not data.get("partial") and agg.get("casesPassed") == agg.get("casesTotal")
+                        and set(c["name"] for c in cases) == set(tags)}
+    if "--case" in args:
+        print(json.dumps(report, indent=2))
+        print("a run of some cases only: no report written")
+    else:
+        (LOOPS / loop_id / EVALS / REPORT_NAME).write_text(json.dumps(report, indent=2) + "\n")
+        print("wrote loops/%s/%s/%s: %s" % (loop_id, EVALS, REPORT_NAME, "passed" if report["passed"] else "FAILED"))
+    return 0 if report["passed"] else 1
 
 
 # ---------------------------------------------------------------- links: pinned files and lines exist
@@ -716,9 +914,12 @@ def check(base=None):
     waiting = set(baseline_ids(BASELINE.read_text(encoding="utf-8"))) if BASELINE.exists() else set()
     for path in paths:
         if path.parent.name not in waiting:
-            errors += ["loops/%s: %s" % (path.parent.name, e) for e in example_problems(path.parent)]
+            fm = read(path)[0]
+            errors += ["loops/%s: %s" % (path.parent.name, e) for e in example_problems(path.parent)
+                       + evals_problems(path.parent, fm)]
     if TEMPLATE.exists():
-        errors += ["loops/_template: %s" % e for e in example_problems(TEMPLATE.parent, template=True)]
+        errors += ["loops/_template: %s" % e for e in example_problems(TEMPLATE.parent, template=True)
+                   + evals_problems(TEMPLATE.parent, read(TEMPLATE)[0], template=True)]
     errors += baseline_problems(known, base)
     stray = sorted(p.name for p in LOOPS.iterdir() if p.is_dir() and not p.name.startswith("_")
                    and not (p / "card.md").exists())
@@ -758,6 +959,10 @@ def main():
         sys.exit(cmd_example(sys.argv[2:]))
     elif cmd == "links":
         sys.exit(cmd_links(sys.argv[2:]))
+    elif cmd == "skill":
+        sys.exit(cmd_skill(sys.argv[2:]))
+    elif cmd == "eval":
+        sys.exit(cmd_eval(sys.argv[2:]))
     else:
         sys.exit(__doc__)
 

@@ -1,0 +1,39 @@
+{
+  "loop": "stall-detector",
+  "skill_hash": "2f1c190102be1f3e242c2e25b449deefef5b1dec23be831adaacd8af33da3728",
+  "claude_version": "2.1.322",
+  "model": "sonnet",
+  "judge_model": "sonnet",
+  "runs": "3",
+  "partial": false,
+  "cases": [
+    {
+      "name": "build-in-project",
+      "tags": [
+        "build"
+      ],
+      "score": 1,
+      "delta": 1
+    },
+    {
+      "name": "ignores-unrelated-work",
+      "tags": [
+        "no-trigger"
+      ],
+      "score": 1,
+      "delta": 0
+    },
+    {
+      "name": "triggers-on-a-loop",
+      "tags": [
+        "trigger"
+      ],
+      "score": 1,
+      "delta": 1
+    }
+  ],
+  "cases_passed": 3,
+  "cases_total": 3,
+  "cost_usd": 2.5152354,
+  "passed": true
+}

@@ -1,16 +1,19 @@
 # superloops
 
 A Claude Code plugin that makes an agent's work on a project checkable, from the task to the change confirmed where
-it is used. Its command is `/superloops`, and `/wizard` sets a project up from the site's form:
+it is used. Its command is `/superloops`; `/wizard` sets a project up from the site's form, and `/review-loop`
+reviews a loop for the catalog:
 
 | You run | What happens |
 |---|---|
 | `/superloops` in a project without `superloops/superloops.md` | The setup. It studies the project, recognizes the loops it already runs (CI jobs, hooks, linters, deploy checks, specs, agent loops) and places each in the project's super-loops. It asks only what the code does not tell: what the project is, how far superloops may go on its own, what it can reach, and where a change counts as done. It writes `superloops/superloops.md` and shows the map. It builds nothing |
 | `/superloops <a task, or a ticket URL>` | The task, through its super-loop. Triage picks the level (product or harness) and the super-loop; each phase runs the loops the map has; the task ends at an exit, such as a change confirmed in production, or at the `done_at` the user chose |
 | `/superloops` | The status: the map, the measures, the work in flight |
+| `/review-loop <a loop's folder, or a pull request>` | The review of a loop before it enters the catalog: the formal checks, its evals with and without its skill (`claude plugin eval`), and whether the card's loop is new and its claims true. It drafts the review; for a pull request, it posts it as a comment only when you say so |
 | `/wizard <answers>` | The setup from the wizard's answers (a JSON file from the site, or the questions asked here): it checks them against the repository, writes `superloops/superloops.md`, plans the loops the answers bring in (a core every project gets, plus what its kind, surfaces, stages, team, autonomy and pains add) and builds the first five with your go-ahead |
 
-The commands are `superloops:superloops` and `superloops:wizard` in the command list; typing `/superloops` or `/wizard` runs them.
+The commands are `superloops:superloops`, `superloops:wizard` and `superloops:review-loop` in the command list; typing
+`/superloops`, `/wizard` or `/review-loop` runs them.
 
 ## The model
 
@@ -57,6 +60,7 @@ The details: [`plugin/parts/harness/super-loops/`](plugin/parts/harness/super-lo
 | `.claude-plugin/marketplace.json` | The marketplace: one plugin, from `plugin/` |
 | `plugin/skills/superloops/` | The command |
 | `plugin/skills/wizard/` | The wizard's setup |
+| `plugin/skills/review-loop/` | The review of a loop for the catalog |
 | `plugin/parts/` | What it reads: the harness, wizard, spec, event-model, text-quality, app-probing, fixture-modify, pom-modify and ui-prototypes parts ([`plugin/parts/README.md`](plugin/parts/README.md)) |
 
 ## What it keeps in a project

@@ -162,8 +162,9 @@ A harness task that asks which loops to build, such as the first one after the s
    `python3 $S/scripts/loops.py new <id> --type <type-id>` (or `--type custom`).
 2. **Confirm the tools.** Find each tool the loop needs, install it if the autonomy level allows, run it once, and note
    its version in the Tools section of `LOOP.md`. Missing access is H3.
-3. **Build it.** When the loop type has an example (`loops/<type-id>/example/`), start from it: copy it into the
-   loop's folder, point `run` at the project's own files and tools, keep the cases that apply and add the project's.
+3. **Build it.** When the loop type has an example (`loops/<type-id>/example/`), start from it:
+   `python3 $S/scripts/loops.py install <id> --from $S/loops/<type-id>/example`, then point `run` at the project's
+   own files and tools, keep the cases that apply and add the project's.
    - `run`: takes the directory to check as its only argument, exits 0 when the check passes and non-zero when it
      fires, and prints `file:line: message` or JSON. The message says how to fix the problem.
    - Cases: at least one directory in `cases/must-fire/` for each kind of failure the loop must catch, and at least
